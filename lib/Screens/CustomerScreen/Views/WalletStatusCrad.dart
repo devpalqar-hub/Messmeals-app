@@ -1,0 +1,171 @@
+import 'package:flutter/material.dart';
+
+class WalletStatusCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+  final String? actionText;
+  final String? preButtonText;
+  final VoidCallback? onAction;
+  final EdgeInsetsGeometry padding;
+  final double radius;
+  final bool isPrimary;
+
+  const WalletStatusCard({
+    super.key,
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+    this.actionText,
+    this.preButtonText,
+    this.onAction,
+    this.padding = const EdgeInsets.all(14),
+    this.radius = 14,
+    this.isPrimary = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const labelStyle = TextStyle(
+      color: Color(0xFF717182),
+      fontFamily: 'Inter',
+      fontWeight: FontWeight.w600,
+      fontSize: 12,
+      letterSpacing: 0.3,
+      height: 1.1,
+    );
+
+    const valueStyle = TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+      fontFamily: 'Inter',
+      color: Colors.black,
+      height: 1.1,
+    );
+
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// ---------------------------
+          /// FIRST ROW: icon + label (left)  |  value (right, middle-aligned)
+          /// ---------------------------
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center, // ⬅️ Center vertically
+            children: [
+              // Icon container
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 16),
+
+              // Label on left and value on right
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Label
+                    Expanded(
+                      child: Text(
+                        label.toUpperCase(),
+                        maxLines: 2,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                        style: labelStyle,
+                      ),
+                    ),
+
+                    // Value (only if primary)
+                    if (isPrimary)
+                      Text(
+                        value,
+                        style: valueStyle,
+                        textAlign: TextAlign.right,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          /// ---------------------------
+          /// INLINE TEXT + BUTTON (only for primary)
+          /// ---------------------------
+          if (isPrimary && (preButtonText != null || actionText != null)) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (preButtonText != null)
+                  Flexible(
+                    child: Text(
+                      preButtonText!.toUpperCase(),
+                      maxLines: 2,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      style: labelStyle,
+                    ),
+                  ),
+                const SizedBox(width: 10),
+                if (actionText != null)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 34),
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        minimumSize: const Size(0, 0),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: const Color(0xFF1976D2),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: onAction,
+                      child: Text(
+                        actionText!,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+
+          /// ---------------------------
+          /// VALUE BELOW (only for non-primary cards)
+          /// ---------------------------
+          if (!isPrimary) ...[
+            const SizedBox(height: 10),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: valueStyle,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
