@@ -45,25 +45,24 @@ class _PartnerScreenState extends State<PartnerScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const TittleText(text: "Partners"),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AddPartnerScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                      label: const Text("Add", style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0474B9),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 13.h),
-                      ),
-                    ),
+                  ElevatedButton.icon(
+  onPressed: () async {
+    final result = await Get.to(() => const AddPartnerScreen());
+    if (result == true) {
+      await controller.fetchPartners();
+    }
+  },
+  icon: const Icon(Icons.add, size: 18, color: Colors.white),
+  label: const Text("Add", style: TextStyle(color: Colors.white)),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xff0474B9),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12.r),
+    ),
+    padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 13.h),
+  ),
+),
+
                   ],
                 ),
 
@@ -76,60 +75,67 @@ class _PartnerScreenState extends State<PartnerScreen> {
 
                 /// ---------- SEARCH ----------
                 TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    hintText: "Search partners...",
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                  ),
-                  onChanged: (query) {
-                    if (query.isNotEmpty) {
-                      final filtered = controller.partners
-                          .where((p) =>
-                              p.name.toLowerCase().contains(query.toLowerCase()))
-                          .toList();
-                      controller.partners.value = filtered;
-                    } else {
-                      controller.fetchPartners();
-                    }
-                  },
-                ),
+  controller: searchController,
+  decoration: InputDecoration(
+    hintText: "Search partners...",
+    prefixIcon: const Icon(Icons.search, size: 20),
+    contentPadding:
+        EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+    filled: true,
+    fillColor: Colors.white,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.r),
+      borderSide: BorderSide(color: Colors.grey[300]!),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.r),
+      borderSide: BorderSide(color: Colors.grey[300]!),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.r),
+      borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+    ),
+  ),
+  onChanged: (query) {
+    if (query.isNotEmpty) {
+      final filtered = controller.partners
+          .where((p) =>
+              p.name.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+      controller.partners.value = filtered;
+    } else {
+      controller.fetchPartners();
+    }
+  },
+),
 
                 SizedBox(height: 16.h),
 
                 /// ---------- PARTNER LIST ----------
                 Expanded(
-  child: ListView.separated(
-    itemCount: partners.length,
-    separatorBuilder: (context, index) => SizedBox(height: 15.h),
-    itemBuilder: (context, index) {
-      final partner = partners[index];
-      final stats = partner.stats;
-      final profile = partner.deliveryPartnerProfile;
+                  child: RefreshIndicator(
+                    onRefresh: () async => controller.fetchPartners(),
+                    child: ListView.separated(
+                      itemCount: partners.length,
+                      separatorBuilder: (context, index) => SizedBox(height: 15.h),
+                      itemBuilder: (context, index) {
+                        final partner = partners[index];
+                        final stats = partner.stats;
+                        final profile = partner.deliveryPartnerProfile;
 
-      return PartnerCard(
-        id: partner.id,
-        name: partner.name,
-        phone: partner.phone,
-        email: partner.email,
-        totalOrders: stats?.totalDeliveries ?? 0,
-        location: profile?.address?? "N/A",
-        isActive: partner.isActive,
-        onEdit: () async {},   // ✅ these are not used inside card, but required params
-        onDelete: () async {},
-        onTap: () {},
-      );
-    },
-  ),
-),
-
+                        return PartnerCard(
+                          id: partner.id,
+                          name: partner.name,
+                          phone: partner.phone,
+                          email: partner.email,
+                          totalOrders: stats?.totalDeliveries ?? 0,
+                          location: profile?.address ?? "N/A",
+                          isActive: partner.isActive,
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ],
             );
           }),

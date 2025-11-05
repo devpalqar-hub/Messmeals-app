@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/DeliveriesScreen/Services/DeliveriesController.dart';
+import 'package:url_launcher/url_launcher.dart'; // ✅ Added
 
 class OrderCard extends StatefulWidget {
   final String id;
@@ -54,7 +55,6 @@ class _OrderCardState extends State<OrderCard> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    // Match backend status to the pill
     _selectedStatus = _statusValues.indexOf(widget.status.toUpperCase());
     if (_selectedStatus == -1) _selectedStatus = 0;
   }
@@ -140,19 +140,28 @@ class _OrderCardState extends State<OrderCard> with SingleTickerProviderStateMix
         const Divider(thickness: 1),
         const SizedBox(height: 10),
 
-        /// ✅ Pills (same design, fixed logic)
         _statusPillsContainer(),
         const SizedBox(height: 10),
 
-        // Action buttons
+        // ✅ Action buttons
         Row(
           children: [
             Expanded(
-              child: _actionButton(Icons.place_outlined, 'Open in Map', Colors.blue, () {}),
+              child: _actionButton(
+                Icons.place_outlined,
+                'Open in Map',
+                Colors.blue,
+                _openInMap, // ✅ Google Map Function
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _actionButton(Icons.call_outlined, 'Call Now', Colors.green, () {}),
+              child: _actionButton(
+                Icons.call_outlined,
+                'Call Now',
+                Colors.green,
+                _callNow, // ✅ Call Function
+              ),
             ),
           ],
         ),
@@ -165,7 +174,6 @@ class _OrderCardState extends State<OrderCard> with SingleTickerProviderStateMix
         child: Text(text, style: const TextStyle(fontSize: 14)),
       );
 
-  /// ✅ Simple Flat Pills (original UI)
   Widget _statusPillsContainer() {
     return Container(
       width: double.infinity,
@@ -234,6 +242,34 @@ class _OrderCardState extends State<OrderCard> with SingleTickerProviderStateMix
         ),
       ),
     );
+  }
+
+  /// ✅ Opens Google Maps with address
+  Future<void> _openInMap() async {
+    final address = [
+      widget.addressLine1,
+      widget.addressLine2,
+      widget.cityStateZip
+    ].where((e) => e != null && e.isNotEmpty).join(", ");
+
+    final encodedAddress = Uri.encodeComponent(address);
+    final googleUrl = "https://www.google.com/maps/search/?api=1&query=$encodedAddress";
+
+    if (await canLaunchUrl(Uri.parse(googleUrl))) {
+      await launchUrl(Uri.parse(googleUrl), mode: LaunchMode.externalApplication);
+    } else {
+      Get.snackbar("Error", "Could not open Google Maps");
+    }
+  }
+
+  /// ✅ Opens dialer with phone number
+  Future<void> _callNow() async {
+    final phoneUri = Uri(scheme: 'tel', path: widget.phone);
+    if (await canLaunchUrl(phoneUri)) {
+      await launchUrl(phoneUri);
+    } else {
+      Get.snackbar("Error", "Could not launch dialer");
+    }
   }
 }
 

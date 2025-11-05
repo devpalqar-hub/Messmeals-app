@@ -2,51 +2,24 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
+import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mess/main.dart';
-import 'package:mess/Screens/HomeScreen/HomeView.dart';
+import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
+
+String bearerToken = "";
 
 class AuthController extends GetxController {
   RxBool isLoggedIn = false.obs;
+  RxBool isLoading = false.obs;
   RxString token = "".obs;
   Rx<UserModel?> currentUser = Rx<UserModel?>(null);
+  RxList<Map<String, dynamic>> ownedMesses = <Map<String, dynamic>>[].obs;
+  RxString selectedMessId = "".obs;
+
   DateTime? tokenExpiry;
   Timer? _logoutTimer;
-
-  /// ================== SEND REGISTER OTP ==================
-  Future<bool> sendRegisterOtp({
-    required String name,
-    required String phone,
-    required String email,
-  }) async {
-    try {
-      final url = Uri.parse("$baseUrl/auth/send-reg-otp");
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "name": name,
-          "phone": phone,
-          "email": email,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("OTP Sent", data["message"] ?? "Registration OTP sent!");
-        return true;
-      } else {
-        Get.snackbar("Error", data["message"] ?? "Failed to send OTP");
-        return false;
-      }
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-      return false;
-    }
-  }
 
   /// ================== SEND LOGIN OTP ==================
   Future<bool> sendOtp(String phone) async {
@@ -59,7 +32,6 @@ class AuthController extends GetxController {
       );
 
       final data = jsonDecode(response.body);
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         Get.snackbar("OTP Sent", data["message"] ?? "OTP sent successfully!");
         return true;
@@ -73,49 +45,47 @@ class AuthController extends GetxController {
     }
   }
 
-  /// ================== VERIFY OTP (FOR LOGIN OR REGISTER) ==================
+  /// ================== VERIFY OTP ==================
   Future<void> verifyOtp(String phone, String otp) async {
     try {
       final url = Uri.parse("$baseUrl/auth/verify-otp");
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "phone": phone,
-          "otp": otp,
-        }),
+        body: jsonEncode({"phone": phone, "otp": otp}),
       );
 
       final data = jsonDecode(response.body);
 
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          data["accessToken"] != null) {
+      if ((response.statusCode == 201) && data["accessToken"] != null) {
         final prefs = await SharedPreferences.getInstance();
 
-        /// Store token
         token.value = data["accessToken"];
-
-        /// Parse user model
-        final userData = data["user"];
-        currentUser.value = UserModel.fromJson(userData);
+        bearerToken = "Bearer ${token.value}";
+        currentUser.value = UserModel.fromJson(data["user"]);
         isLoggedIn.value = true;
 
-        /// Save locally
-        await prefs.setString("token", token.value);
-        await prefs.setString("user", jsonEncode(userData));
-
-        /// Handle expiry if provided
-        if (userData["expiresAt"] != null) {
-          tokenExpiry = DateTime.tryParse(userData["expiresAt"]);
-          if (tokenExpiry != null) {
-            await prefs.setString("expiry", tokenExpiry!.toIso8601String());
-            _startAutoLogoutTimer();
-          }
+        tokenExpiry = _decodeTokenExpiry(token.value);
+        if (tokenExpiry == null) {
+          logout();
+          return;
         }
 
-        /// Navigate to Dashboard
-        Get.offAll(() => const DashboardScreen());
-        Get.snackbar("Success", "Welcome ${currentUser.value?.name ?? 'User'}!");
+        await fetchOwnedMesses();
+
+        if (ownedMesses.isNotEmpty) {
+          selectedMessId.value = ownedMesses.first["id"];
+          await prefs.setString("selectedMessId", selectedMessId.value);
+        }
+
+        await prefs.setString("token", token.value);
+        await prefs.setString("user", jsonEncode(data["user"]));
+        await prefs.setString("ownedMesses", jsonEncode(ownedMesses));
+        await prefs.setString("tokenExpiry", tokenExpiry!.toIso8601String());
+
+        _startAutoLogoutTimer();
+
+       Get.offAll(() => const DashboardScreen());
       } else {
         Get.snackbar("Error", data["message"] ?? "Invalid OTP");
       }
@@ -124,40 +94,102 @@ class AuthController extends GetxController {
     }
   }
 
-  /// ================== AUTO LOGIN CHECK ==================
+  /// ================== FETCH OWNED MESSES ==================
+  Future<void> fetchOwnedMesses() async {
+    try {
+      isLoading(true);
+      final url = Uri.parse("$baseUrl/customer/owners/messes");
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": bearerToken,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          ownedMesses.value = List<Map<String, dynamic>>.from(decoded);
+        } else {
+          ownedMesses.clear();
+        }
+      } else {
+        ownedMesses.clear();
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  /// ================== CHECK LOGIN STATUS ==================
   Future<void> checkLoginStatus() async {
+    isLoading(true);
     final prefs = await SharedPreferences.getInstance();
     final storedToken = prefs.getString("token");
     final storedUser = prefs.getString("user");
-    final expiry = prefs.getString("expiry");
+    final storedSelectedMessId = prefs.getString("selectedMessId");
+    final storedOwnedMesses = prefs.getString("ownedMesses");
 
-    if (storedToken != null && storedUser != null && expiry != null) {
-      final expiryDate = DateTime.tryParse(expiry);
-      if (expiryDate != null && DateTime.now().isBefore(expiryDate)) {
+    if (storedToken != null && storedUser != null) {
+      final expiry = _decodeTokenExpiry(storedToken);
+      final now = DateTime.now();
+
+      if (expiry != null && expiry.isAfter(now)) {
         token.value = storedToken;
+        bearerToken = "Bearer ${token.value}";
         currentUser.value = UserModel.fromJson(jsonDecode(storedUser));
-        tokenExpiry = expiryDate;
+        selectedMessId.value = storedSelectedMessId ?? "";
+
+        if (storedOwnedMesses != null) {
+          ownedMesses.value =
+              List<Map<String, dynamic>>.from(jsonDecode(storedOwnedMesses));
+        }
+
+        tokenExpiry = expiry;
         isLoggedIn.value = true;
         _startAutoLogoutTimer();
-        Get.offAll(() => const DashboardScreen());
+        isLoading(false);
         return;
       }
     }
 
-    isLoggedIn.value = false;
-    Get.offAll(() => const LoginScreen());
+    logout();
+    isLoading(false);
   }
 
   /// ================== AUTO LOGOUT TIMER ==================
   void _startAutoLogoutTimer() {
     _logoutTimer?.cancel();
-    if (tokenExpiry != null) {
-      final timeToExpire = tokenExpiry!.difference(DateTime.now());
-      if (timeToExpire.isNegative) {
-        logout();
-      } else {
-        _logoutTimer = Timer(timeToExpire, logout);
+    if (tokenExpiry == null) return;
+
+    final secondsUntilLogout =
+        tokenExpiry!.difference(DateTime.now()).inSeconds;
+
+    if (secondsUntilLogout > 0) {
+      _logoutTimer = Timer(Duration(seconds: secondsUntilLogout), logout);
+    } else {
+      logout();
+    }
+  }
+
+  /// ================== DECODE JWT TOKEN EXPIRY ==================
+  DateTime? _decodeTokenExpiry(String jwt) {
+    try {
+      final parts = jwt.split('.');
+      if (parts.length != 3) return null;
+
+      final payload =
+          jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))));
+      if (payload.containsKey('exp')) {
+        final exp = payload['exp'];
+        return DateTime.fromMillisecondsSinceEpoch(exp * 1000);
       }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -167,10 +199,14 @@ class AuthController extends GetxController {
     await prefs.clear();
 
     token.value = "";
+    bearerToken = "";
+    selectedMessId.value = "";
+    ownedMesses.clear();
     currentUser.value = null;
     isLoggedIn.value = false;
+    _logoutTimer?.cancel();
 
     Get.offAll(() => const LoginScreen());
-    Get.snackbar("Logged Out", "Session ended. Please login again.");
+    Get.snackbar("Session expired", "Please login again.");
   }
 }

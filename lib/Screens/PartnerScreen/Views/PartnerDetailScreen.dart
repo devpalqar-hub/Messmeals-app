@@ -4,11 +4,10 @@ import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/RecentlyDeliveryCard.dart';
 import 'package:mess/Screens/PartnerScreen/Views/StatusCard.dart';
-import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart'; // ✅ make sure this exists
+import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 
 class PartnerDetailsScreen extends StatefulWidget {
   final String partnerId;
-
   const PartnerDetailsScreen({super.key, required this.partnerId});
 
   @override
@@ -16,12 +15,11 @@ class PartnerDetailsScreen extends StatefulWidget {
 }
 
 class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
-  final PartnerController controller = Get.put(PartnerController());
+  final PartnerController controller = Get.find<PartnerController>();
 
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.fetchPartnerById(widget.partnerId);
     });
@@ -67,20 +65,37 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                       ),
                     ),
                     const Spacer(),
-                  GestureDetector(
-  onTap: () async {
-    // ✅ Navigate to AddPartnerScreen for editing this partner
-    await Get.to(() => AddPartnerScreen(
-          partner: partner, // pass the full partner object here
-        ));
-    // ✅ Refresh details after returning
-    controller.fetchPartnerById(widget.partnerId);
-  },
-  child: _actionButton(Icons.edit_outlined, "Edit"),
-),
 
+                    // ✅ EDIT BUTTON
+                    GestureDetector(
+                      onTap: () async {
+                        await controller.fetchPartnerById(widget.partnerId);
+                        final selected = controller.selectedPartner.value;
+
+                        if (selected == null) {
+                          Get.snackbar("Error", "Failed to load partner details");
+                          return;
+                        }
+
+                        final result = await Get.to(() => AddPartnerScreen(
+                              isEdit: true,
+                              partner: selected,
+                            ));
+
+                        // ✅ If edit successful, refresh list & go back
+                        if (result == true) {
+                          await controller.fetchPartners(); // refresh full list
+                          Get.back(); // return to list
+                          Get.snackbar("Success", "Partner updated successfully",
+                              snackPosition: SnackPosition.BOTTOM);
+                        }
+                      },
+                      child: _actionButton(Icons.edit_outlined, "Edit"),
+                    ),
 
                     const SizedBox(width: 8),
+
+                    // ✅ DELETE BUTTON
                     GestureDetector(
                       onTap: () => _confirmDelete(context, partner.id),
                       child: _actionButton(Icons.delete_outline, "Delete"),
@@ -134,10 +149,8 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                             const SizedBox(height: 4),
                             _infoRow(Icons.email_outlined, partner.email),
                             const SizedBox(height: 4),
-                            _infoRow(
-                              Icons.location_on_outlined,
-                              profile?.address ?? "No address available",
-                            ),
+                            _infoRow(Icons.location_on_outlined,
+                                profile?.address ?? "No address available"),
                           ],
                         ),
                       ),
@@ -147,7 +160,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
 
                 const SizedBox(height: 15),
 
-                // ---------- STATS GRID ----------
+                // ---------- STATS ----------
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -185,77 +198,22 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
 
                 const SizedBox(height: 15),
 
-                // ---------- PERFORMANCE METRICS ----------
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade200),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Performance Metrics",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                          fontFamily: "Inter",
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Completion Rate",
-                            style: TextStyle(
-                              color: Color(0xff717182),
-                              fontFamily: "Inter",
-                            ),
-                          ),
-                          Text(
-                            "${_calculateCompletionRate(stats).toStringAsFixed(1)}%",
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontFamily: "Inter",
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: _calculateCompletionRate(stats) / 100.0,
-                          backgroundColor: const Color(0xFFE5E5E5),
-                          color: Colors.black,
-                          minHeight: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                // ---------- RECENT DELIVERIES ----------
-                RecentDeliveriesSection(
-                  deliveries: [
-                    {
-                      "status": "Completed",
-                      "deliveryId": "DLV-1024",
-                      "date": "Oct 22, 2025",
-                      "amount": "₹540.00",
-                    },
-                    {
-                      "status": "Pending",
-                      "deliveryId": "DLV-1023",
-                      "date": "Oct 20, 2025",
-                      "amount": "₹230.50",
-                    },
-                  ],
-                ),
+              //  RecentDeliveriesSection(
+                //  deliveries: [
+                  //  {
+                    //  "status": "Completed",
+                  //    "deliveryId": "DLV-1024",
+                    //  "date": "Oct 22, 2025",
+                  //    "amount": "₹540.00",
+                  //},
+                   // {
+                  //    "status": "Pending",
+                    //  "deliveryId": "DLV-1023",
+                    //  "date": "Oct 20, 2025",
+                    //  "amount": "₹230.50",
+                  //  },
+                 // ],
+               // ),
               ],
             ),
           );
@@ -263,8 +221,6 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
       ),
     );
   }
-
-  // ---------- Helper Widgets ----------
 
   Widget _infoRow(IconData icon, String text) {
     return Row(
@@ -297,26 +253,18 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
         children: [
           Icon(icon, size: 18, color: Colors.black87),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-              fontFamily: "Inter",
-            ),
-          ),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                  fontFamily: "Inter")),
         ],
       ),
     );
   }
 
-  double _calculateCompletionRate(PartnerStats? stats) {
-    if (stats == null || stats.totalDeliveries == 0) return 0.0;
-    return (stats.completedDeliveries / stats.totalDeliveries) * 100;
-  }
-
-  // ---------- Delete Confirmation ----------
+  // ✅ DELETE CONFIRMATION
   void _confirmDelete(BuildContext context, String partnerId) {
     showDialog(
       context: context,
@@ -331,8 +279,9 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await controller.deletePartner(partnerId);
-              Get.back(); // go back to previous list screen
+             
+              await controller.fetchPartners(); // refresh list
+              Get.back(); // go back to list
               Get.snackbar("Success", "Partner deleted successfully",
                   snackPosition: SnackPosition.BOTTOM);
             },

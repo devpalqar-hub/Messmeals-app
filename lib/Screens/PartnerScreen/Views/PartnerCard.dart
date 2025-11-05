@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerDetailScreen.dart';
@@ -22,12 +21,12 @@ class PartnerCard extends StatelessWidget {
     required this.email,
     required this.location,
     required this.totalOrders,
-    this.isActive = true, required Null Function() onTap, required Future<Null> Function() onDelete, required Future<Null> Function() onEdit,
+    this.isActive = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(PartnerController());
+    final controller = Get.find<PartnerController>();
 
     return Container(
       decoration: BoxDecoration(
@@ -91,10 +90,9 @@ class PartnerCard extends StatelessWidget {
               // ---------- Action buttons ----------
               Row(
                 children: [
-                  // ✅ Edit Button (same as PartnerDetailsScreen)
+                  // ✅ Edit Button
                   IconButton(
                     onPressed: () async {
-                      // fetch the full partner before editing
                       await controller.fetchPartnerById(id);
 
                       final partner = controller.selectedPartner.value;
@@ -104,18 +102,22 @@ class PartnerCard extends StatelessWidget {
                       }
 
                       // Navigate to AddPartnerScreen for edit
-                      await Get.to(() => AddPartnerScreen(
+                      final result = await Get.to(() => AddPartnerScreen(
                             isEdit: true,
                             partner: partner,
                           ));
 
-                      // Refresh partner list after edit
-                      controller.fetchPartners();
+                      if (result == true) {
+                        // Refresh and show snackbar when returned
+                        await controller.fetchPartners();
+                        Get.snackbar("Success", "Partner updated successfully",
+                            snackPosition: SnackPosition.BOTTOM);
+                      }
                     },
                     icon: const Icon(Icons.edit_outlined, size: 22),
                   ),
 
-                  // ✅ Delete Button (same logic as in PartnerDetailsScreen)
+                  // ✅ Delete Button
                   IconButton(
                     onPressed: () => _confirmDelete(context, id, controller),
                     icon: const Icon(Icons.delete_outline, size: 20),
@@ -225,7 +227,7 @@ class PartnerCard extends StatelessWidget {
     );
   }
 
-  /// ✅ Delete Confirmation Dialog (same as PartnerDetailsScreen)
+  /// ✅ Delete Confirmation Dialog
   void _confirmDelete(BuildContext context, String partnerId, PartnerController controller) {
     showDialog(
       context: context,
@@ -241,9 +243,15 @@ class PartnerCard extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               await controller.deletePartner(partnerId);
-              controller.fetchPartners();
+              await controller.fetchPartners();
+
               Get.snackbar("Success", "Partner deleted successfully",
                   snackPosition: SnackPosition.BOTTOM);
+
+              // ✅ Go back to previous screen (list with bottom bar)
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context, true); // return true to refresh
+              }
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),

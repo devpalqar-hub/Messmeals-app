@@ -128,7 +128,7 @@ class PlanScreen extends StatelessWidget {
         return "$baseUrl/$cleanUrl".replaceAll("//uploads", "/uploads");
       })()
     : "https://via.placeholder.com/60";
-print("🖼️ Final image URL for ${plan.planName}: $imageUrl");
+
 
 
                         return PlanCard(

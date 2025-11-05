@@ -5,12 +5,13 @@ class SubscriptionDetailsCard extends StatelessWidget {
   final String planPrice;
   final String startDate;
   final String endDate;
-  final String? endNote; // e.g., "Renew sub"
-  final List<String> variationTitles; // ✅ now clearer naming
+  final String? endNote; 
+  final List<String> variationTitles;
   final VoidCallback onRenew;
   final VoidCallback onCancel;
+  final VoidCallback onPause;
   final String activeSubscriptionId;
-final String customerProfileId;
+  final String customerProfileId;
 
   const SubscriptionDetailsCard({
     super.key,
@@ -22,8 +23,9 @@ final String customerProfileId;
     required this.variationTitles,
     required this.onRenew,
     required this.onCancel,
+    required this.onPause, 
     required this.activeSubscriptionId,
-  required this.customerProfileId,
+    required this.customerProfileId,
   });
 
   @override
@@ -128,7 +130,6 @@ final String customerProfileId;
           const Text('PLAN VARIATIONS', style: captionStyle),
           const SizedBox(height: 10),
 
-          // ✅ Dynamic variation titles from backend
           if (variationTitles.isNotEmpty)
             Wrap(
               spacing: 10,
@@ -137,7 +138,9 @@ final String customerProfileId;
                   .map(
                     (title) => Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 4),
+                        horizontal: 14,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF2F2F6),
                         borderRadius: BorderRadius.circular(8),
@@ -162,7 +165,7 @@ final String customerProfileId;
 
           const SizedBox(height: 18),
 
-          // Renew button
+          // ✅ Renew Button
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -186,7 +189,32 @@ final String customerProfileId;
 
           const SizedBox(height: 12),
 
-          // Cancel button
+          // ✅ Pause Button (new)
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton(
+              onPressed: onPause,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF0474B9)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                foregroundColor: const Color(0xFF0474B9),
+                backgroundColor: const Color(0xFFE9F6FF),
+                textStyle: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              child: const Text('Pause Subscription'),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Cancel Button
           SizedBox(
             width: double.infinity,
             height: 52,

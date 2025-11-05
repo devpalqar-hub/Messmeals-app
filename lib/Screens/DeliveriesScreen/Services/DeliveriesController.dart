@@ -2,9 +2,14 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
+import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
+import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/main.dart';
 
 class DeliveriesController extends GetxController {
+   final AuthController authController = Get.put(AuthController());
+   final DashboardController dashboardController = Get.find<DashboardController>();
+
   var isLoading = false.obs;
   var deliveries = <Delivery>[].obs;
   var page = 1.obs;
@@ -18,44 +23,52 @@ class DeliveriesController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Build query params dynamically
+      final messId = authController.selectedMessId.value;
+      if (messId.isEmpty) {
+        Get.snackbar("Error", "Please select a mess first");
+        isLoading.value = false;
+        return;
+      }
+
+      // 🔹 Build query params dynamically
       final Map<String, String> queryParams = {
         'page': page.value.toString(),
         'limit': limit.value.toString(),
+        'messId': messId,
       };
 
       if (date != null) {
-        // Ensure correct backend date format (YYYY-MM-DD)
         queryParams['date'] = date.toIso8601String().split('T')[0];
       }
 
       if (status != null && status.trim().isNotEmpty) {
-        // Normalize to uppercase since API expects uppercase statuses
         queryParams['status'] = status.toUpperCase();
       }
 
-      final uri = Uri.parse('$baseUrl/deliveries').replace(queryParameters: queryParams);
-      print("🔍 Fetching Deliveries: $uri");
+      final uri = Uri.parse('$baseUrl/deliveries')
+          .replace(queryParameters: queryParams);
+    
 
       final response = await http.get(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
       );
 
-      print("🟢 Fetch Response (${response.statusCode}): ${response.body}");
-
+     
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         final List<dynamic> dataList = jsonData['data'] ?? [];
         deliveries.value = dataList.map((e) => Delivery.fromJson(e)).toList();
-
-        print("✅ Deliveries fetched: ${deliveries.length}");
+       
       } else {
         Get.snackbar('Error', 'Failed to fetch deliveries: ${response.statusCode}');
       }
     } catch (e) {
       Get.snackbar('Error', 'Failed to load deliveries: $e');
-      print("❌ Fetch Deliveries Error: $e");
+   
     } finally {
       isLoading.value = false;
     }
@@ -72,10 +85,11 @@ class DeliveriesController extends GetxController {
         body: json.encode({"date": date.toIso8601String().split('T')[0]}),
       );
 
-      print("🟡 Generate Deliveries Response (${response.statusCode}): ${response.body}");
+  
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Get.snackbar('Success', 'Deliveries generated successfully');
+        await dashboardController.fetchDashboardStats(); 
         await fetchDeliveries(date: date);
       } else {
         final msg = json.decode(response.body)['message'] ?? 'Unknown error';
@@ -83,7 +97,7 @@ class DeliveriesController extends GetxController {
       }
     } catch (e) {
       Get.snackbar('Error', 'Error generating deliveries: $e');
-      print("❌ Generate Deliveries Error: $e");
+     
     } finally {
       isLoading.value = false;
     }
@@ -97,8 +111,6 @@ class DeliveriesController extends GetxController {
       final url = Uri.parse('$baseUrl/deliveries/$deliveryId/status');
       final body = json.encode({"status": newStatus.toUpperCase()});
 
-      print("PATCH: $url");
-      print("Body: $body");
 
       final response = await http.patch(
         url,
@@ -106,12 +118,12 @@ class DeliveriesController extends GetxController {
         body: body,
       );
 
-      print("🟢 Status Update Response (${response.statusCode}): ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final updatedStatus = data['status'] ?? newStatus;
         Get.snackbar('Success', 'Delivery status updated to $updatedStatus');
+         await dashboardController.fetchDashboardStats(); 
         await fetchDeliveries(); // refresh list after update
       } else {
         final msg = json.decode(response.body)['message'] ?? 'Unknown error';
@@ -119,7 +131,7 @@ class DeliveriesController extends GetxController {
       }
     } catch (e) {
       Get.snackbar('Error', 'Error updating delivery status: $e');
-      print("❌ Error updating delivery status: $e");
+   
     } finally {
       isLoading.value = false;
     }
