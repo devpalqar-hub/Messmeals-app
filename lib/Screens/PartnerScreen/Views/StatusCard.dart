@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class StatsCard extends StatelessWidget {
   final IconData icon;
@@ -17,50 +18,55 @@ class StatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ---- Icon + Label Row ----
+          /// ---------- ICON + LABEL ----------
           Row(
             children: [
-              Container( 
+              Container(
                 decoration: BoxDecoration(
                   color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
-                padding: const EdgeInsets.all(8),
-                child: Icon(icon, color: iconColor, ),
+                padding: EdgeInsets.all(8.w),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 20.sp,
+                ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: Color(0xff717182),
+                  style: TextStyle(
+                    color: const Color(0xff717182),
                     fontFamily: "Inter",
                     fontWeight: FontWeight.w500,
-                    fontSize: 12,
-                    
+                    fontSize: 12.sp,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
 
-          // ---- Value ----
+          SizedBox(height: 10.h),
+
+          /// ---------- VALUE ----------
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 20,
+            style: TextStyle(
+              fontSize: 20.sp,
               fontWeight: FontWeight.w600,
               fontFamily: "Inter",
+              color: Colors.black,
             ),
           ),
         ],

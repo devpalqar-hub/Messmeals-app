@@ -5,7 +5,8 @@ import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 
-String baseUrl = "http://31.97.237.63/supermeals"; // 🌐 Global base URL
+String baseUrl = "https://api.messmeals.com"; 
+
 
 Future<void> main() async {
   // 🧩 Ensures Flutter engine is ready before async calls

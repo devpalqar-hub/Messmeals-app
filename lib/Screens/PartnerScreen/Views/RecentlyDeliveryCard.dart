@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class RecentDeliveriesSection extends StatelessWidget {
   final List<Map<String, String>> deliveries;
@@ -11,28 +12,27 @@ class RecentDeliveriesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          const Text(
+          /// ---------- HEADER ----------
+          Text(
             "Recent Deliveries",
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w600,
               fontFamily: "Inter",
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
 
-          // List of deliveries
+          /// ---------- DELIVERY LIST ----------
           ...deliveries.map((delivery) {
             bool isCompleted = delivery["status"]!.toLowerCase() == "completed";
             Color bgColor =
@@ -40,20 +40,17 @@ class RecentDeliveriesSection extends StatelessWidget {
             Color textColor = isCompleted ? Colors.green : Colors.orange;
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-             // padding: const EdgeInsets.all(14),
-             // decoration: BoxDecoration(
-               // borderRadius: BorderRadius.circular(12),
-                //border: Border.all(color: Colors.grey.shade300),
-             // ),
+              margin: EdgeInsets.only(bottom: 12.h),
               child: Row(
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: bgColor,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Text(
                       delivery["status"]!,
@@ -61,29 +58,30 @@ class RecentDeliveriesSection extends StatelessWidget {
                         color: textColor,
                         fontWeight: FontWeight.w500,
                         fontFamily: "Inter",
+                        fontSize: 13.sp,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 50),
+                  SizedBox(width: 50.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           delivery["deliveryId"]!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontFamily: "Inter",
-                            fontSize: 14,
+                            fontSize: 14.sp,
                           ),
                         ),
                         Text(
                           delivery["date"]!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.black54,
-                            fontSize: 13,
+                            fontSize: 13.sp,
                             fontFamily: "Inter",
-                             fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -91,10 +89,10 @@ class RecentDeliveriesSection extends StatelessWidget {
                   ),
                   Text(
                     delivery["amount"]!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontFamily: "Inter",
-                      fontSize: 15,
+                      fontSize: 15.sp,
                     ),
                   ),
                 ],

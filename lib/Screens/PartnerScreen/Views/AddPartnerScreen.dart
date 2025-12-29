@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
@@ -27,8 +28,6 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
   @override
   void initState() {
     super.initState();
-
-    // ✅ Pre-fill data if editing
     if (widget.isEdit && widget.partner != null) {
       final partner = widget.partner!;
       nameController.text = partner.name;
@@ -42,16 +41,17 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffF7F9FB),
       appBar: AppBar(
         backgroundColor: Colors.white,
+        elevation: 0,
         title: Text(
           widget.isEdit ? "Edit Partner" : "Add Partner",
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
+            fontSize: 18.sp,
             fontFamily: "Inter",
-            fontSize: 18,
           ),
         ),
         leading: IconButton(
@@ -63,44 +63,41 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
         return Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: EdgeInsets.all(16.w),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ---------- BASIC INFORMATION ----------
+                    /// ---------- BASIC INFO ----------
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.all(18.w),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(24),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "Basic Information",
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                              fontFamily: "Inter",
-                              color: Color(0xff1A1D29),
+                              fontSize: 16.sp,
+                              color: const Color(0xff1A1D29),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16.h),
 
-                          // Always show Name
                           buildTextField(
                             label: "Name *",
                             hint: "Enter full name",
                             controller: nameController,
                           ),
+                          SizedBox(height: 14.h),
 
-                          const SizedBox(height: 14),
-
-                          // Show phone & email ONLY when adding
                           if (!widget.isEdit) ...[
                             buildTextField(
                               label: "Phone *",
@@ -108,17 +105,16 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                               controller: phoneController,
                               keyboardType: TextInputType.phone,
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14.h),
                             buildTextField(
                               label: "Email",
                               hint: "email@example.com",
                               controller: emailController,
                               keyboardType: TextInputType.emailAddress,
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14.h),
                           ],
 
-                          // Always show address
                           buildTextField(
                             label: "Address *",
                             hint: "Enter address",
@@ -128,120 +124,106 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
 
-                    // Show status dropdown ONLY when adding
+                    /// ---------- STATUS (for Add only) ----------
                     if (!widget.isEdit)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(20),
+                        padding: EdgeInsets.all(18.w),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(24),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(color: Colors.grey[300]!),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               "Status",
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                                color: Colors.black87,
-                                fontFamily: "Inter",
+                                fontSize: 16.sp,
+                                color: const Color(0xff1A1D29),
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
+                            SizedBox(height: 16.h),
+                            Text(
                               "Current Status *",
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 14.sp,
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: "Inter",
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xffF0F2F5),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              child: DropdownButtonFormField<String>(
-                                value: status,
-                                icon: const Icon(
-                                    Icons.keyboard_arrow_down_rounded),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
+                            SizedBox(height: 8.h),
+                            DropdownButtonFormField<String>(
+                              value: status,
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: const Color(0xffF0F2F5),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12.w, vertical: 12.h),
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(16.r),
                                 ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'Active',
-                                    child: Text(
-                                      "Active",
-                                      style: TextStyle(
-                                          fontFamily: "Inter", fontSize: 14),
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Inactive',
-                                    child: Text(
-                                      "Inactive",
-                                      style: TextStyle(
-                                          fontFamily: "Inter", fontSize: 14),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    status = value!;
-                                  });
-                                },
                               ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'Active',
+                                  child: Text("Active"),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Inactive',
+                                  child: Text("Inactive"),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  status = value!;
+                                });
+                              },
                             ),
                           ],
                         ),
                       ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 24.h),
 
-                    // ---------- BUTTONS ----------
+                    /// ---------- ACTION BUTTONS ----------
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.grey.shade300),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                            ),
                             onPressed: () => Get.back(),
-                            child: const Text(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.grey[300]!),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                            ),
+                            child: Text(
                               "Cancel",
                               style: TextStyle(
-                                fontSize: 16,
-                                color: Color(0xff1A1D29),
+                                fontSize: 16.sp,
+                                color: const Color(0xff1A1D29),
                                 fontWeight: FontWeight.w500,
-                                fontFamily: "Inter",
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12.w),
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0D47A1),
+                              backgroundColor: const Color(0xff0474B9),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(12.r),
                               ),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
                             ),
                             onPressed: () async {
                               if (_formKey.currentState!.validate()) {
@@ -257,20 +239,17 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                                     phone: phoneController.text.trim(),
                                     email: emailController.text.trim(),
                                     address: addressController.text.trim(),
-                                   // isActive: status == "Active",
+                                    // isActive: status == "Active",
                                   );
                                 }
                               }
                             },
                             child: Text(
-                              widget.isEdit
-                                  ? "Update Partner"
-                                  : "Add Partner",
-                              style: const TextStyle(
-                                fontSize: 16,
+                              widget.isEdit ? "Update Partner" : "Add Partner",
+                              style: TextStyle(
+                                fontSize: 16.sp,
                                 color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: "Inter",
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -282,7 +261,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
               ),
             ),
 
-            // ✅ Loading overlay
+            /// ---------- LOADING OVERLAY ----------
             if (controller.isLoading.value)
               Container(
                 color: Colors.white70,
@@ -294,7 +273,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
     );
   }
 
-  // ---------- REUSABLE TEXT FIELD ----------
+  /// ---------- REUSABLE TEXT FIELD ----------
   Widget buildTextField({
     required String label,
     required String hint,
@@ -306,26 +285,25 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
+          style: TextStyle(
+            fontSize: 14.sp,
             fontWeight: FontWeight.w500,
             color: Colors.black87,
-            fontFamily: "Inter",
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6.h),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: const Color(0XFFF0F2F5),
+            fillColor: const Color(0xffF0F2F5),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
             border: OutlineInputBorder(
               borderSide: BorderSide.none,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
             ),
           ),
           validator: (value) {

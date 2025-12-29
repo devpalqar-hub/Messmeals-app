@@ -12,6 +12,7 @@ class CustomerCard extends StatelessWidget {
   const CustomerCard({
     super.key,
     required this.customer,
+    
   });
 
   @override
@@ -68,15 +69,15 @@ class CustomerCard extends StatelessWidget {
                     /// ---- Edit Button ----
                     IconButton(
                       onPressed: () {
-                       Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => AddCustomerScreen(
-      customer: customer,
-    ),
-  ),
-);
-
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddCustomerScreen(
+                              customer: customer, // Pass customer for edit
+                              isEdit: true, // Flag to handle edit
+                            ),
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.edit_note,
                           size: 22, color: Colors.black),
@@ -171,8 +172,8 @@ class CustomerCard extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text("Delete Customer"),
-        content:
-            Text("Are you sure you want to delete ${customer.name}? This action cannot be undone."),
+        content: Text(
+            "Are you sure you want to delete ${customer.name}? This action cannot be undone."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -184,7 +185,7 @@ class CustomerCard extends StatelessWidget {
             ),
             onPressed: () async {
               Navigator.pop(ctx);
-              await controller.deleteCustomer(customer.id);
+              await controller.deleteCustomer(customer.customerProfileId);
             },
             child: const Text("Delete"),
           ),

@@ -75,6 +75,59 @@ class PartnerController extends GetxController {
     }
   }
 
+Future<bool> updatePartner({
+  required String id,
+  String? name,
+  String? phone,
+  String? email,
+  String? address,
+  bool? isActive,
+}) async {
+  isLoading.value = true;
+  errorMessage.value = '';
+
+  try {
+    final messId = authController.selectedMessId.value;
+    if (messId.isEmpty) {
+      _showSnackBar("Error", "Please select a mess first", Colors.red);
+      return false;
+    }
+
+    final payload = {
+      if (name != null) "name": name,
+      if (phone != null) "phone": phone,
+      if (email != null) "email": email,
+      if (address != null) "address": address,
+      if (isActive != null) "isActive": isActive,
+      "messId": messId,
+    };
+
+    final response = await http.patch(
+      Uri.parse('$baseUrl/delivery-agent/$id'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": bearerToken,
+      },
+      body: json.encode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      await fetchPartners();
+      _showSnackBar("Updated", "Partner updated successfully", Colors.green);
+      return true;
+    }
+
+    final err = json.decode(response.body);
+    _showSnackBar("Error", err['message'], Colors.red);
+    return false;
+  } catch (e) {
+    _showSnackBar("Error", e.toString(), Colors.red);
+    return false;
+  } finally {
+    isLoading.value = false; // ✅ FIX
+  }
+}
+
   Future<void> fetchPartnerById(String id) async {
     try {
       isLoading(true);
@@ -147,57 +200,7 @@ class PartnerController extends GetxController {
     }
   }
 
-  Future<void> updatePartner({
-    required String id,
-    String? name,
-    String? phone,
-    String? email,
-    String? address,
-    bool? isActive,
-  }) async {
-    try {
-      isLoading.value = true;
-      final messId = authController.selectedMessId.value;
-
-      if (messId.isEmpty) {
-        _showSnackBar("Error", "Please select a mess first", Colors.red);
-        return;
-      }
-
-      final payload = {
-        if (name != null) "name": name,
-        if (phone != null) "phone": phone,
-        if (email != null) "email": email,
-        if (address != null) "address": address,
-        if (isActive != null) "isActive": isActive,
-        "messId": messId,
-      };
-
-      final response = await http.patch(
-        Uri.parse('$baseUrl/delivery-agent/$id'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": bearerToken,
-        },
-        body: json.encode(payload),
-      );
-
-      if (response.statusCode == 200) {
-        await fetchPartnerById(id);
-        await fetchPartners();
-        Get.back();
-        _showSnackBar("Updated", "Partner updated successfully", Colors.green);
-      } else {
-        final err = json.decode(response.body);
-        _showSnackBar("Error", err['message'] ?? "Failed to update partner", Colors.red);
-      }
-    } catch (e) {
-      _showSnackBar("Error", e.toString(), Colors.red);
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
+  
   Future<void> deletePartner(String id) async {
     try {
       isLoading.value = true;

@@ -26,7 +26,6 @@ class HomeScreen extends StatelessWidget {
         final userName = authController.currentUser.value?.name ?? "Admin";
         final userEmail = authController.currentUser.value?.email ?? "admin@email.com";
 
-        // ✅ Use default values if stats is null
         final totalRevenue = stats?.totalRevenue ?? 0.0;
         final completedOrders = stats?.completedOrders ?? 0;
         final todaysRevenue = stats?.todaysRevenue ?? 0.0;
@@ -57,22 +56,22 @@ class HomeScreen extends StatelessWidget {
                       onTap: () {
                         showModalBottomSheet(
                           context: context,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
                           ),
                           backgroundColor: Colors.white,
                           builder: (context) {
                             return Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 25.h),
+                              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 25.h),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Container(
-                                    width: 60.w,
+                                    width: 80.w,
                                     height: 6.h,
                                     decoration: BoxDecoration(
                                       color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10.r),
                                     ),
                                   ),
                                   SizedBox(height: 20.h),
@@ -87,9 +86,7 @@ class HomeScreen extends StatelessWidget {
                                         ),
                                         child: Center(
                                           child: Text(
-                                            userName.isNotEmpty
-                                                ? userName[0].toUpperCase()
-                                                : 'A',
+                                            userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
                                             style: GoogleFonts.poppins(
                                               fontSize: 20.sp,
                                               fontWeight: FontWeight.w600,
@@ -98,7 +95,7 @@ class HomeScreen extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 12.w),
+                                     // SizedBox(width: 12.w),
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -120,7 +117,7 @@ class HomeScreen extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 25.h),
+                                  SizedBox(height: 40.h),
                                   Divider(color: Colors.grey[300]),
                                   SizedBox(height: 10.h),
 
@@ -158,8 +155,8 @@ class HomeScreen extends StatelessWidget {
                         );
                       },
                       child: Container(
-                        width: 35.w,
-                        height: 35.h,
+                        width: 38.w,
+                        height: 38.h,
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           color: Color(0xFFF5F3F3),
@@ -169,7 +166,7 @@ class HomeScreen extends StatelessWidget {
                             userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
                             style: TextStyle(
                               fontSize: 14.sp,
-                              fontWeight: FontWeight.w400,
+                              fontWeight: FontWeight.w500,
                               color: Colors.black,
                             ),
                           ),
@@ -177,19 +174,19 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
 
-                    /// 🔹 Dashboard title
+                    /// 🔹 Dashboard Title
                     TittleText(text: userName),
 
-                    /// 🔹 Dropdown for mess selection
+                    /// 🔹 Dropdown for Mess Selection
                     Obx(() {
                       final messes = authController.ownedMesses;
                       final selectedMessId = authController.selectedMessId.value;
 
                       return Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w),
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF5F3F3),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
@@ -239,7 +236,7 @@ class HomeScreen extends StatelessWidget {
                   crossAxisCount: 2,
                   mainAxisSpacing: 16.h,
                   crossAxisSpacing: 16.w,
-                  childAspectRatio: 1.15,
+                  childAspectRatio: 1.1,
                   children: [
                     AnalyticsCard(
                       icon: Icons.shopping_bag_outlined,
@@ -289,7 +286,7 @@ class HomeScreen extends StatelessWidget {
                         subtitleColor: const Color(0xFFC34314),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16.w),
                     Expanded(
                       child: RevnueAccountCard(
                         label: 'Total Revenue',
@@ -306,7 +303,7 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 40.h),
 
-                /// 🔹 Meal Chart Card
+                /// 🔹 Meal Chart
                 const MealChartCard(),
 
                 SizedBox(height: 60.h),
@@ -324,7 +321,7 @@ void _showLogoutDialog(BuildContext context, AuthController authController) {
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
       title: const Text("Confirm Logout"),
       content: const Text("Are you sure you want to log out?"),
       actions: [

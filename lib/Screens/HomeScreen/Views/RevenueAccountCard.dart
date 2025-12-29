@@ -7,8 +7,8 @@ class RevnueAccountCard extends StatelessWidget {
   final String? subtitle;
   final Color bgColor;
   final Color textColor;
-  final Color? labelColor;     // ✅ new optional color for label text
-  final Color? subtitleColor;  // ✅ optional custom color for subtitle
+  final Color? labelColor;     
+  final Color? subtitleColor;  
 
   const RevnueAccountCard({
     super.key,
@@ -17,7 +17,7 @@ class RevnueAccountCard extends StatelessWidget {
     this.subtitle,
     required this.bgColor,
     required this.textColor,
-    this.labelColor,           // ✅ new param
+    this.labelColor,         
     this.subtitleColor,
   });
 

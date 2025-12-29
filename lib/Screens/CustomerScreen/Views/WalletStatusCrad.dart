@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class WalletStatusCard extends StatelessWidget {
   final IconData icon;
@@ -63,12 +64,12 @@ class WalletStatusCard extends StatelessWidget {
             children: [
               // Icon container
               Container(
-                padding: const EdgeInsets.all(12),
+                padding:  EdgeInsets.all(12.h),
                 decoration: BoxDecoration(
                   color: iconColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: iconColor, size: 20),
+                child: Icon(icon, color: iconColor, size: 20.sp),
               ),
               const SizedBox(width: 16),
 
@@ -106,7 +107,7 @@ class WalletStatusCard extends StatelessWidget {
           /// INLINE TEXT + BUTTON (only for primary)
           /// ---------------------------
           if (isPrimary && (preButtonText != null || actionText != null)) ...[
-            const SizedBox(height: 8),
+             SizedBox(height: 8.h),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -120,30 +121,30 @@ class WalletStatusCard extends StatelessWidget {
                       style: labelStyle,
                     ),
                   ),
-                const SizedBox(width: 10),
+                 SizedBox(width: 10.w),
                 if (actionText != null)
                   ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 34),
+                    constraints: BoxConstraints(minHeight: 34.h),
                     child: TextButton(
                       style: TextButton.styleFrom(
                         padding:
-                            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                             EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                         minimumSize: const Size(0, 0),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         backgroundColor: const Color(0xFF1976D2),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
                       ),
                       onPressed: onAction,
                       child: Text(
                         actionText!,
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 12.sp,
                         ),
                       ),
                     ),
@@ -156,7 +157,7 @@ class WalletStatusCard extends StatelessWidget {
           /// VALUE BELOW (only for non-primary cards)
           /// ---------------------------
           if (!isPrimary) ...[
-            const SizedBox(height: 10),
+             SizedBox(height: 10.h),
             Text(
               value,
               maxLines: 1,

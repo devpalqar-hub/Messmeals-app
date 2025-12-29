@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SubscriptionDetailsCard extends StatelessWidget {
   final String currentPlan;
@@ -13,7 +14,7 @@ class SubscriptionDetailsCard extends StatelessWidget {
   final String activeSubscriptionId;
   final String customerProfileId;
 
-  const SubscriptionDetailsCard({
+   SubscriptionDetailsCard({
     super.key,
     required this.currentPlan,
     required this.planPrice,
@@ -48,25 +49,25 @@ class SubscriptionDetailsCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: EdgeInsets.fromLTRB(16, 18, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18.r),
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+           Text(
             'Subscription Details',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 18.sp,
               fontWeight: FontWeight.w600,
               fontFamily: 'Inter',
             ),
           ),
 
-          const SizedBox(height: 18),
+           SizedBox(height: 18.h),
 
           // Row 1: Current plan | Plan price
           Row(
@@ -80,7 +81,7 @@ class SubscriptionDetailsCard extends StatelessWidget {
                   valueStyle: valueStyle,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16.w),
               Expanded(
                 child: _LabeledValue(
                   caption: 'PLAN PRICE',
@@ -92,7 +93,7 @@ class SubscriptionDetailsCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 18),
+          SizedBox(height: 18.h),
 
           // Row 2: Start date | End date
           Row(
@@ -106,7 +107,7 @@ class SubscriptionDetailsCard extends StatelessWidget {
                   valueStyle: valueStyle,
                 ),
               ),
-              const SizedBox(width: 16),
+               SizedBox(width: 16.w),
               Expanded(
                 child: _LabeledValue(
                   caption: 'END DATE',
@@ -114,21 +115,21 @@ class SubscriptionDetailsCard extends StatelessWidget {
                   subtitle: endNote,
                   captionStyle: captionStyle,
                   valueStyle: valueStyle,
-                  subtitleStyle: const TextStyle(
+                  subtitleStyle:  TextStyle(
                     color: Colors.black,
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w400,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                   ),
                 ),
               ),
             ],
           ),
 
-          const Divider(height: 28, color: Color(0xFFE5E5EA)),
+           Divider(height: 28.h, color: Color(0xFFE5E5EA)),
 
-          const Text('PLAN VARIATIONS', style: captionStyle),
-          const SizedBox(height: 10),
+           Text('PLAN VARIATIONS', style: captionStyle),
+           SizedBox(height: 10.h),
 
           if (variationTitles.isNotEmpty)
             Wrap(
@@ -137,9 +138,9 @@ class SubscriptionDetailsCard extends StatelessWidget {
               children: variationTitles
                   .map(
                     (title) => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 4,
+                      padding:  EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 4.h,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF2F2F6),
@@ -147,7 +148,7 @@ class SubscriptionDetailsCard extends StatelessWidget {
                       ),
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w600,
                           color: Colors.black,
@@ -163,73 +164,73 @@ class SubscriptionDetailsCard extends StatelessWidget {
               style: TextStyle(color: Colors.grey),
             ),
 
-          const SizedBox(height: 18),
+           SizedBox(height: 18.h),
 
           // ✅ Renew Button
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: 52.h,
             child: ElevatedButton(
               onPressed: onRenew,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0474B9),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
-                textStyle: const TextStyle(
+                textStyle:  TextStyle(
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: 16.sp,
                 ),
               ),
               child: const Text('Renew Subscription'),
             ),
           ),
 
-          const SizedBox(height: 12),
+           SizedBox(height: 12.h),
 
           // ✅ Pause Button (new)
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: 52.h,
             child: OutlinedButton(
               onPressed: onPause,
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFF0474B9)),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 foregroundColor: const Color(0xFF0474B9),
                 backgroundColor: const Color(0xFFE9F6FF),
-                textStyle: const TextStyle(
+                textStyle: TextStyle(
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: 16.sp,
                 ),
               ),
               child: const Text('Pause Subscription'),
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
 
           // Cancel Button
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: 52.h,
             child: OutlinedButton(
               onPressed: onCancel,
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFE8E8EE)),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 foregroundColor: const Color(0xFFDF3B2F),
-                textStyle: const TextStyle(
+                textStyle:  TextStyle(
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: 16.sp,
                 ),
                 backgroundColor: Colors.white,
               ),
@@ -265,10 +266,10 @@ class _LabeledValue extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(caption, style: captionStyle),
-        const SizedBox(height: 6),
+         SizedBox(height: 6.h),
         Text(value, style: valueStyle),
         if (subtitle != null) ...[
-          const SizedBox(height: 4),
+         SizedBox(height: 4.h),
           Text(subtitle!, style: subtitleStyle),
         ],
       ],

@@ -13,10 +13,10 @@ class CustomerController extends GetxController {
    final AuthController authController = Get.put(AuthController());
    final DashboardController dashboardController = Get.find<DashboardController>();
 
-  var customers = <CustomerModel>[].obs;
-  var isLoading = false.obs;
-  var isMoreLoading = false.obs;
-  var hasMore = true.obs;
+  var customers = <CustomerModel>[];
+  var isLoading = false;
+  var isMoreLoading = false;
+  var hasMore = true;
 
   int page = 1;
   int limit = 10;
@@ -32,31 +32,28 @@ class CustomerController extends GetxController {
 
     if (refresh) {
       page = 1;
-      hasMore(true);
+      hasMore = true;
       customers.clear();
+      update(); // 🔥 update UI
     }
 
-    if (!hasMore.value) return;
+    if (!hasMore) return;
 
     try {
       if (refresh) {
-        isLoading(true);
+        isLoading = true;
       } else {
-        isMoreLoading(true);
+        isMoreLoading = true;
       }
+      update(); // 🔥
 
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      if (token == null || token.isEmpty) {
-        Get.snackbar("Authentication Error", "Token not found. Please login again.");
-        return;
-      }
+      if (token == null || token.isEmpty) return;
 
-      // ✅ Include messId in URL
-      String url =
-          '$baseUrl/customer?messId=$messId&page=$page&limit=$limit${planName != null && planName.isNotEmpty ? '&search=$planName' : ''}';
-
-      
+      final url =
+          '$baseUrl/customer?messId=$messId&page=$page&limit=$limit'
+          '${planName != null && planName.isNotEmpty ? '&search=$planName' : ''}';
 
       final response = await http.get(
         Uri.parse(url),
@@ -66,42 +63,35 @@ class CustomerController extends GetxController {
         },
       );
 
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List list = data['data'] ?? [];
 
-        final fetched = list.map((e) => CustomerModel.fromJson(e)).toList();
+        final fetched =
+            list.map((e) => CustomerModel.fromJson(e)).toList();
 
         if (fetched.length < limit) {
-          hasMore(false);
+          hasMore = false;
         }
 
-        if (refresh) {
-          customers.assignAll(fetched);
-        } else {
-          customers.addAll(fetched);
-        }
-
+        customers.addAll(fetched);
         page++;
-      } else if (response.statusCode == 401) {
-        Get.snackbar("Session Expired", "Please login again.");
-      } else {
-        Get.snackbar("Error", "Failed to load customers");
       }
-    } catch (e, st) {
-      
+    } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
-      isLoading(false);
-      isMoreLoading(false);
+      isLoading = false;
+      isMoreLoading = false;
+      update(); // 🔥 VERY IMPORTANT
     }
   }
+
 
   /// 🔹 Pull-to-refresh
   Future<void> refreshCustomers() async {
     await fetchCustomers(refresh: true);
   }
+
 Future<void> addCustomer({
   required String name,
   required String phone,
@@ -120,10 +110,11 @@ Future<void> addCustomer({
   required List<String> selectedDays,
 }) async {
   try {
-    isLoading(true);
+    isLoading = true;
+    update(); 
+
     final url = Uri.parse('$baseUrl/customer/register-user');
 
-    // 🧠 Debug: Print payload before sending
     final requestBody = {
       "name": name,
       "phone": phone,
@@ -144,9 +135,6 @@ Future<void> addCustomer({
           : [],
     };
 
-    print("📤 Sending to: $url");
-    print("🧾 Request Body: ${jsonEncode(requestBody)}");
-
     final response = await http.post(
       url,
       body: jsonEncode(requestBody),
@@ -156,12 +144,11 @@ Future<void> addCustomer({
       },
     );
 
-    print("📥 Response Code: ${response.statusCode}");
-    print("📥 Response Body: ${response.body}");
-
     if (response.statusCode == 201 || response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
       await dashboardController.fetchDashboardStats();
+      await refreshCustomers();
 
       Get.snackbar(
         "Success",
@@ -171,8 +158,7 @@ Future<void> addCustomer({
         colorText: Colors.white,
       );
 
-      await Future.delayed(const Duration(milliseconds: 800));
-      await refreshCustomers();
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (Get.isOverlaysOpen) {
         Get.back(closeOverlays: true);
@@ -180,19 +166,16 @@ Future<void> addCustomer({
         Get.back();
       }
     } else {
-      print("❌ Server Error: ${response.body}");
       final error = jsonDecode(response.body);
       Get.snackbar(
         "Error",
-        error['message'] ?? "Failed to add customer (Server Error)",
+        error['message'] ?? "Failed to add customer",
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.withOpacity(0.9),
         colorText: Colors.white,
       );
     }
-  } catch (e, stack) {
-    print("⚠️ Exception: $e");
-    print("🪜 StackTrace: $stack");
+  } catch (e) {
     Get.snackbar(
       "Error",
       "Something went wrong: $e",
@@ -201,178 +184,223 @@ Future<void> addCustomer({
       colorText: Colors.white,
     );
   } finally {
-    isLoading(false);
+    isLoading = false;
+    update(); // 🔥 IMPORTANT
   }
 }
 
+Future<void> updateCustomer({
+  required String id,
+  required String name,
+  required String address,
+  required String latitudeLongitude,
+  required String currentLocation,
+  required int walletAmount,
+  required String planId,
+  required String deliveryPartnerId,
+  String? discount,
+  
+}) async {
+  try {
+    isLoading = true;
+    update();
 
+    final url = Uri.parse('$baseUrl/customer/$id');
 
-  /// 🔹 Update Customer
-  Future<void> updateCustomer({
-    required String id,
-    required String name,
-    required String address,
-    required String latitudeLongitude,
-    required String currentLocation,
-    required int walletAmount,
-    required String planId,
-    required String deliveryPartnerId,
-    String? discount,
-  }) async {
-    try {
-      isLoading(true);
-      final url = Uri.parse('$baseUrl/customer/$id');
+    final body = jsonEncode({
+      "name": name,
+      "address": address,
+      "latitude_logitude": latitudeLongitude,
+      "currentLocation": currentLocation,
+      "walletAmount": walletAmount,
+      "planId": planId,
+      "deliveryPartnerId": deliveryPartnerId,
+      if (discount != null) "discount": discount,
+    });
 
-      final body = jsonEncode({
-        "name": name,
-        "address": address,
-        "latitude_logitude": latitudeLongitude,
-        "currentLocation": currentLocation,
-        "walletAmount": walletAmount,
-        "planId": planId,
-        "deliveryPartnerId": deliveryPartnerId,
-      });
-
-      
-      final response = await http.patch(url, body: body, 
-        headers: {
+    final response = await http.patch(
+      url,
+      body: body,
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': bearerToken, 
-      },);
+        'Authorization': bearerToken,
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        Get.snackbar(
-          "Success",
-          data['message'] ?? "Customer updated successfully",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.withOpacity(0.9),
-          colorText: Colors.white,
-        );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-        await Future.delayed(const Duration(milliseconds: 800));
-        await refreshCustomers();
+      await refreshCustomers();
 
-        if (Get.isOverlaysOpen) {
-          Get.back(closeOverlays: true);
-        } else if (Get.key.currentState?.canPop() ?? false) {
-          Get.back();
-        }
-      } else {
-        final error = jsonDecode(response.body);
-        Get.snackbar(
-          "Error",
-          error['message'] ?? "Failed to update customer",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.9),
-          colorText: Colors.white,
-        );
+      Get.snackbar(
+        "Success",
+        data['message'] ?? "Customer updated successfully",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.withOpacity(0.9),
+        colorText: Colors.white,
+      );
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (Get.isOverlaysOpen) {
+        Get.back(closeOverlays: true);
+      } else if (Get.key.currentState?.canPop() ?? false) {
+        Get.back();
       }
-    } catch (e) {
+    } else {
+      final error = jsonDecode(response.body);
       Get.snackbar(
         "Error",
-        "Something went wrong: $e",
+        error['message'] ?? "Failed to update customer",
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.withOpacity(0.9),
         colorText: Colors.white,
       );
-    } finally {
-      isLoading(false);
     }
+  } catch (e) {
+    Get.snackbar(
+      "Error",
+      "Something went wrong: $e",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red.withOpacity(0.9),
+      colorText: Colors.white,
+    );
+  } finally {
+    isLoading = false;
+    update(); // 🔥 UI refresh
   }
+}
+
 
   /// 🔹 Delete Customer
-  Future<void> deleteCustomer(String id) async {
-    try {
-      isLoading(true);
-      final url = Uri.parse('$baseUrl/customer/$id');
-      final response = await http.delete(url,  headers: {
-        'Content-Type': 'application/json',
-        'Authorization': bearerToken, 
-      },);
+ Future<void> deleteCustomer(String customerProfileId) async {
+  try {
+    isLoading = true;
+    update();
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        Get.snackbar("Success", "Customer deleted successfully");
-        customers.removeWhere((c) => c.id == id);
-          await refreshCustomers();
-          await dashboardController.fetchDashboardStats(); 
-        Get.back();
+    // Construct URL
+    final url = '$baseUrl/customer/$customerProfileId';
+    print("🗑 DELETE URL => $url");
 
-      } else {
-        final error = json.decode(response.body);
-        Get.snackbar("Error", error['message'] ?? "Failed to delete customer");
-      }
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-    } finally {
-      isLoading(false);
+    // Headers
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': bearerToken,
+    };
+    print("🗑 DELETE HEADERS => $headers");
+
+    // Make the DELETE request
+    final response = await http.delete(
+      Uri.parse(url),
+      headers: headers,
+    );
+
+    print("🗑 DELETE STATUS CODE => ${response.statusCode}");
+    print("🗑 DELETE RESPONSE BODY => ${response.body}");
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      // Remove customer locally
+      customers.removeWhere(
+        (c) => c.customerProfileId == customerProfileId,
+      );
+      print("🗑 Customer removed locally: $customerProfileId");
+
+      // Refresh dashboard stats
+      await dashboardController.fetchDashboardStats();
+
+      Get.snackbar(
+        "Success",
+        "Customer deleted successfully",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } else {
+      Get.snackbar(
+        "Error",
+        "Failed to delete customer. Status: ${response.statusCode}",
+      );
     }
+  } catch (e, stackTrace) {
+    print("❌ DELETE EXCEPTION => $e");
+    print("❌ STACKTRACE => $stackTrace");
+    Get.snackbar("Error", e.toString());
+  } finally {
+    isLoading = false;
+    update(); // Refresh UI
   }
+}
+
 
   /// 🔹 Renew Subscription
   Future<bool> renewSubscription({
-    required String planId,
-    required String startDate,
-    required String endDate,
-    required String deliveryPartnerId,
-    required String discount,
-    required String customerProfileId,
-  }) async {
-    try {
-      isLoading(true);
+  required String planId,
+  required String startDate,
+  required String endDate,
+  required String deliveryPartnerId,
+  required String discount,
+  required String customerProfileId,
+}) async {
+  try {
+    isLoading = true;
+    update();
 
-      final url = Uri.parse('$baseUrl/customer/renew-subscription');
-      final body = jsonEncode({
-        "planId": planId,
-        "start_date": startDate,
-        "end_date": endDate,
-        "deliveryPartnerId": deliveryPartnerId,
-        "discount": discount,
-        "customerProfileId": customerProfileId,
+    final url = Uri.parse('$baseUrl/customer/renew-subscription');
+
+    final body = jsonEncode({
+      "planId": planId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "deliveryPartnerId": deliveryPartnerId,
+      "discount": discount,
+      "customerProfileId": customerProfileId,
+    });
+
+    final response = await http.post(
+      url,
+      body: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': bearerToken,
+      },
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      Get.snackbar("Success", "Subscription renewed successfully");
+
+      final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
+      final customerResponse = await http.get(customerUrl, headers: {
+        'Authorization': bearerToken,
       });
 
-      
-      final response = await http.post(url, body: body,   headers: {
-        'Content-Type': 'application/json',
-        'Authorization': bearerToken, 
-      },);
+      if (customerResponse.statusCode == 200) {
+        final updatedData = jsonDecode(customerResponse.body)['data'];
+        final updatedCustomer = CustomerModel.fromJson(updatedData);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Success", "Subscription renewed successfully");
-
-        await Future.delayed(const Duration(milliseconds: 700));
-
-        final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
-        final customerResponse = await http.get(customerUrl);
-
-        if (customerResponse.statusCode == 200) {
-          final updatedData = json.decode(customerResponse.body)['data'];
-          final updatedCustomer = CustomerModel.fromJson(updatedData);
-
-          final index = customers.indexWhere((c) => c.id == customerProfileId);
-          if (index != -1) {
-            customers[index] = updatedCustomer;
-            customers.refresh();
-          }
-
-          if (Get.isBottomSheetOpen ?? false) {
-            Get.back(result: updatedCustomer);
-          }
+        final index = customers.indexWhere((c) => c.id == customerProfileId);
+        if (index != -1) {
+          customers[index] = updatedCustomer;
+          update();
         }
 
-        return true;
-      } else {
-        final error = json.decode(response.body);
-        Get.snackbar("Error", error['message'] ?? "Failed to renew subscription");
-        return false;
+        if (Get.isBottomSheetOpen ?? false) {
+          Get.back(result: updatedCustomer);
+        }
       }
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
+
+      return true;
+    } else {
+      final error = jsonDecode(response.body);
+      Get.snackbar("Error", error['message'] ?? "Failed to renew subscription");
       return false;
-    } finally {
-      isLoading(false);
     }
+  } catch (e) {
+    Get.snackbar("Error", e.toString());
+    return false;
+  } finally {
+    isLoading = false;
+    update();
   }
+}
+
 /// 🔹 Pause Subscription
 Future<void> pauseSubscription(
   String activeSubscriptionId,
@@ -434,110 +462,210 @@ Future<void> pauseSubscription(
 
   /// 🔹 Cancel Subscription
   Future<bool> cancelSubscription(
-    String activeSubscriptionId,
-    String customerProfileId,
-  ) async {
-    isLoading(true);
-    final url = Uri.parse('$baseUrl/customer/cancel-subscription/$activeSubscriptionId');
-    final response = await http.patch(url,  headers: {
+  String activeSubscriptionId,
+  String customerProfileId,
+) async {
+  try {
+    isLoading = true;
+    update();
+
+    final url = Uri.parse(
+      '$baseUrl/customer/cancel-subscription/$activeSubscriptionId',
+    );
+
+    final response = await http.patch(
+      url,
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': bearerToken, 
-      },);
+        'Authorization': bearerToken,
+      },
+    );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       Get.snackbar("Success", "Subscription cancelled successfully");
 
-     
-
       final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
-      final customerResponse = await http.get(customerUrl);
+      final customerResponse = await http.get(customerUrl, headers: {
+        'Authorization': bearerToken,
+      });
 
       if (customerResponse.statusCode == 200) {
-        final updatedData = json.decode(customerResponse.body)['data'];
+        final updatedData = jsonDecode(customerResponse.body)['data'];
         final updatedCustomer = CustomerModel.fromJson(updatedData);
 
         final index = customers.indexWhere((c) => c.id == customerProfileId);
         if (index != -1) {
           customers[index] = updatedCustomer;
-          customers.refresh();
+          update();
         }
 
         if (Get.isBottomSheetOpen ?? false) {
           Get.back(result: updatedCustomer);
         }
+      }
+
+      return true;
+    } else {
+      final error = jsonDecode(response.body);
+      Get.snackbar("Error", error['message'] ?? "Cancel subscription failed");
+      return false;
+    }
+  } finally {
+    isLoading = false;
+    update();
+  }
+}
+
+Future<bool> cancelSubscriptionRange(
+  String activeSubscriptionId,
+  String customerProfileId, {
+  required String cancellationStartDate,
+  required String cancellationEndDate,
+}) async {
+  try {
+    isLoading = true;
+    update();
+
+    final url = Uri.parse(
+      '$baseUrl/customer/cancel-subscription/$activeSubscriptionId',
+    );
+
+    final body = jsonEncode({
+      "cancellation_start_date": cancellationStartDate,
+      "cancellation_end_date": cancellationEndDate,
+    });
+
+    final response = await http.patch(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': bearerToken,
+      },
+      body: body,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+
+      Get.snackbar(
+        "Success",
+        data['message'] ?? "Subscription cancelled successfully",
+      );
+
+      final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
+      final customerResponse = await http.get(customerUrl, headers: {
+        'Authorization': bearerToken,
+      });
+
+      if (customerResponse.statusCode == 200) {
+        final updatedData = jsonDecode(customerResponse.body)['data'];
+        final updatedCustomer = CustomerModel.fromJson(updatedData);
+
+        final index = customers.indexWhere((c) => c.id == customerProfileId);
+        if (index != -1) {
+          customers[index] = updatedCustomer;
+          update();
+        }
+
+        if (Get.isBottomSheetOpen ?? false) {
+          Get.back(result: updatedCustomer);
+        }
+
         return true;
       }
     } else {
-      final error = json.decode(response.body);
+      final error = jsonDecode(response.body);
       Get.snackbar("Error", error['message'] ?? "Cancel subscription failed");
     }
-    isLoading(false);
-    return false;
+  } catch (e) {
+    Get.snackbar("Error", e.toString());
+  } finally {
+    isLoading = false;
+    update();
   }
+
+  return false;
+}
+
 
   /// 🔹 Update Wallet
-  Future<void> updateWalletBalance({
-    required String customerProfileId,
-    required String amount,
-  }) async {
-    try {
-      isLoading(true);
-      final url = Uri.parse('$baseUrl/customer/update-wallet/$customerProfileId');
-      final body = jsonEncode({"amount": amount});
-      final headers = {"Content-Type": "application/json"};
+ Future<void> updateWalletBalance({
+  required String customerProfileId,
+  required String amount,
+}) async {
+  try {
+    isLoading = true;
+    update();
 
-      final response = await http.patch(url, body: body, headers: headers);
+    final url = Uri.parse(
+      '$baseUrl/customer/update-wallet/$customerProfileId',
+    );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Success", "Wallet updated successfully");
-        await dashboardController.fetchDashboardStats(); 
+    final body = jsonEncode({"amount": amount});
 
-        final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
-        final customerResponse = await http.get(customerUrl);
+    final response = await http.patch(
+      url,
+      body: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': bearerToken,
+      },
+    );
 
-        if (customerResponse.statusCode == 200) {
-          final updatedData = json.decode(customerResponse.body)['data'];
-          final updatedCustomer = CustomerModel.fromJson(updatedData);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      Get.snackbar("Success", "Wallet updated successfully");
 
-          final index = customers.indexWhere((c) => c.id == customerProfileId);
-          if (index != -1) {
-            customers[index] = updatedCustomer;
-            customers.refresh();
-          }
+      await dashboardController.fetchDashboardStats();
 
-          if (Get.isBottomSheetOpen ?? false) {
-            Get.back(result: updatedCustomer);
-          }
+      final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
+      final customerResponse = await http.get(customerUrl, headers: {
+        'Authorization': bearerToken,
+      });
+
+      if (customerResponse.statusCode == 200) {
+        final updatedData = jsonDecode(customerResponse.body)['data'];
+        final updatedCustomer = CustomerModel.fromJson(updatedData);
+
+        final index = customers.indexWhere((c) => c.id == customerProfileId);
+        if (index != -1) {
+          customers[index] = updatedCustomer;
+          update();
         }
-      } else {
-        final error = json.decode(response.body);
-        Get.snackbar("Error", error['message'] ?? "Failed to update wallet");
+
+        if (Get.isBottomSheetOpen ?? false) {
+          Get.back(result: updatedCustomer);
+        }
       }
-    } catch (e) {
-      Get.snackbar("Error", "Something went wrong: $e");
-    } finally {
-      isLoading(false);
+    } else {
+      final error = jsonDecode(response.body);
+      Get.snackbar("Error", error['message'] ?? "Failed to update wallet");
     }
+  } catch (e) {
+    Get.snackbar("Error", e.toString());
+  } finally {
+    isLoading = false;
+    update();
   }
+}
+
 
   /// 🔹 Fetch a single customer (refresh one entry)
   Future<void> fetchCustomerDetails(String customerProfileId) async {
     try {
-      final url = Uri.parse('$baseUrl/customer/$customerProfileId');
-      final response = await http.get(url);
+      final response =
+          await http.get(Uri.parse('$baseUrl/customer/$customerProfileId'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body)['data'];
         final updatedCustomer = CustomerModel.fromJson(data);
 
-        final index =
-            customers.indexWhere((c) => c.customerProfileId == customerProfileId);
+        final index = customers
+            .indexWhere((c) => c.customerProfileId == customerProfileId);
+
         if (index != -1) {
           customers[index] = updatedCustomer;
-          customers.refresh();
+          update();
         }
-
-        update();
       }
     } catch (e) {
       debugPrint("Error fetching customer: $e");

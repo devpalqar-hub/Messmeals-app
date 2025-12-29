@@ -64,6 +64,10 @@ class ActiveSubscription {
   final String deliveryPartnerProfileId;
   final Plan plan;
 
+  // NEW FIELDS
+  final String scheduleType; // "EVERYDAY" or "CUSTOM"
+  final List<String> days; // For custom delivery days
+
   ActiveSubscription({
     required this.id,
     required this.startDate,
@@ -73,6 +77,8 @@ class ActiveSubscription {
     required this.discountedPrice,
     required this.deliveryPartnerProfileId,
     required this.plan,
+    this.scheduleType = "EVERYDAY", // default to EVERYDAY
+    this.days = const [],
   });
 
   factory ActiveSubscription.fromJson(Map<String, dynamic> json) {
@@ -85,6 +91,10 @@ class ActiveSubscription {
       discountedPrice: json['discountedPrice'] ?? 0,
       deliveryPartnerProfileId: json['deliveryPartnerProfileId'] ?? '',
       plan: Plan.fromJson(json['plan'] ?? {}),
+      scheduleType: json['scheduleType'] ?? "EVERYDAY",
+      days: json['days'] != null
+          ? List<String>.from(json['days'])
+          : [],
     );
   }
 }

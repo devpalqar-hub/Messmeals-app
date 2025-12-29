@@ -38,7 +38,10 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
       setState(() {
         selectedDate = picked;
       });
-      controller.searchDeliveries(date: picked, status: _statusToApiValue(selectedStatus));
+      controller.searchDeliveries(
+        date: picked,
+        status: _statusToApiValue(selectedStatus),
+      );
     }
   }
 
@@ -86,24 +89,36 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                             builder: (_) => GenerateDeliveriesDialog(),
                           );
                         },
-                        icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                        label: const Text("Generate",
-                            style: TextStyle(color: Colors.white)),
+                        icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
+                        label: Text(
+                          "Generate",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xff0474B9),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           padding: EdgeInsets.symmetric(
-                              horizontal: 25.w, vertical: 13.h),
+                            horizontal: 25.w,
+                            vertical: 13.h,
+                          ),
                         ),
                       ),
                     ],
                   ),
 
+                  SizedBox(height: 4.h),
                   Text(
                     "${deliveries.length} total",
-                    style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey[600],
+                    ),
                   ),
                   SizedBox(height: 16.h),
 
@@ -119,7 +134,11 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                         padding: EdgeInsets.only(top: 50.h),
                         child: Text(
                           "No deliveries found",
-                          style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     )
@@ -128,16 +147,20 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                       final customer = delivery.customer;
                       final user = customer?.user;
 
-                      return OrderCard(
-                        id: delivery.id,
-                        status: delivery.status,
-                        amount: "₹${delivery.plan?.price ?? '0'}",
-                        orderNo: deliveries.indexOf(delivery) + 1,
-                        customerName: user?.name ?? "Unknown",
-                        phone: user?.phone ?? "N/A",
-                        date: DateTime.tryParse(delivery.date) ?? DateTime.now(),
-                        addressLine1: customer?.address ?? "No address",
-                        email: user?.email ?? "",
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 12.h),
+                        child: OrderCard(
+                          id: delivery.id,
+                          status: delivery.status,
+                          amount: "₹${delivery.plan?.price ?? '0'}",
+                          orderNo: deliveries.indexOf(delivery) + 1,
+                          customerName: user?.name ?? "Unknown",
+                          phone: user?.phone ?? "N/A",
+                          date:
+                              DateTime.tryParse(delivery.date) ?? DateTime.now(),
+                          addressLine1: customer?.address ?? "No address",
+                          email: user?.email ?? "",
+                        ),
                       );
                     }).toList(),
                 ],
@@ -191,7 +214,8 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                         : DateFormat('dd MMM yyyy').format(selectedDate!),
                     style: TextStyle(fontSize: 14.sp, color: Colors.black),
                   ),
-                  const Icon(Icons.calendar_today_rounded, color: Colors.grey),
+                  Icon(Icons.calendar_today_rounded,
+                      size: 18.sp, color: Colors.grey),
                 ],
               ),
             ),
@@ -217,12 +241,19 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
+          icon: Icon(Icons.keyboard_arrow_down_rounded,
+              size: 20.sp, color: Colors.grey),
           isExpanded: true,
           style: TextStyle(fontSize: 14.sp, color: Colors.black),
           onChanged: onChanged,
           items: items
-              .map((v) => DropdownMenuItem<String>(value: v, child: Text(v)))
+              .map((v) => DropdownMenuItem<String>(
+                    value: v,
+                    child: Text(
+                      v,
+                      style: TextStyle(fontSize: 14.sp),
+                    ),
+                  ))
               .toList(),
         ),
       ),

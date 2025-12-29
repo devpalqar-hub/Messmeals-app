@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
@@ -52,12 +53,12 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
               hintText: hint,
               filled: true,
               fillColor: const Color(0xFFF2F3F7),
-              isDense: true,
+             // isDense: true,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                   EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide(color: Colors.grey.shade100),
               ),
               suffixIcon: suffixIcon,
             );
@@ -73,16 +74,16 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
           return Obx(() {
             final plans = planController.plans;
             final partners = partnerController.partners;
-            final isLoading = planController.isLoading.value ||
+            final isLoading = planController.isLoading ||
                 partnerController.isLoading.value;
 
             return Stack(
               children: [
                 SingleChildScrollView(
                   padding: EdgeInsets.only(
-                    left: 16,
-                    right: 16,
-                    top: 20,
+                    left: 16.w,
+                    right: 16.w,
+                    top: 20.h,
                     bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
                   ),
                   child: Column(
@@ -91,12 +92,12 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                     children: [
                       Row(
                         children: [
-                          const Expanded(
+                           Expanded(
                             child: Text(
                               'Renew Subscription',
                               style: TextStyle(
                                 fontFamily: 'Inter',
-                                fontSize: 20,
+                                fontSize: 20.sp,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -107,18 +108,18 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                       SizedBox(height: 10.h),
 
                       if (isLoading)
-                        const Center(
+                         Center(
                           child: Padding(
-                            padding: EdgeInsets.all(20),
+                            padding: EdgeInsets.all(20.w),
                             child: CircularProgressIndicator(),
                           ),
                         )
                       else ...[
                         const Text('Meal Plan *', style: caption),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         DropdownButtonFormField<String>(
                           value: selectedPlanId,
                           items: plans
@@ -135,7 +136,7 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                           ),
                           icon: const SizedBox.shrink(),
                         ),
-                        const SizedBox(height: 16),
+                         SizedBox(height: 16.h),
 
                         Row(
                           children: [
@@ -144,7 +145,7 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text('Start Date *', style: caption),
-                                  const SizedBox(height: 8),
+                                   SizedBox(height: 8.h),
                                   TextField(
                                     controller: startCtrl,
                                     readOnly: true,
@@ -159,21 +160,21 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 16),
+                             SizedBox(width: 16.w),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text('End Date *', style: caption),
-                                  const SizedBox(height: 8),
+                                   SizedBox(height: 8.h),
                                   TextField(
                                     controller: endCtrl,
                                     readOnly: true,
                                     onTap: () => pickDate(endCtrl),
                                     decoration: inputDec(
-                                      suffixIcon: const Icon(
+                                      suffixIcon: Icon(
                                         Icons.calendar_today_rounded,
-                                        size: 18,
+                                        size: 18.sp,
                                       ),
                                     ),
                                   ),
@@ -182,10 +183,10 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                         SizedBox(height: 16.h),
 
                         const Text('Delivery Partner *', style: caption),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         DropdownButtonFormField<String>(
                           value: selectedPartnerId,
                           items: partners
@@ -202,20 +203,20 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                           ),
                           icon: const SizedBox.shrink(),
                         ),
-                        const SizedBox(height: 16),
+                         SizedBox(height: 16.h),
 
                         const Text('Discount', style: caption),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         TextField(
                           controller: discountCtrl,
                           decoration: inputDec(hint: 'Discount'),
                           keyboardType: TextInputType.number,
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20.h),
 
                         SizedBox(
                           width: double.infinity,
-                          height: 48,
+                          height: 48.h,
                           child: ElevatedButton(
                             onPressed: () async {
                               if (selectedPlanId == null ||
@@ -292,29 +293,29 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                               backgroundColor: const Color(0xFF0D6EBA),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(8.r),
                               ),
                             ),
                             child: isSubmitting
-                                ? const SizedBox(
-                                    height: 22,
-                                    width: 22,
+                                ?  SizedBox(
+                                    height: 22.h,
+                                    width: 22.w,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text(
+                                :  Text(
                                     'Renew Subscription',
                                     style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 16,
+                                      fontSize: 16.sp,
                                     ),
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 10),
+                         SizedBox(height: 10.h),
                       ],
                     ],
                   ),

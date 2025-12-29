@@ -146,7 +146,7 @@ class _PauseOrderBottomSheetState extends State<PauseOrderBottomSheet> {
                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric( horizontal: 24, vertical: 12, ),
                      shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(8),
-                      ), ), child: const Text("Cancel"), 
+                      ), ), child: const Text("Close"), 
                       ),
                        ElevatedButton( onPressed: () { 
                         // Handle pause order with rangeStart & rangeEnd 

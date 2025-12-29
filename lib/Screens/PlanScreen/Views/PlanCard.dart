@@ -42,24 +42,16 @@ class PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     /// 🧩 Robust image URL builder
     final displayImage = () {
-      print("🔹 Raw imageUrl from backend: $imageUrl");
-
       if (imageUrl == null || imageUrl!.isEmpty) {
-        print("⚠️ No image URL found — showing placeholder.");
         return "https://via.placeholder.com/100x100.png?text=No+Image";
       }
 
       final cleanUrl = imageUrl!.replaceAll("\\", "/");
-      print("🧹 Cleaned URL: $cleanUrl");
-
       if (cleanUrl.startsWith("http")) {
-        print("🌍 Using full image URL: $cleanUrl");
         return cleanUrl;
       }
 
-      final finalUrl = "$baseUrl/$cleanUrl".replaceAll("//uploads", "/uploads");
-      print("✅ Final image URL to load: $finalUrl");
-      return finalUrl;
+      return "$baseUrl/$cleanUrl".replaceAll("//uploads", "/uploads");
     }();
 
     return Center(
@@ -68,8 +60,8 @@ class PlanCard extends StatelessWidget {
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: Colors.grey.shade300, width: 1.w),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,15 +80,23 @@ class PlanCard extends StatelessWidget {
                     height: 65.w,
                     width: 65.w,
                     alignment: Alignment.center,
-                    child: const CircularProgressIndicator(strokeWidth: 2),
+                    child: SizedBox(
+                      height: 18.w,
+                      width: 18.w,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   );
                 },
                 errorBuilder: (context, error, stackTrace) => Container(
                   height: 65.w,
                   width: 65.w,
                   color: Colors.grey.shade100,
-                  child: const Icon(Icons.image_not_supported,
-                      color: Colors.grey, size: 28),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.image_not_supported,
+                    color: Colors.grey,
+                    size: 28.sp,
+                  ),
                 ),
               ),
             ),
@@ -175,14 +175,14 @@ class PlanCard extends StatelessWidget {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             if (meals.any((m) => m.toLowerCase() == 'breakfast'))
-                              const Icon(Icons.local_drink,
-                                  size: 18, color: Colors.black54),
+                              Icon(Icons.local_drink,
+                                  size: 18.sp, color: Colors.black54),
                             if (meals.any((m) => m.toLowerCase() == 'lunch'))
-                              const Icon(Icons.restaurant,
-                                  size: 18, color: Colors.black54),
+                              Icon(Icons.restaurant,
+                                  size: 18.sp, color: Colors.black54),
                             if (meals.any((m) => m.toLowerCase() == 'dinner'))
-                              const Icon(Icons.nights_stay,
-                                  size: 18, color: Colors.black54),
+                              Icon(Icons.nights_stay,
+                                  size: 18.sp, color: Colors.black54),
                             ...meals.map(
                               (meal) => Container(
                                 padding: EdgeInsets.symmetric(
@@ -207,12 +207,12 @@ class PlanCard extends StatelessWidget {
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.edit_outlined, size: 20),
+                            icon: Icon(Icons.edit_outlined, size: 20.sp),
                             color: Colors.black87,
                             onPressed: onEdit,
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete_outline_sharp, size: 20),
+                            icon: Icon(Icons.delete_outline_sharp, size: 20.sp),
                             color: Colors.black87,
                             onPressed: onDelete,
                           ),

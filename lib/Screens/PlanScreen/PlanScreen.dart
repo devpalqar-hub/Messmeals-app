@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -23,157 +24,193 @@ class PlanScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// ---------- HEADER ----------
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: GetBuilder<PlanController>(
+            builder: (controller) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const TittleText(text: "Plans"),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => const AddPlanBottomSheet(),
-                      ).then((_) {
-                        planController.refreshPlans();
-                      });
-                    },
-                    icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                    label: const Text("Add", style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff0474B9),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
+                  /// ---------- HEADER ----------
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const TittleText(text: "Plans"),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => const AddPlanBottomSheet(),
+                          ).then((_) {
+                            controller.refreshPlans();
+                          });
+                        },
+                        icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
+                        label: Text(
+                          "Add",
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 14.sp),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff0474B9),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 25.w,
+                            vertical: 13.h,
+                          ),
+                        ),
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 13.h),
+                    ],
+                  ),
+
+                  SizedBox(height: 8.h),
+
+                  /// ---------- COUNT ----------
+                  Text(
+                    "${controller.plans.length} Plans added",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey[600],
                     ),
+                  ),
+
+                  SizedBox(height: 16.h),
+
+                  /// ---------- SEARCH ----------
+                  TextField(
+                    onChanged: (value) {
+                      controller.searchQuery = value;
+                      controller.update(); // 🔥 rebuild list
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Search plans...",
+                      hintStyle: TextStyle(fontSize: 14.sp),
+                      prefixIcon: Icon(Icons.search, size: 20.sp),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 12.h,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                        borderSide:
+                            BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                        borderSide:
+                            BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                        borderSide:
+                            BorderSide(color: Colors.grey, width: 1.5.w),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 16.h),
+
+                  /// ---------- LIST ----------
+                  Expanded(
+                    child: _buildPlanList(controller),
                   ),
                 ],
-              ),
-
-              Obx(() {
-                return Text(
-                  "${planController.plans.length} Plans added",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey[600],
-                  ),
-                );
-              }),
-
-              SizedBox(height: 16.h),
-
-              /// ---------- SEARCH BAR ----------
-              TextField(
-                onChanged: (value) => planController.searchQuery.value = value,
-                decoration: InputDecoration(
-                  hintText: "Search plans...",
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1.5),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 16.h),
-
-              /// ---------- PLANS LIST ----------
-              Expanded(
-                child: Obx(() {
-                  if (planController.isLoading.value) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (planController.errorMessage.isNotEmpty) {
-                    return Center(child: Text(planController.errorMessage.value));
-                  }
-
-                  final filteredPlans = planController.filteredPlans;
-
-                  if (filteredPlans.isEmpty) {
-                    return const Center(child: Text("No matching plans"));
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: planController.refreshPlans,
-                    child: ListView.separated(
-                      itemCount: filteredPlans.length,
-                      separatorBuilder: (context, index) => SizedBox(height: 12.h),
-                      itemBuilder: (context, index) {
-                        final plan = filteredPlans[index];
-
-                       final imageUrl = plan.images.isNotEmpty
-    ? (() {
-        final rawUrl = plan.images.first.url;
-        final cleanUrl = rawUrl.replaceAll("\\", "/");
-        if (cleanUrl.startsWith("http")) return cleanUrl;
-        
-        return "$baseUrl/$cleanUrl".replaceAll("//uploads", "/uploads");
-      })()
-    : "https://via.placeholder.com/60";
-
-
-
-                        return PlanCard(
-  title: plan.planName,
-  description: plan.description,
-  price: double.tryParse(plan.price) ?? 0,
-  minPrice: double.tryParse(plan.minPrice) ?? 0,
-  meals: plan.variations.map((v) => v.title).toList(),
-  imageUrl: imageUrl,
-  onDelete: () {
-    _showDeleteDialog(context, planController, plan.id);
-  },
-  onEdit: () {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => AddPlanBottomSheet(
-        isEdit: true,
-        planId: plan.id,
-        planName: plan.planName,
-        price: plan.price,
-        minPrice: plan.minPrice,
-        description: plan.description,
-        imageUrl: imageUrl,
-        selectedVariations: plan.variations.map((v) => v.id).toList(),
-      ),
-    ).then((_) {
-      planController.refreshPlans(); // 🔄 refresh after editing
-    });
-  },
-);
-
-                      },
-                    ),
-                  );
-                }),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
     );
   }
+
+  Widget _buildPlanList(PlanController controller) {
+    if (controller.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (controller.errorMessage.isNotEmpty) {
+      return Center(
+        child: Text(
+          controller.errorMessage,
+          style: TextStyle(fontSize: 14.sp),
+        ),
+      );
+    }
+
+    final plans = controller.filteredPlans;
+
+    if (plans.isEmpty) {
+      return Center(
+        child: Text(
+          "No matching plans",
+          style: TextStyle(fontSize: 14.sp),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: controller.refreshPlans,
+      child: ListView.separated(
+        itemCount: plans.length,
+        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        itemBuilder: (context, index) {
+          final plan = plans[index];
+
+          final imageUrl = plan.images.isNotEmpty
+              ? (() {
+                  final rawUrl = plan.images.first.url;
+                  final cleanUrl = rawUrl.replaceAll("\\", "/");
+                  if (cleanUrl.startsWith("http")) return cleanUrl;
+                  return "$baseUrl/$cleanUrl"
+                      .replaceAll("//uploads", "/uploads");
+                })()
+              : "https://via.placeholder.com/60";
+
+          return PlanCard(
+            title: plan.planName,
+            description: plan.description,
+            price: double.tryParse(plan.price) ?? 0,
+            minPrice: double.tryParse(plan.minPrice) ?? 0,
+            meals: plan.variations.map((v) => v.title).toList(),
+            imageUrl: imageUrl,
+            onDelete: () {
+              _showDeleteDialog(
+                context,
+                controller,
+                plan.id,
+              );
+            },
+            onEdit: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => AddPlanBottomSheet(
+                  isEdit: true,
+                  planId: plan.id,
+                  planName: plan.planName,
+                  price: plan.price,
+                  minPrice: plan.minPrice,
+                  description: plan.description,
+                  imageUrl: imageUrl,
+                  selectedVariations:
+                      plan.variations.map((v) => v.id).toList(),
+                ),
+              ).then((_) {
+                controller.refreshPlans();
+              });
+            },
+          );
+        },
+      ),
+    );
+  }
 }
+
 
 void _showDeleteDialog(
   BuildContext context,
@@ -182,6 +219,7 @@ void _showDeleteDialog(
 ) {
   showDialog(
     context: context,
+    barrierDismissible: false, // optional but recommended
     builder: (BuildContext ctx) {
       return Dialog(
         shape: RoundedRectangleBorder(
@@ -219,7 +257,9 @@ void _showDeleteDialog(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Get.back(),
+                      onPressed: () {
+                        Navigator.pop(ctx); // ✅ FIX
+                      },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.grey.shade300),
                         shape: RoundedRectangleBorder(
@@ -227,14 +267,17 @@ void _showDeleteDialog(
                         ),
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
-                      child: const Text("Cancel"),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
                     ),
                   ),
                   SizedBox(width: 10.w),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        Get.back(); // close dialog
+                        Navigator.pop(ctx); // ✅ FIX (close dialog first)
                         await controller.deletePlan(planId);
                         await controller.refreshPlans();
                       },
@@ -245,9 +288,12 @@ void _showDeleteDialog(
                         ),
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
-                      child: const Text(
+                      child: Text(
                         "Delete",
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                        ),
                       ),
                     ),
                   ),

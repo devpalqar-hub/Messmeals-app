@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
@@ -31,10 +32,10 @@ class PartnerCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      padding: const EdgeInsets.all(16),
+      padding:  EdgeInsets.all(16.r),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -49,8 +50,8 @@ class PartnerCard extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style:  TextStyle(
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.w500,
                         fontFamily: "Inter",
                         color: Color(0xff0A0A0A),
@@ -58,25 +59,25 @@ class PartnerCard extends StatelessWidget {
                     ),
                     if (isActive)
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                        padding:  EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 4.h,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: const Row(
+                        child:  Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.check_circle, size: 14, color: Colors.white),
-                            SizedBox(width: 4),
+                            Icon(Icons.check_circle, size: 14.sp, color: Colors.white),
+                            SizedBox(width: 4.w),
                             Text(
                               "active",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontFamily: "Inter",
-                                fontSize: 12,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -114,13 +115,13 @@ class PartnerCard extends StatelessWidget {
                             snackPosition: SnackPosition.BOTTOM);
                       }
                     },
-                    icon: const Icon(Icons.edit_outlined, size: 22),
+                    icon:  Icon(Icons.edit_outlined, size: 22.sp),
                   ),
 
                   // ✅ Delete Button
                   IconButton(
                     onPressed: () => _confirmDelete(context, id, controller),
-                    icon: const Icon(Icons.delete_outline, size: 20),
+                    icon:  Icon(Icons.delete_outline, size: 20.sp),
                   ),
 
                   // ✅ View Details Button
@@ -133,7 +134,7 @@ class PartnerCard extends StatelessWidget {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.chevron_right, size: 22),
+                    icon:  Icon(Icons.chevron_right, size: 22.sp),
                   ),
                 ],
               ),
@@ -143,49 +144,49 @@ class PartnerCard extends StatelessWidget {
           // --- Contact Info ---
           Text(
             phone,
-            style: const TextStyle(
-              fontSize: 15,
+            style:  TextStyle(
+              fontSize: 15.sp,
               fontFamily: "Inter",
               fontWeight: FontWeight.w400,
               color: Color(0xff717182),
             ),
           ),
-          const SizedBox(height: 2),
+           SizedBox(height: 2.h),
           Text(
             email,
-            style: const TextStyle(
-              fontSize: 15,
+            style: TextStyle(
+              fontSize: 15.sp,
               fontFamily: "Inter",
               fontWeight: FontWeight.w400,
               color: Color(0xff717182),
             ),
           ),
 
-          const SizedBox(height: 12),
+           SizedBox(height: 12.h),
           Divider(color: Colors.grey[300]),
 
           // --- Bottom Row: Orders + Location ---
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                     Text(
                       "TOTAL ORDERS",
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 13.sp,
                         fontFamily: "Inter",
                         fontWeight: FontWeight.w500,
                         color: Color(0xff717182),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                     SizedBox(height: 4.h),
                     Text(
                       "$totalOrders",
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style:  TextStyle(
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         fontFamily: "Inter",
                         color: Colors.black87,
@@ -198,20 +199,20 @@ class PartnerCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "LOCATION",
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 13.sp,
                         fontFamily: "Inter",
                         fontWeight: FontWeight.w500,
                         color: Color(0xff717182),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                     SizedBox(height: 4.h),
                     Text(
                       location,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style:  TextStyle(
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
                         fontFamily: "Inter",
@@ -253,7 +254,7 @@ class PartnerCard extends StatelessWidget {
                 Navigator.pop(context, true); // return true to refresh
               }
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            child:  Text("Delete", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

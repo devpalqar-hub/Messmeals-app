@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
-import 'package:mess/Screens/PartnerScreen/Views/RecentlyDeliveryCard.dart';
-import 'package:mess/Screens/PartnerScreen/Views/StatusCard.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
+import 'package:mess/Screens/PartnerScreen/Views/StatusCard.dart';
 
 class PartnerDetailsScreen extends StatefulWidget {
   final String partnerId;
@@ -28,7 +28,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffF7F9FB),
       body: SafeArea(
         child: Obx(() {
           if (controller.isLoading.value) {
@@ -44,21 +44,21 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
           final stats = partner.stats;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ---------- HEADER ----------
+                /// ---------- HEADER ----------
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back),
+                      icon: Icon(Icons.arrow_back, size: 22.sp),
                       onPressed: () => Navigator.pop(context),
                     ),
-                    const Text(
+                    Text(
                       "Partner Details",
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.w600,
                         fontFamily: "Inter",
                         color: Colors.black87,
@@ -66,7 +66,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                     ),
                     const Spacer(),
 
-                    // ✅ EDIT BUTTON
+                    /// EDIT BUTTON
                     GestureDetector(
                       onTap: () async {
                         await controller.fetchPartnerById(widget.partnerId);
@@ -82,10 +82,9 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                               partner: selected,
                             ));
 
-                        // ✅ If edit successful, refresh list & go back
                         if (result == true) {
-                          await controller.fetchPartners(); // refresh full list
-                          Get.back(); // return to list
+                          await controller.fetchPartners();
+                          Get.back();
                           Get.snackbar("Success", "Partner updated successfully",
                               snackPosition: SnackPosition.BOTTOM);
                         }
@@ -93,9 +92,9 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                       child: _actionButton(Icons.edit_outlined, "Edit"),
                     ),
 
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
 
-                    // ✅ DELETE BUTTON
+                    /// DELETE BUTTON
                     GestureDetector(
                       onTap: () => _confirmDelete(context, partner.id),
                       child: _actionButton(Icons.delete_outline, "Delete"),
@@ -103,54 +102,57 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 10),
+                SizedBox(height: 10.h),
 
-                // ---------- PROFILE CARD ----------
+                /// ---------- PROFILE CARD ----------
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14.r),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
                   child: Row(
                     children: [
                       CircleAvatar(
-                        radius: 28,
+                        radius: 28.r,
                         backgroundColor: Colors.grey.shade300,
                         child: Text(
                           partner.name.isNotEmpty
                               ? partner.name.substring(0, 2).toUpperCase()
                               : "NA",
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.black87,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                             fontFamily: "Inter",
-                            fontSize: 18,
+                            fontSize: 18.sp,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 35),
+                      SizedBox(width: 30.w),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               partner.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                fontSize: 18,
+                                fontSize: 18.sp,
                                 fontFamily: "Inter",
                                 color: Colors.black,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4.h),
                             _infoRow(Icons.phone, partner.phone),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4.h),
                             _infoRow(Icons.email_outlined, partner.email),
-                            const SizedBox(height: 4),
-                            _infoRow(Icons.location_on_outlined,
-                                profile?.address ?? "No address available"),
+                            SizedBox(height: 4.h),
+                            _infoRow(
+                              Icons.location_on_outlined,
+                              profile?.address ?? "No address available",
+                            ),
                           ],
                         ),
                       ),
@@ -158,16 +160,16 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 15),
+                SizedBox(height: 16.h),
 
-                // ---------- STATS ----------
+                /// ---------- STATS GRID ----------
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.59,
+                  crossAxisSpacing: 12.w,
+                  mainAxisSpacing: 12.h,
+                  childAspectRatio: 1.55,
                   children: [
                     StatsCard(
                       icon: Icons.check_circle_outline,
@@ -196,24 +198,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 15),
-
-              //  RecentDeliveriesSection(
-                //  deliveries: [
-                  //  {
-                    //  "status": "Completed",
-                  //    "deliveryId": "DLV-1024",
-                    //  "date": "Oct 22, 2025",
-                  //    "amount": "₹540.00",
-                  //},
-                   // {
-                  //    "status": "Pending",
-                    //  "deliveryId": "DLV-1023",
-                    //  "date": "Oct 20, 2025",
-                    //  "amount": "₹230.50",
-                  //  },
-                 // ],
-               // ),
+                SizedBox(height: 16.h),
               ],
             ),
           );
@@ -222,17 +207,18 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
     );
   }
 
+  /// ---------- INFO ROW ----------
   Widget _infoRow(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 6),
+        Icon(icon, size: 16.sp, color: Colors.grey),
+        SizedBox(width: 6.w),
         Flexible(
           child: Text(
             text,
-            style: const TextStyle(
-              color: Color(0xff717182),
-              fontSize: 14,
+            style: TextStyle(
+              color: const Color(0xff717182),
+              fontSize: 14.sp,
               fontFamily: "Inter",
             ),
           ),
@@ -241,51 +227,72 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
     );
   }
 
+  /// ---------- ACTION BUTTON ----------
   Widget _actionButton(IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: Colors.grey.shade200),
         color: Colors.white,
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Colors.black87),
-          const SizedBox(width: 4),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                  fontFamily: "Inter")),
+          Icon(icon, size: 18.sp, color: Colors.black87),
+          SizedBox(width: 4.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+              fontFamily: "Inter",
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ✅ DELETE CONFIRMATION
+  /// ---------- DELETE CONFIRMATION ----------
   void _confirmDelete(BuildContext context, String partnerId) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Delete Partner"),
-        content: const Text("Are you sure you want to delete this partner?"),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        title: Text(
+          "Delete Partner",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16.sp,
+          ),
+        ),
+        content: Text(
+          "Are you sure you want to delete this partner?",
+          style: TextStyle(fontSize: 14.sp),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+            child: Text(
+              "Cancel",
+              style: TextStyle(fontSize: 14.sp, color: Colors.grey[700]),
+            ),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-             
-              await controller.fetchPartners(); // refresh list
-              Get.back(); // go back to list
+              await controller.fetchPartners();
+              Get.back();
               Get.snackbar("Success", "Partner deleted successfully",
                   snackPosition: SnackPosition.BOTTOM);
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            child: Text(
+              "Delete",
+              style: TextStyle(color: Colors.red, fontSize: 14.sp),
+            ),
           ),
         ],
       ),
