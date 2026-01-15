@@ -1,74 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 import 'package:mess/Screens/DeliveriesScreen/Services/DeliveriesController.dart';
-import 'package:url_launcher/url_launcher.dart'; // ✅ Added
+import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 class OrderCard extends StatefulWidget {
-  final String id;
-  final String status;
-  final String amount;
-  final int orderNo;
-  final String customerName;
-  final String phone;
-  final DateTime date;
+  final Delivery delivery;
 
-  final String? addressLine1;
-  final String? addressLine2;
-  final String? cityStateZip;
-  final String? altPhone;
-  final String? fax;
-  final String? email;
-
-  const OrderCard({
-    super.key,
-    required this.id,
-    required this.status,
-    required this.amount,
-    required this.orderNo,
-    required this.customerName,
-    required this.phone,
-    required this.date,
-    this.addressLine1,
-    this.addressLine2,
-    this.cityStateZip,
-    this.altPhone,
-    this.fax,
-    this.email,
-  });
+  const OrderCard({super.key, required this.delivery});
 
   @override
   State<OrderCard> createState() => _OrderCardState();
 }
 
-class _OrderCardState extends State<OrderCard> with SingleTickerProviderStateMixin {
+class _OrderCardState extends State<OrderCard> {
   bool _expanded = false;
   int _selectedStatus = 0;
-  final DeliveriesController _controller = Get.find();
 
-  /// ✅ Fixed commas between statuses
-  final List<String> _statusValues = [
-    "PENDING",
-    "PROGRESS",
-    "DELIVERED",
-  ];
+  final DeliveriesController _controller = Get.find<DeliveriesController>();
+
+  final List<String> _statusValues = ["PENDING", "PROGRESS", "DELIVERED"];
 
   @override
   void initState() {
     super.initState();
-    _selectedStatus = _statusValues.indexOf(widget.status.toUpperCase());
+    _selectedStatus =
+        _statusValues.indexOf(widget.delivery.status.toUpperCase());
     if (_selectedStatus == -1) _selectedStatus = 0;
   }
 
-  String get _dateStr {
-    final d = widget.date;
-    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  Customer? get customer => widget.delivery.customer;
+  User? get user => customer?.user;
+  Plan? get plan => widget.delivery.plan;
+
+  bool _has(String? v) => v != null && v.trim().isNotEmpty;
+
+  String get formattedDate {
+    try {
+      return DateFormat('dd MMM yyyy')
+          .format(DateTime.parse(widget.delivery.date));
+    } catch (_) {
+      return widget.delivery.date;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -77,138 +57,193 @@ class _OrderCardState extends State<OrderCard> with SingleTickerProviderStateMix
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row: status + amount
+          /// TOP ROW (Status + Details + Price)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Capsule(label: widget.status),
-              const Spacer(),
-              Text(widget.amount,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Customer + Date
-          Row(
-            children: [
+              /// LEFT SIDE
               Expanded(
-                child: Text(widget.customerName,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                     SizedBox(height: 6),
+                    _Capsule(label: _statusValues[_selectedStatus]),
+                    SizedBox(height: 3),
+
+                    if (_has(user?.name)) Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: _text(user!.name, bold: true),
+                    ),
+                     SizedBox(height: 3),
+                    if (_has(user?.phone))
+                      _rowInfo(Icons.call_outlined, user!.phone),
+                    if (_has(customer?.address))
+                      SizedBox(height: 3),
+                      _rowInfo(Icons.location_on_outlined, customer!.address),
+                  ],
+                ),
               ),
-              Text(_dateStr,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+
+              /// RIGHT SIDE (TIGHT — NO TOP SPACE)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                   SizedBox(height: 10),
+                  Text(
+                    formattedDate,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
+                    ),
+                  ),
+                   const SizedBox(height: 10),
+                  Text(
+                    "₹${plan?.price ?? '0'}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.1,
+                    ),
+                  ),
+                   const SizedBox(height: 10),
+                  Text(
+                    plan?.planName ?? '',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 8),
 
-          // Phone + expand
-          Row(
-            children: [
-              Text(widget.phone,
-                  style: TextStyle(
-                      color: Colors.blueGrey[700], fontWeight: FontWeight.w500)),
-              const Spacer(),
-              IconButton(
-                onPressed: () => setState(() => _expanded = !_expanded),
-                icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
-              ),
-            ],
+          /// EXPAND BUTTON
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              icon:
+                  Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+              onPressed: () =>
+                  setState(() => _expanded = !_expanded),
+            ),
           ),
 
-          if (_expanded) const Divider(),
-
+          /// EXPANDED CONTENT
           AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: _expanded ? _expandedDetails() : const SizedBox.shrink(),
+            duration: const Duration(milliseconds: 250),
+            child: !_expanded
+                ? const SizedBox.shrink()
+                : Column(
+                    children: [
+                      const SizedBox(height: 15),
+                      Divider(height:1,),
+                       const SizedBox(height: 20),
+
+                      _statusPillsContainer(),
+
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _actionButton(
+                              Icons.place_outlined,
+                              "Open Map",
+                              Colors.blue,
+                              _openInMap,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _actionButton(
+                              Icons.call_outlined,
+                              "Call Now",
+                              Colors.green,
+                              _callNow,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _expandedDetails() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (widget.addressLine1 != null) _line(widget.addressLine1!),
-        if (widget.addressLine2 != null) _line(widget.addressLine2!),
-        if (widget.cityStateZip != null) _line(widget.cityStateZip!),
-        if (widget.altPhone != null) _line('Alt Phone: ${widget.altPhone!}'),
-        if (widget.email != null) _line('Email: ${widget.email!}'),
+  /// ---------------- HELPERS ----------------
 
-        const Divider(thickness: 1),
-        const SizedBox(height: 10),
+  Widget _text(String text, {bool bold = false}) => Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      );
 
-        _statusPillsContainer(),
-        const SizedBox(height: 10),
-
-        // ✅ Action buttons
-        Row(
+  Widget _rowInfo(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: Row(
           children: [
+            Icon(icon, size: 14, color: Colors.grey[600]),
+            const SizedBox(width: 6),
             Expanded(
-              child: _actionButton(
-                Icons.place_outlined,
-                'Open in Map',
-                Colors.blue,
-                _openInMap, // ✅ Google Map Function
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _actionButton(
-                Icons.call_outlined,
-                'Call Now',
-                Colors.green,
-                _callNow, // ✅ Call Function
-              ),
+              child: Text(text, style: const TextStyle(fontSize: 13)),
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _line(String text) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Text(text, style: const TextStyle(fontSize: 14)),
       );
 
   Widget _statusPillsContainer() {
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: List.generate(_statusValues.length, (index) {
-          final text = _statusValues[index];
           final isSelected = _selectedStatus == index;
+          final text = _statusValues[index];
 
           return Expanded(
             child: GestureDetector(
               onTap: () async {
-                setState(() {
-                  _selectedStatus = index;
-                });
-                await _controller.updateDeliveryStatus(widget.id, text);
+                final success = await _controller.updateDeliveryStatus(
+                  widget.delivery.id,
+                  text,
+                );
+                if (success) {
+                  setState(() => _selectedStatus = index);
+                }
               },
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
+                  color:
+                      isSelected ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   text,
                   style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.w500,
                   ),
                 ),
               ),
@@ -219,7 +254,12 @@ class _OrderCardState extends State<OrderCard> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _actionButton(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _actionButton(
+    IconData icon,
+    String label,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -229,65 +269,63 @@ class _OrderCardState extends State<OrderCard> with SingleTickerProviderStateMix
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade300),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color),
+            Icon(icon, color: color, size: 18),
             const SizedBox(width: 6),
-            Text(label,
-                style: TextStyle(
-                    color: color, fontWeight: FontWeight.w600, fontSize: 14)),
+            Text(
+              label,
+              style:
+                  TextStyle(color: color, fontWeight: FontWeight.w600),
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// ✅ Opens Google Maps with address
+  /// ---------------- ACTIONS ----------------
+
   Future<void> _openInMap() async {
-    final address = [
-      widget.addressLine1,
-      widget.addressLine2,
-      widget.cityStateZip
-    ].where((e) => e != null && e.isNotEmpty).join(", ");
-
-    final encodedAddress = Uri.encodeComponent(address);
-    final googleUrl = "https://www.google.com/maps/search/?api=1&query=$encodedAddress";
-
-    if (await canLaunchUrl(Uri.parse(googleUrl))) {
-      await launchUrl(Uri.parse(googleUrl), mode: LaunchMode.externalApplication);
-    } else {
-      Get.snackbar("Error", "Could not open Google Maps");
-    }
+    if (!_has(customer?.address)) return;
+    final encoded = Uri.encodeComponent(customer!.address);
+    await launchUrl(
+      Uri.parse(
+          "https://www.google.com/maps/search/?api=1&query=$encoded"),
+      mode: LaunchMode.externalApplication,
+    );
   }
 
-  /// ✅ Opens dialer with phone number
   Future<void> _callNow() async {
-    final phoneUri = Uri(scheme: 'tel', path: widget.phone);
-    if (await canLaunchUrl(phoneUri)) {
-      await launchUrl(phoneUri);
-    } else {
-      Get.snackbar("Error", "Could not launch dialer");
-    }
+    if (!_has(user?.phone)) return;
+    await launchUrl(Uri(scheme: 'tel', path: user!.phone));
   }
 }
 
+/// ---------------- STATUS CAPSULE ----------------
+
 class _Capsule extends StatelessWidget {
   final String label;
+
   const _Capsule({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.black87,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Text(
-        label.toUpperCase(),
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
       ),
     );
   }

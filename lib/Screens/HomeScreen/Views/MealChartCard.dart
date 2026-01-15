@@ -16,7 +16,6 @@ class MealChartCard extends StatefulWidget {
 class _MealChartCardState extends State<MealChartCard> {
   final DashboardController controller = Get.put(DashboardController());
 
-  /// 🔹 Open Date Picker
   Future<void> _pickDate(BuildContext context) async {
     final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -39,7 +38,7 @@ class _MealChartCardState extends State<MealChartCard> {
     );
 
     if (picked != null) {
-      controller.updateDate(picked); // ✅ Fetch data for new date
+      controller.updateDate(picked); 
     }
   }
 
@@ -68,7 +67,7 @@ class _MealChartCardState extends State<MealChartCard> {
         ),
         child: Column(
           children: [
-            /// 🔹 Header
+       
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -114,7 +113,6 @@ class _MealChartCardState extends State<MealChartCard> {
 
             SizedBox(height: 16.h),
 
-            /// 🔹 Chart or Loader
             if (isLoading)
               SizedBox(
                 height: 120.h,
@@ -171,7 +169,6 @@ class _MealChartCardState extends State<MealChartCard> {
     });
   }
 
-  /// Assign colors dynamically per meal type
   Color _getColorForTitle(String title) {
     switch (title.toLowerCase()) {
       case 'breakfast':

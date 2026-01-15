@@ -88,10 +88,9 @@ class PartnerCard extends StatelessWidget {
                 ),
               ),
 
-              // ---------- Action buttons ----------
               Row(
                 children: [
-                  // ✅ Edit Button
+                 
                   IconButton(
                     onPressed: () async {
                       await controller.fetchPartnerById(id);
@@ -102,15 +101,16 @@ class PartnerCard extends StatelessWidget {
                         return;
                       }
 
-                      // Navigate to AddPartnerScreen for edit
+                     
                       final result = await Get.to(() => AddPartnerScreen(
                             isEdit: true,
                             partner: partner,
                           ));
 
                       if (result == true) {
-                        // Refresh and show snackbar when returned
+                       
                         await controller.fetchPartners();
+                         Get.back();
                         Get.snackbar("Success", "Partner updated successfully",
                             snackPosition: SnackPosition.BOTTOM);
                       }
@@ -118,13 +118,13 @@ class PartnerCard extends StatelessWidget {
                     icon:  Icon(Icons.edit_outlined, size: 22.sp),
                   ),
 
-                  // ✅ Delete Button
+                  
                   IconButton(
                     onPressed: () => _confirmDelete(context, id, controller),
                     icon:  Icon(Icons.delete_outline, size: 20.sp),
                   ),
 
-                  // ✅ View Details Button
+                
                   IconButton(
                     onPressed: () {
                       Navigator.push(
@@ -141,7 +141,7 @@ class PartnerCard extends StatelessWidget {
             ],
           ),
 
-          // --- Contact Info ---
+         
           Text(
             phone,
             style:  TextStyle(
@@ -165,7 +165,7 @@ class PartnerCard extends StatelessWidget {
            SizedBox(height: 12.h),
           Divider(color: Colors.grey[300]),
 
-          // --- Bottom Row: Orders + Location ---
+       
           SizedBox(height: 8.h),
           Row(
             children: [
@@ -228,7 +228,7 @@ class PartnerCard extends StatelessWidget {
     );
   }
 
-  /// ✅ Delete Confirmation Dialog
+
   void _confirmDelete(BuildContext context, String partnerId, PartnerController controller) {
     showDialog(
       context: context,
@@ -249,9 +249,9 @@ class PartnerCard extends StatelessWidget {
               Get.snackbar("Success", "Partner deleted successfully",
                   snackPosition: SnackPosition.BOTTOM);
 
-              // ✅ Go back to previous screen (list with bottom bar)
+              
               if (Navigator.canPop(context)) {
-                Navigator.pop(context, true); // return true to refresh
+                Navigator.pop(context, true); 
               }
             },
             child:  Text("Delete", style: TextStyle(color: Colors.red)),

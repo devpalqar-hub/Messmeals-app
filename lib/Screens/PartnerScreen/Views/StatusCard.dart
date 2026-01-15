@@ -27,7 +27,7 @@ class StatsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// ---------- ICON + LABEL ----------
+       
           Row(
             children: [
               Container(
@@ -59,7 +59,7 @@ class StatsCard extends StatelessWidget {
 
           SizedBox(height: 10.h),
 
-          /// ---------- VALUE ----------
+         
           Text(
             value,
             style: TextStyle(

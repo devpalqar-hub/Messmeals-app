@@ -7,7 +7,7 @@ import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 
 Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
   BuildContext context, {
-  required String customerProfileId, // ✅ pass from CustomerDetailsScreen
+  required String customerProfileId, 
 }) async {
   final startCtrl = TextEditingController();
   final endCtrl = TextEditingController();
@@ -269,7 +269,7 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                                 discount: discountCtrl.text.isEmpty
                                     ? '0'
                                     : discountCtrl.text,
-                                customerProfileId: customerProfileId, // ✅ direct
+                                customerProfileId: customerProfileId, 
                               );
 
                               setState(() => isSubmitting = false);

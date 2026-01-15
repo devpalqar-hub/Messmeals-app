@@ -20,7 +20,6 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // 🔹 Automatically fetch data when selected mess changes
     ever(authController.selectedMessId, (_) {
       if (authController.selectedMessId.value.isNotEmpty) {
         fetchDashboardStats();
@@ -28,7 +27,7 @@ class DashboardController extends GetxController {
       }
     });
 
-    // 🔹 If mess already selected, fetch data immediately
+
     if (authController.selectedMessId.value.isNotEmpty) {
       fetchDashboardStats();
       fetchVariationCount(selectedDate.value);
@@ -40,7 +39,7 @@ class DashboardController extends GetxController {
     return prefs.getString('token');
   }
 
-  /// ===================== DASHBOARD STATS =====================
+
   Future<void> fetchDashboardStats() async {
     try {
       isLoading.value = true;
@@ -81,7 +80,7 @@ class DashboardController extends GetxController {
     }
   }
 
-  /// ===================== VARIATION COUNT =====================
+
   Future<void> fetchVariationCount(DateTime date) async {
     try {
       isVariationLoading.value = true;

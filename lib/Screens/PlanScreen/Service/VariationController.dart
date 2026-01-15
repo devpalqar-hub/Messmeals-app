@@ -11,7 +11,6 @@ class VariationController extends GetxController  {
   RxBool isLoading = false.obs;
   RxString errorMessage = ''.obs;
 
-  /// Fetch all variations
   Future<void> fetchVariations() async {
     try {
       isLoading.value = true;
@@ -37,7 +36,6 @@ class VariationController extends GetxController  {
     }
   }
 
-  /// Refresh function for pull-to-refresh
   Future<void> refreshVariations() async {
     await fetchVariations();
   }

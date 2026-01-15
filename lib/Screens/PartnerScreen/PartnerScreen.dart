@@ -40,7 +40,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// ---------- HEADER ----------
+            
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -83,7 +83,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
 
                 SizedBox(height: 16.h),
 
-                /// ---------- SEARCH ----------
+             
                 TextField(
                   controller: searchController,
                   style: TextStyle(fontSize: 14.sp),
@@ -129,7 +129,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
 
                 SizedBox(height: 16.h),
 
-                /// ---------- PARTNER LIST ----------
+              
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () async => controller.fetchPartners(),

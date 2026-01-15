@@ -63,10 +63,8 @@ class ActiveSubscription {
   final int discountedPrice;
   final String deliveryPartnerProfileId;
   final Plan plan;
-
-  // NEW FIELDS
-  final String scheduleType; // "EVERYDAY" or "CUSTOM"
-  final List<String> days; // For custom delivery days
+  final String scheduleType; 
+  final List<String> days; 
 
   ActiveSubscription({
     required this.id,
@@ -77,7 +75,7 @@ class ActiveSubscription {
     required this.discountedPrice,
     required this.deliveryPartnerProfileId,
     required this.plan,
-    this.scheduleType = "EVERYDAY", // default to EVERYDAY
+    this.scheduleType = "EVERYDAY", 
     this.days = const [],
   });
 

@@ -30,7 +30,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   String? selectedPartner;
   DateTime? startDate;
   DateTime? endDate;
-  String? selectedDeliveryType; // "everyday" or "custom"
+  String? selectedDeliveryType; 
   final List<String> selectedDays = [];
   final List<String> weekDays = [
     "Monday",
@@ -81,21 +81,20 @@ void _loadCustomerData() {
     final s = c.activeSubscriptions.first;
     discountController.text = s.discountedPrice.toString();
 
-    // Meal Plan
     final hasPlan = planController.plans.any((p) => p.id == s.plan.id);
     selectedMealPlan = hasPlan ? s.plan.id : null;
 
-    // Delivery Partner
+
     final hasPartner = partnerController.partners.any(
       (p) => (p.deliveryPartnerProfile?.id ?? '') == s.deliveryPartnerProfileId,
     );
     selectedPartner = hasPartner ? s.deliveryPartnerProfileId : null;
 
-    // Start / End Dates
+    
     startDate = s.startDate;
     endDate = s.endDate;
 
-    // ✅ Delivery Type
+
     if (!widget.isEdit) {
       if (s.scheduleType == "EVERYDAY") {
         selectedDeliveryType = "everyday";
@@ -199,7 +198,7 @@ void _loadCustomerData() {
       );
     }
 
-    // Form readiness
+ 
     final plansReady = planController.isReady && !planController.isLoading;
     final partnersReady = partnerController.isReady.value && !partnerController.isLoading.value;
     final formReady = plansReady && partnersReady;

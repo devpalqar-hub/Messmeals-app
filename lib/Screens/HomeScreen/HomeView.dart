@@ -18,14 +18,14 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
 
-  // 🔹 Add more screens later if you have multiple tabs
+  
   final List<Widget> screens = [
     HomeScreen(),
     CustomersScreen(),
     PartnerScreen(),
     DeliveriesScreen(),
     PlanScreen(),
-    // Add more: CustomersScreen(), PartnersScreen(), etc.
+    
   ];
 
   void onTabTapped(int index) {
@@ -41,16 +41,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            /// 🔹 Main screen content (changes with tab)
+           
             Positioned.fill(
               child: screens[selectedIndex],
             ),
 
-            /// 🔹 BottomBar widget pinned to bottom
+          
             Positioned(
               left: 0,
               right: 0,
-             bottom: 0.1, // space above screen edge
+             bottom: 0.1, 
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 0.0),
                 child: Column(
@@ -60,7 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       selectedIndex: selectedIndex,
                       onItemTapped: onTabTapped,
                     ),
-                    const SizedBox(height: 20), // extra padding below
+                    const SizedBox(height: 20), 
                   ],
                 ),
               ),

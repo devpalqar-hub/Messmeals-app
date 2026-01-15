@@ -13,7 +13,6 @@ class PlanController extends GetxController {
   final DashboardController dashboardController =
       Get.find<DashboardController>();
 
-  /// ---------- STATE ----------
   bool isLoading = false;
   bool isReady = false;
   List<PlanModel> plans = [];
@@ -23,7 +22,6 @@ class PlanController extends GetxController {
   String errorMessage = '';
   String searchQuery = '';
 
-  /// ---------- FILTER ----------
   List<PlanModel> get filteredPlans {
     if (searchQuery.isEmpty) return plans;
 
@@ -34,7 +32,7 @@ class PlanController extends GetxController {
     }).toList();
   }
 
-  /// ---------- LOAD ONCE ----------
+
   Future<void> ensureLoaded() async {
     if (isReady) return;
     if (plans.isEmpty) {
@@ -44,7 +42,6 @@ class PlanController extends GetxController {
     update();
   }
 
-  /// ---------- FETCH ----------
   Future<void> fetchPlans({int? page, int? perPage}) async {
     isLoading = true;
     errorMessage = '';
@@ -88,7 +85,7 @@ class PlanController extends GetxController {
       update();
     }
   }
-/// ---------- ADD ----------
+
 Future<bool> addPlan({
   required String planName,
   required String price,
@@ -115,15 +112,25 @@ Future<bool> addPlan({
         'messId': messId,
       });
 
+    
+    request.fields.forEach((key, value) {
+      debugPrint("   $key : $value");
+    });
+
     if (imageFile != null && await imageFile.exists()) {
-      request.files.add(
-        await http.MultipartFile.fromPath('planImages', imageFile.path),
+      final file = await http.MultipartFile.fromPath(
+        'planImages',
+        imageFile.path,
       );
+      request.files.add(file);
+
+     
     }
 
     final response = await request.send();
     final body = await response.stream.bytesToString();
 
+    
     if (response.statusCode == 201) {
       await refreshPlans();
       await dashboardController.fetchDashboardStats();
@@ -134,7 +141,7 @@ Future<bool> addPlan({
         color: Colors.green,
       );
 
-      return true; // ✅ now returns bool
+      return true;
     } else {
       _showSnackBar(
         title: "Error",
@@ -143,7 +150,8 @@ Future<bool> addPlan({
       );
       return false;
     }
-  } catch (e) {
+  } catch (e, stack) {
+    
     _showSnackBar(
       title: "Error",
       message: e.toString(),
@@ -156,7 +164,7 @@ Future<bool> addPlan({
   }
 }
 
-/// ---------- EDIT ----------
+
 Future<bool> editPlan({
   required String id,
   required String planName,
@@ -200,7 +208,7 @@ Future<bool> editPlan({
         color: Colors.green,
       );
 
-      return true; // ✅ now returns bool
+      return true; 
     } else {
       _showSnackBar(
         title: "Error",
@@ -222,7 +230,6 @@ Future<bool> editPlan({
   }
 }
 
-  /// ---------- DELETE ----------
   Future<void> deletePlan(String id) async {
     try {
       final messId = authController.selectedMessId.value;
@@ -241,8 +248,7 @@ Future<bool> editPlan({
         plans.removeWhere((p) => p.id == id);
         await dashboardController.fetchDashboardStats();
 
-        update(); // 🔥 IMPORTANT
-
+        update(); 
         _showSnackBar(
           title: "Deleted",
           message: "Plan deleted successfully",
@@ -264,13 +270,12 @@ Future<bool> editPlan({
     }
   }
 
-  /// ---------- REFRESH ----------
   Future<void> refreshPlans() async {
     currentPage = 1;
     await fetchPlans(page: 1);
   }
 
-  /// ---------- SNACK ----------
+ 
   void _showSnackBar({
     required String title,
     required String message,

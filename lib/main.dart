@@ -9,16 +9,16 @@ String baseUrl = "https://api.messmeals.com";
 
 
 Future<void> main() async {
-  // 🧩 Ensures Flutter engine is ready before async calls
+
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🧠 Initialize the AuthController before app runs
+ 
   final authController = Get.put(AuthController());
 
-  // 🔐 Check login status before loading UI
+  
   await authController.checkLoginStatus();
 
-  // 🚀 Run the app after setup
+  
   runApp(const MessMeals());
 }
 
@@ -27,7 +27,7 @@ class MessMeals extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Use the same controller instance initialized in main()
+  
     final auth = Get.find<AuthController>();
 
     return ScreenUtilInit(
@@ -37,7 +37,7 @@ class MessMeals extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: "Mess Meals",
           home: Obx(() {
-            // 🧭 Dynamically show screen based on login status
+          
             return auth.isLoggedIn.value
                 ? const DashboardScreen()
                 : const LoginScreen();

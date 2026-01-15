@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class RevenueCard extends StatelessWidget {
-  final double? totalRevenue;     // dynamic total revenue
-  final int? completedOrders;     // dynamic completed orders
-  final double? todaysRevenue;    // optional: today’s revenue
+  final double? totalRevenue;     
+  final int? completedOrders;     
+  final double? todaysRevenue;    
 
   const RevenueCard({
     super.key,
@@ -45,9 +45,7 @@ class RevenueCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8.0),
-
-            /// 🔹 Dynamic total revenue text
-            Text(
+  Text(
               '₹${(totalRevenue ?? 0).toStringAsFixed(2)}',
               style: const TextStyle(
                 fontSize: 26.0,
@@ -58,7 +56,6 @@ class RevenueCard extends StatelessWidget {
             ),
             const SizedBox(height: 6.0),
 
-            /// 🔹 Row showing completed orders or today's revenue
             Row(
               children: [
                 Icon(

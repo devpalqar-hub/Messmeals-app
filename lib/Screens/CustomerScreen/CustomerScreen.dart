@@ -47,7 +47,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                   final customers = customerCtrl.customers;
 
-                  /// 🔍 Filter logic
+                
                   final filteredCustomers = customers.where((c) {
                     final query = searchQuery.toLowerCase();
 
@@ -81,7 +81,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// ---------- HEADER ----------
+                
                       Row(
                         mainAxisAlignment:
                             MainAxisAlignment.spaceBetween,
@@ -137,10 +137,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                       SizedBox(height: 16.h),
 
-                      /// ---------- SEARCH + FILTER ----------
                       Row(
                         children: [
-                          /// 🔍 Search
+                       
                           Expanded(
                             child: TextField(
                               onChanged: (value) {
@@ -175,7 +174,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                           SizedBox(width: 10.w),
 
-                          /// 🔽 Plan Dropdown
+                          
                           Container(
                             height: 48.h,
                             padding: EdgeInsets.symmetric(
@@ -213,7 +212,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                       SizedBox(height: 16.h),
 
-                      /// ---------- CUSTOMER LIST ----------
                       Expanded(
                         child: filteredCustomers.isEmpty
                             ? Center(

@@ -21,7 +21,7 @@ class CustomerController extends GetxController {
   int page = 1;
   int limit = 10;
 
-  /// 🔹 Fetch customers (supports optional plan name search)
+ 
  Future<void> fetchCustomers({bool refresh = false, String? planName}) async {
     final messId = authController.selectedMessId.value;
 
@@ -34,7 +34,7 @@ class CustomerController extends GetxController {
       page = 1;
       hasMore = true;
       customers.clear();
-      update(); // 🔥 update UI
+      update(); 
     }
 
     if (!hasMore) return;
@@ -45,7 +45,7 @@ class CustomerController extends GetxController {
       } else {
         isMoreLoading = true;
       }
-      update(); // 🔥
+      update(); 
 
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -82,12 +82,11 @@ class CustomerController extends GetxController {
     } finally {
       isLoading = false;
       isMoreLoading = false;
-      update(); // 🔥 VERY IMPORTANT
+      update(); 
     }
   }
 
 
-  /// 🔹 Pull-to-refresh
   Future<void> refreshCustomers() async {
     await fetchCustomers(refresh: true);
   }
@@ -185,7 +184,7 @@ Future<void> addCustomer({
     );
   } finally {
     isLoading = false;
-    update(); // 🔥 IMPORTANT
+    update(); 
   }
 }
 
@@ -267,45 +266,35 @@ Future<void> updateCustomer({
     );
   } finally {
     isLoading = false;
-    update(); // 🔥 UI refresh
+    update(); 
   }
 }
 
 
-  /// 🔹 Delete Customer
- Future<void> deleteCustomer(String customerProfileId) async {
+
+ Future<void> deleteCustomer(String customerId) async {
   try {
     isLoading = true;
     update();
 
-    // Construct URL
-    final url = '$baseUrl/customer/$customerProfileId';
-    print("🗑 DELETE URL => $url");
+    final url = '$baseUrl/customer/$customerId';
+    debugPrint("🗑 DELETE URL => $url");
 
-    // Headers
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': bearerToken,
-    };
-    print("🗑 DELETE HEADERS => $headers");
-
-    // Make the DELETE request
     final response = await http.delete(
       Uri.parse(url),
-      headers: headers,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': bearerToken,
+      },
     );
 
-    print("🗑 DELETE STATUS CODE => ${response.statusCode}");
-    print("🗑 DELETE RESPONSE BODY => ${response.body}");
+    debugPrint("🗑 STATUS => ${response.statusCode}");
+    debugPrint("🗑 BODY => ${response.body}");
 
     if (response.statusCode == 200 || response.statusCode == 204) {
-      // Remove customer locally
-      customers.removeWhere(
-        (c) => c.customerProfileId == customerProfileId,
-      );
-      print("🗑 Customer removed locally: $customerProfileId");
+  
+      customers.removeWhere((c) => c.id == customerId);
 
-      // Refresh dashboard stats
       await dashboardController.fetchDashboardStats();
 
       Get.snackbar(
@@ -316,21 +305,19 @@ Future<void> updateCustomer({
     } else {
       Get.snackbar(
         "Error",
-        "Failed to delete customer. Status: ${response.statusCode}",
+        "Failed to delete customer",
       );
     }
-  } catch (e, stackTrace) {
-    print("❌ DELETE EXCEPTION => $e");
-    print("❌ STACKTRACE => $stackTrace");
+  } catch (e) {
     Get.snackbar("Error", e.toString());
   } finally {
     isLoading = false;
-    update(); // Refresh UI
+    update();
   }
 }
 
 
-  /// 🔹 Renew Subscription
+
   Future<bool> renewSubscription({
   required String planId,
   required String startDate,
@@ -401,7 +388,7 @@ Future<void> updateCustomer({
   }
 }
 
-/// 🔹 Pause Subscription
+
 Future<void> pauseSubscription(
   String activeSubscriptionId,
   String customerProfileId,
@@ -460,7 +447,7 @@ Future<void> pauseSubscription(
 
 
 
-  /// 🔹 Cancel Subscription
+
   Future<bool> cancelSubscription(
   String activeSubscriptionId,
   String customerProfileId,
@@ -588,7 +575,7 @@ Future<bool> cancelSubscriptionRange(
 }
 
 
-  /// 🔹 Update Wallet
+ 
  Future<void> updateWalletBalance({
   required String customerProfileId,
   required String amount,
@@ -649,7 +636,7 @@ Future<bool> cancelSubscriptionRange(
 }
 
 
-  /// 🔹 Fetch a single customer (refresh one entry)
+
   Future<void> fetchCustomerDetails(String customerProfileId) async {
     try {
       final response =

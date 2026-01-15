@@ -47,11 +47,11 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// 🔹 Header Row
+             
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // 👤 Profile icon
+                 
                     GestureDetector(
                       onTap: () {
                         showModalBottomSheet(
@@ -95,7 +95,7 @@ class HomeScreen extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                     // SizedBox(width: 12.w),
+                                    
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -121,7 +121,7 @@ class HomeScreen extends StatelessWidget {
                                   Divider(color: Colors.grey[300]),
                                   SizedBox(height: 10.h),
 
-                                  // 🚪 Logout button
+                           
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton.icon(
@@ -165,7 +165,7 @@ class HomeScreen extends StatelessWidget {
                           child: Text(
                             userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
                             ),
@@ -174,10 +174,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
 
-                    /// 🔹 Dashboard Title
-                    TittleText(text: userName),
+                   
+                    TittleText(text: userName,size: 16.sp,fontWeight: FontWeight.w800,),
 
-                    /// 🔹 Dropdown for Mess Selection
+                   
                     Obx(() {
                       final messes = authController.ownedMesses;
                       final selectedMessId = authController.selectedMessId.value;
@@ -200,7 +200,7 @@ class HomeScreen extends StatelessWidget {
                                       value: mess["id"],
                                       child: Text(
                                         mess["name"] ?? "Unnamed",
-                                        style: TextStyle(fontSize: 12.sp),
+                                        style: TextStyle(fontSize: 11.sp),
                                       ),
                                     ))
                                 .toList(),
@@ -220,7 +220,7 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 20.h),
 
-                /// 🔹 Main Revenue Summary Card
+              
                 RevenueCard(
                   totalRevenue: totalRevenue,
                   completedOrders: completedOrders,
@@ -229,7 +229,6 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 20.h),
 
-                /// 🔹 Analytics Grid (2x2)
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -272,7 +271,7 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 20.h),
 
-                /// 🔹 Revenue Account Cards
+               
                 Row(
                   children: [
                     Expanded(
@@ -303,7 +302,7 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 40.h),
 
-                /// 🔹 Meal Chart
+              
                 const MealChartCard(),
 
                 SizedBox(height: 60.h),
@@ -316,7 +315,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// 🔹 Logout confirmation dialog
+
 void _showLogoutDialog(BuildContext context, AuthController authController) {
   showDialog(
     context: context,

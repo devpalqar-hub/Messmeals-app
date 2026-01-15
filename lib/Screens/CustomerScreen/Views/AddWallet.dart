@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 Future<String?> showAddWalletAmountSheet(BuildContext context) async {
   final controller = TextEditingController(text: '0');
 
-  // Return the entered amount as String
+  
   final result = await showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
@@ -23,7 +23,6 @@ Future<String?> showAddWalletAmountSheet(BuildContext context) async {
         child: _AddWalletContent(
           controller: controller,
           onAdd: () {
-            // Pop with result (entered amount)
             Navigator.pop(ctx, controller.text);
           },
           onCancel: () => Navigator.pop(ctx),
@@ -32,7 +31,7 @@ Future<String?> showAddWalletAmountSheet(BuildContext context) async {
     },
   );
 
-  return result; // String or null
+  return result;
 }
 
 class _AddWalletContent extends StatelessWidget {
@@ -68,7 +67,7 @@ class _AddWalletContent extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
+
           Row(
             children: [
               const Expanded(
@@ -86,7 +85,7 @@ class _AddWalletContent extends StatelessWidget {
           const Text('Add amount', style: subhead),
           const SizedBox(height: 16),
 
-          // Card with textfield
+     
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
@@ -159,7 +158,7 @@ class _AddWalletContent extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Add button
+    
           SizedBox(
             width: double.infinity,
             height: 40,
@@ -183,7 +182,7 @@ class _AddWalletContent extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Cancel button
+          
           SizedBox(
             width: double.infinity,
             height: 40,

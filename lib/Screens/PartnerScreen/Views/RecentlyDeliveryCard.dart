@@ -21,7 +21,7 @@ class RecentDeliveriesSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// ---------- HEADER ----------
+         
           Text(
             "Recent Deliveries",
             style: TextStyle(
@@ -32,7 +32,6 @@ class RecentDeliveriesSection extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
 
-          /// ---------- DELIVERY LIST ----------
           ...deliveries.map((delivery) {
             bool isCompleted = delivery["status"]!.toLowerCase() == "completed";
             Color bgColor =

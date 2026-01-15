@@ -52,7 +52,7 @@ class CustomerCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// ---------- NAME + ACTIONS ----------
+           
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -66,15 +66,15 @@ class CustomerCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    /// ---- Edit Button ----
+                  
                     IconButton(
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => AddCustomerScreen(
-                              customer: customer, // Pass customer for edit
-                              isEdit: true, // Flag to handle edit
+                              customer: customer, 
+                              isEdit: true, 
                             ),
                           ),
                         );
@@ -84,7 +84,7 @@ class CustomerCard extends StatelessWidget {
                       tooltip: "Edit",
                     ),
 
-                    /// ---- Delete Button ----
+                 
                     IconButton(
                       onPressed: () {
                         _showDeleteDialog(context, controller);
@@ -94,7 +94,7 @@ class CustomerCard extends StatelessWidget {
                       tooltip: "Delete",
                     ),
 
-                    /// ---- View Details ----
+               
                     IconButton(
                       onPressed: () {
                         Navigator.push(
@@ -116,7 +116,7 @@ class CustomerCard extends StatelessWidget {
 
             SizedBox(height: 6.h),
 
-            /// ---------- CONTACT ----------
+   
             Text(
               customer.phone,
               style: TextStyle(fontSize: 14.sp, color: Colors.grey[700]),
@@ -130,7 +130,7 @@ class CustomerCard extends StatelessWidget {
             Divider(color: Colors.grey[300], thickness: 1),
             SizedBox(height: 8.h),
 
-            /// ---------- WALLET + PLAN ----------
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -143,7 +143,6 @@ class CustomerCard extends StatelessWidget {
 
             SizedBox(height: 10.h),
 
-            /// ---------- DATES ----------
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -165,7 +164,6 @@ class CustomerCard extends StatelessWidget {
     );
   }
 
-  /// 🔹 Delete Confirmation Dialog
   void _showDeleteDialog(BuildContext context, CustomerController controller) {
     showDialog(
       context: context,
@@ -185,7 +183,7 @@ class CustomerCard extends StatelessWidget {
             ),
             onPressed: () async {
               Navigator.pop(ctx);
-              await controller.deleteCustomer(customer.customerProfileId);
+              await controller.deleteCustomer(customer.id);
             },
             child: const Text("Delete"),
           ),

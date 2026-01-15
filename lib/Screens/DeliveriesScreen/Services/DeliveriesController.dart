@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
@@ -17,62 +18,85 @@ class DeliveriesController extends GetxController {
 
   /// ✅ Fetch Deliveries (with optional date and status filters)
   Future<void> fetchDeliveries({
-    DateTime? date,
-    String? status,
-  }) async {
-    try {
-      isLoading.value = true;
+  DateTime? date,
+  String? status,
+}) async {
+  try {
+    isLoading.value = true;
 
-      final messId = authController.selectedMessId.value;
-      if (messId.isEmpty) {
-        Get.snackbar("Error", "Please select a mess first");
-        isLoading.value = false;
-        return;
-      }
-
-      // 🔹 Build query params dynamically
-      final Map<String, String> queryParams = {
-        'page': page.value.toString(),
-        'limit': limit.value.toString(),
-        'messId': messId,
-      };
-
-      if (date != null) {
-        queryParams['date'] = date.toIso8601String().split('T')[0];
-      }
-
-      if (status != null && status.trim().isNotEmpty) {
-        queryParams['status'] = status.toUpperCase();
-      }
-
-      final uri = Uri.parse('$baseUrl/deliveries')
-          .replace(queryParameters: queryParams);
-    
-
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': bearerToken,
-        },
-      );
-
-     
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        final List<dynamic> dataList = jsonData['data'] ?? [];
-        deliveries.value = dataList.map((e) => Delivery.fromJson(e)).toList();
-       
-      } else {
-        Get.snackbar('Error', 'Failed to fetch deliveries: ${response.statusCode}');
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to load deliveries: $e');
-   
-    } finally {
-      isLoading.value = false;
+    final messId = authController.selectedMessId.value;
+    if (messId.isEmpty) {
+      Get.snackbar("Error", "Please select a mess first");
+      return;
     }
+
+    /// 🔹 Build query params dynamically
+    final Map<String, String> queryParams = {
+      'page': page.value.toString(),
+      'limit': limit.value.toString(),
+      'messId': messId,
+    };
+
+    if (date != null) {
+      queryParams['date'] = date.toIso8601String().split('T')[0];
+    }
+
+    if (status != null && status.trim().isNotEmpty) {
+      queryParams['status'] = status.toUpperCase();
+    }
+
+    final uri = Uri.parse('$baseUrl/deliveries')
+        .replace(queryParameters: queryParams);
+
+    /// 🔍 DEBUG REQUEST
+    debugPrint("📡 FETCH DELIVERIES URL:");
+    debugPrint(uri.toString());
+    debugPrint("📡 HEADERS:");
+    debugPrint(bearerToken);
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': bearerToken,
+      },
+    );
+
+    /// 🔍 DEBUG RESPONSE
+    debugPrint("📥 STATUS CODE: ${response.statusCode}");
+    debugPrint("📥 RESPONSE BODY:");
+    debugPrint(response.body);
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+
+      /// 🔍 DEBUG PARSED JSON
+      debugPrint("📦 PARSED JSON:");
+      debugPrint(jsonData.toString());
+
+      final List<dynamic> dataList = jsonData['data'] ?? [];
+
+      deliveries.value =
+          dataList.map((e) => Delivery.fromJson(e)).toList();
+
+      debugPrint("✅ DELIVERIES COUNT: ${deliveries.length}");
+    } else {
+      Get.snackbar(
+        'Error',
+        'Failed to fetch deliveries (${response.statusCode})',
+      );
+    }
+  } catch (e, stack) {
+    debugPrint("❌ FETCH DELIVERIES ERROR:");
+    debugPrint(e.toString());
+    debugPrint(stack.toString());
+
+    Get.snackbar('Error', 'Failed to load deliveries');
+  } finally {
+    isLoading.value = false;
   }
+}
+
 
   /// ✅ Generate Deliveries by Date
   Future<void> generateDeliveriesByDate(DateTime date) async {
@@ -104,38 +128,42 @@ class DeliveriesController extends GetxController {
   }
 
   /// ✅ Update Delivery Status (PENDING, PROGRESS, DELIVERED)
-  Future<void> updateDeliveryStatus(String deliveryId, String newStatus) async {
-    try {
-      isLoading.value = true;
+ 
+Future<bool> updateDeliveryStatus(String deliveryId, String newStatus) async {
+  try {
+    isLoading.value = true;
 
-      final url = Uri.parse('$baseUrl/deliveries/$deliveryId/status');
-      final body = json.encode({"status": newStatus.toUpperCase()});
+    final url = Uri.parse('$baseUrl/deliveries/$deliveryId/status');
+    final body = json.encode({"status": newStatus.toUpperCase()});
 
+    final response = await http.patch(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
 
-      final response = await http.patch(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: body,
-      );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final updatedStatus = data['status'] ?? newStatus;
 
+      Get.snackbar('Success', 'Delivery status updated to $updatedStatus');
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final updatedStatus = data['status'] ?? newStatus;
-        Get.snackbar('Success', 'Delivery status updated to $updatedStatus');
-         await dashboardController.fetchDashboardStats(); 
-        await fetchDeliveries(); // refresh list after update
-      } else {
-        final msg = json.decode(response.body)['message'] ?? 'Unknown error';
-        Get.snackbar('Error', 'Failed to update status: $msg');
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Error updating delivery status: $e');
-   
-    } finally {
-      isLoading.value = false;
+      await dashboardController.fetchDashboardStats();
+      await fetchDeliveries(); // refresh list after update
+
+      return true; // ✅ Return true on success
+    } else {
+      final msg = json.decode(response.body)['message'] ?? 'Unknown error';
+      Get.snackbar('Error', 'Failed to update status: $msg');
+      return false; // ❌ Return false on failure
     }
+  } catch (e) {
+    Get.snackbar('Error', 'Error updating delivery status: $e');
+    return false; // ❌ Return false on exception
+  } finally {
+    isLoading.value = false;
   }
+}
 
   /// ✅ Search Deliveries (helper for UI filters)
   Future<void> searchDeliveries({

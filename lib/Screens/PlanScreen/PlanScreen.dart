@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
+import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 import 'package:mess/Screens/PlanScreen/Views/AddPlanBottomSheet.dart';
 import 'package:mess/Screens/PlanScreen/Views/PlanCard.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
@@ -14,6 +16,7 @@ class PlanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final PlanController planController = Get.put(PlanController());
+    final VariationController variationController = Get.put(VariationController()); 
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       planController.fetchPlans(page: 1);
@@ -210,7 +213,6 @@ class PlanScreen extends StatelessWidget {
     );
   }
 }
-
 
 void _showDeleteDialog(
   BuildContext context,

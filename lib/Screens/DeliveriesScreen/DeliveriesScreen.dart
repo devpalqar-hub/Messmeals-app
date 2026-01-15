@@ -45,7 +45,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
     }
   }
 
-  /// Map dropdown value to API status
+ 
   String? _statusToApiValue(String value) {
     switch (value) {
       case "Pending":
@@ -77,7 +77,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// HEADER
+                
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -122,12 +122,11 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                   ),
                   SizedBox(height: 16.h),
 
-                  /// FILTERS
+                
                   _buildFilterRow(context),
 
                   SizedBox(height: 16.h),
 
-                  /// DELIVERY LIST
                   if (deliveries.isEmpty)
                     Center(
                       child: Padding(
@@ -150,16 +149,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                       return Padding(
                         padding: EdgeInsets.only(bottom: 12.h),
                         child: OrderCard(
-                          id: delivery.id,
-                          status: delivery.status,
-                          amount: "₹${delivery.plan?.price ?? '0'}",
-                          orderNo: deliveries.indexOf(delivery) + 1,
-                          customerName: user?.name ?? "Unknown",
-                          phone: user?.phone ?? "N/A",
-                          date:
-                              DateTime.tryParse(delivery.date) ?? DateTime.now(),
-                          addressLine1: customer?.address ?? "No address",
-                          email: user?.email ?? "",
+                          delivery: delivery,
                         ),
                       );
                     }).toList(),
@@ -175,7 +165,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
   Widget _buildFilterRow(BuildContext context) {
     return Row(
       children: [
-        /// STATUS FILTER
+
         Expanded(
           child: _dropdown(
             value: selectedStatus,
@@ -193,7 +183,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
         ),
         SizedBox(width: 10.w),
 
-        /// DATE FILTER
+       
         Expanded(
           child: InkWell(
             onTap: () => _selectDate(context),

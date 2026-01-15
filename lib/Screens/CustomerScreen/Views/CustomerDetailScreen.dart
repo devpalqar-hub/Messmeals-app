@@ -71,7 +71,7 @@ class CustomerDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// ---------- HEADER ----------
+                
                   Row(
                     children: [
                       IconButton(
@@ -117,12 +117,12 @@ class CustomerDetailScreen extends StatelessWidget {
 
                   SizedBox(height: 12.h),
 
-                  /// ---------- PROFILE CARD ----------
+              
                   _profileCard(current),
 
                   SizedBox(height: 16.h),
 
-                  /// ---------- WALLET + STATS ----------
+            
                   Row(
                     children: [
                       Expanded(
@@ -215,7 +215,7 @@ class CustomerDetailScreen extends StatelessWidget {
 
                   SizedBox(height: 16.h),
 
-                  /// ---------- SUBSCRIPTION ----------
+                 
                   if (current.activeSubscriptions.isEmpty)
                     _noSubscriptionCard(
                         context, controller, current)
@@ -328,7 +328,7 @@ class CustomerDetailScreen extends StatelessWidget {
     );
   }
 
-  /// ---------- HELPERS ----------
+  
 
   Widget _profileCard(CustomerModel current) => Container(
         padding: EdgeInsets.all(16.w),

@@ -27,7 +27,7 @@ class _CancelSubscriptionBottomSheetState
   DateTime? rangeEnd;
   late DateTime focusedDay;
 
-  String cancelType = "RANGE"; // RANGE or ALL
+  String cancelType = "RANGE"; 
 
   @override
   void initState() {
@@ -49,7 +49,6 @@ class _CancelSubscriptionBottomSheetState
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        // dynamically control scroll based on cancel type
         constraints: BoxConstraints(
           maxHeight: cancelType == "ALL"
               ? MediaQuery.of(context).size.height * 0.4
@@ -62,7 +61,7 @@ class _CancelSubscriptionBottomSheetState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle bar
+
               Center(
                 child: Container(
                   width: 40,
@@ -100,7 +99,7 @@ class _CancelSubscriptionBottomSheetState
               ),
               const SizedBox(height: 10),
 
-              // Cancel options
+  
               RadioListTile<String>(
                 title: const Text("Cancel for a specific range"),
                 value: "RANGE",
@@ -116,7 +115,7 @@ class _CancelSubscriptionBottomSheetState
                 onChanged: (v) => setState(() => cancelType = v!),
               ),
 
-              // Only show range picker when RANGE is selected
+         
               if (cancelType == "RANGE") ...[
                 const SizedBox(height: 10),
                 const Text(

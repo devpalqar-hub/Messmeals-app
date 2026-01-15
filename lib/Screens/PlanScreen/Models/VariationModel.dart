@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:mess/main.dart';
 
-/// --------- MODEL CLASSES ---------
+
 class PlanSummary {
   final String id;
   final String planName;

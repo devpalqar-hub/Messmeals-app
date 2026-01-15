@@ -40,7 +40,7 @@ class RevnueAccountCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          /// ✅ Label text (top line)
+      
           Text(
             label,
             style: TextStyle(
@@ -52,7 +52,7 @@ class RevnueAccountCard extends StatelessWidget {
 
           SizedBox(height: 8.h),
 
-          /// ✅ Main Value text
+       
           Text(
             value,
             style: TextStyle(
@@ -62,7 +62,7 @@ class RevnueAccountCard extends StatelessWidget {
             ),
           ),
 
-          /// ✅ Optional Subtitle
+        
           if (subtitle != null) ...[
             SizedBox(height: 4.h),
             Text(

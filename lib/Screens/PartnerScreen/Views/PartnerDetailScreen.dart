@@ -48,7 +48,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// ---------- HEADER ----------
+              
                 Row(
                   children: [
                     IconButton(
@@ -94,7 +94,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
 
                     SizedBox(width: 8.w),
 
-                    /// DELETE BUTTON
+                   
                     GestureDetector(
                       onTap: () => _confirmDelete(context, partner.id),
                       child: _actionButton(Icons.delete_outline, "Delete"),
@@ -104,7 +104,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
 
                 SizedBox(height: 10.h),
 
-                /// ---------- PROFILE CARD ----------
+            
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16.w),
@@ -162,7 +162,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
 
                 SizedBox(height: 16.h),
 
-                /// ---------- STATS GRID ----------
+               
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -207,7 +207,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
     );
   }
 
-  /// ---------- INFO ROW ----------
+ 
   Widget _infoRow(IconData icon, String text) {
     return Row(
       children: [
@@ -227,7 +227,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
     );
   }
 
-  /// ---------- ACTION BUTTON ----------
+ 
   Widget _actionButton(IconData icon, String label) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
@@ -254,40 +254,30 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
     );
   }
 
-  /// ---------- DELETE CONFIRMATION ----------
   void _confirmDelete(BuildContext context, String partnerId) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        title: Text(
-          "Delete Partner",
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16.sp,
-          ),
-        ),
-        content: Text(
-          "Are you sure you want to delete this partner?",
-          style: TextStyle(fontSize: 14.sp),
-        ),
+       
+       title: const Text("Delete Partner"),
+        content: const Text("Are you sure you want to delete this partner?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              "Cancel",
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey[700]),
-            ),
+            child: const Text("Cancel"),
           ),
+
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
+               await controller.deletePartner(partnerId);
               await controller.fetchPartners();
               Get.back();
               Get.snackbar("Success", "Partner deleted successfully",
                   snackPosition: SnackPosition.BOTTOM);
+                   if (Navigator.canPop(context)) {
+                Navigator.pop(context, true);
+              }
             },
             child: Text(
               "Delete",
@@ -299,3 +289,4 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
     );
   }
 }
+ 

@@ -102,12 +102,12 @@ class PlanCard extends StatelessWidget {
             ),
             SizedBox(width: 14.w),
 
-            /// ---------- Right Content ----------
+           
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// ---------- Title + Price ----------
+                 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -135,7 +135,7 @@ class PlanCard extends StatelessWidget {
 
                   SizedBox(height: 8.h),
 
-                  /// ---------- Description + Min Price ----------
+                  
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -164,7 +164,6 @@ class PlanCard extends StatelessWidget {
 
                   SizedBox(height: 10.h),
 
-                  /// ---------- Meals + Edit/Delete ----------
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

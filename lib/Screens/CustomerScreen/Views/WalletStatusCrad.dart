@@ -56,13 +56,11 @@ class WalletStatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// ---------------------------
-          /// FIRST ROW: icon + label (left)  |  value (right, middle-aligned)
-          /// ---------------------------
+       
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center, // ⬅️ Center vertically
+            crossAxisAlignment: CrossAxisAlignment.center, 
             children: [
-              // Icon container
+            
               Container(
                 padding:  EdgeInsets.all(12.h),
                 decoration: BoxDecoration(
@@ -73,13 +71,13 @@ class WalletStatusCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
 
-              // Label on left and value on right
+           
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Label
+                    
                     Expanded(
                       child: Text(
                         label.toUpperCase(),
@@ -90,7 +88,7 @@ class WalletStatusCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Value (only if primary)
+                    
                     if (isPrimary)
                       Text(
                         value,
@@ -103,9 +101,6 @@ class WalletStatusCard extends StatelessWidget {
             ],
           ),
 
-          /// ---------------------------
-          /// INLINE TEXT + BUTTON (only for primary)
-          /// ---------------------------
           if (isPrimary && (preButtonText != null || actionText != null)) ...[
              SizedBox(height: 8.h),
             Row(
@@ -153,9 +148,6 @@ class WalletStatusCard extends StatelessWidget {
             ),
           ],
 
-          /// ---------------------------
-          /// VALUE BELOW (only for non-primary cards)
-          /// ---------------------------
           if (!isPrimary) ...[
              SizedBox(height: 10.h),
             Text(
