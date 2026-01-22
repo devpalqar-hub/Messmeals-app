@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class RevenueCard extends StatelessWidget {
-  final double? totalRevenue;     
-  final int? completedOrders;     
-  final double? todaysRevenue;    
+  final double? totalRevenue;
+  final int? completedOrders;
+  final double? todaysRevenue;
 
   const RevenueCard({
     super.key,
@@ -17,7 +17,7 @@ class RevenueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 360.w,
-      height: 160.h,
+      height: 140.h,
       decoration: BoxDecoration(
         color: const Color(0xff5B9A9E),
         borderRadius: BorderRadius.circular(24.0),
@@ -45,7 +45,7 @@ class RevenueCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8.0),
-  Text(
+            Text(
               '₹${(totalRevenue ?? 0).toStringAsFixed(2)}',
               style: const TextStyle(
                 fontSize: 26.0,
@@ -58,11 +58,7 @@ class RevenueCard extends StatelessWidget {
 
             Row(
               children: [
-                Icon(
-                  Icons.trending_up,
-                  color: Colors.white,
-                  size: 20.sp,
-                ),
+                Icon(Icons.trending_up, color: Colors.white, size: 20.sp),
                 const SizedBox(width: 6),
                 Text(
                   completedOrders != null

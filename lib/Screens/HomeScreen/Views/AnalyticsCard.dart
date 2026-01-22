@@ -22,10 +22,11 @@ class AnalyticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-     
+      height: 150.w,
+      width: 130.w,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -50,7 +51,7 @@ class AnalyticsCard extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontSize: 14.sp,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w500,
               color: Colors.grey[700],
             ),
@@ -62,21 +63,18 @@ class AnalyticsCard extends StatelessWidget {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 22.sp,
+                  fontSize: 21.sp,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
-              if (subtitle != null) ...[
-                SizedBox(width: 6.w),
-                Text(
-                  subtitle!,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ]
+              // if (subtitle != null) ...[
+              //   SizedBox(width: 6.w),
+              //   Text(
+              //     subtitle!,
+              //     style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+              //   ),
+              // ],
             ],
           ),
         ],

@@ -14,7 +14,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
 
-  final DashboardController dashboardController = Get.put(DashboardController());
+  final DashboardController dashboardController = Get.put(
+    DashboardController(),
+  );
   final AuthController authController = Get.put(AuthController());
 
   @override
@@ -24,7 +26,8 @@ class HomeScreen extends StatelessWidget {
         final stats = dashboardController.dashboardData.value;
         final isLoading = dashboardController.isLoading.value;
         final userName = authController.currentUser.value?.name ?? "Admin";
-        final userEmail = authController.currentUser.value?.email ?? "admin@email.com";
+        final userEmail =
+            authController.currentUser.value?.email ?? "admin@email.com";
 
         final totalRevenue = stats?.totalRevenue ?? 0.0;
         final completedOrders = stats?.completedOrders ?? 0;
@@ -47,22 +50,25 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-             
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                 
                     GestureDetector(
                       onTap: () {
                         showModalBottomSheet(
                           context: context,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(25.r),
+                            ),
                           ),
                           backgroundColor: Colors.white,
                           builder: (context) {
                             return Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 25.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 5.w,
+                                vertical: 25.h,
+                              ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -86,7 +92,9 @@ class HomeScreen extends StatelessWidget {
                                         ),
                                         child: Center(
                                           child: Text(
-                                            userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
+                                            userName.isNotEmpty
+                                                ? userName[0].toUpperCase()
+                                                : 'A',
                                             style: GoogleFonts.poppins(
                                               fontSize: 20.sp,
                                               fontWeight: FontWeight.w600,
@@ -95,9 +103,10 @@ class HomeScreen extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                    
+
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             userName,
@@ -121,15 +130,20 @@ class HomeScreen extends StatelessWidget {
                                   Divider(color: Colors.grey[300]),
                                   SizedBox(height: 10.h),
 
-                           
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton.icon(
                                       onPressed: () {
                                         Navigator.pop(context);
-                                        _showLogoutDialog(context, authController);
+                                        _showLogoutDialog(
+                                          context,
+                                          authController,
+                                        );
                                       },
-                                      icon: const Icon(Icons.logout, color: Colors.white),
+                                      icon: const Icon(
+                                        Icons.logout,
+                                        color: Colors.white,
+                                      ),
                                       label: Text(
                                         "Logout",
                                         style: GoogleFonts.poppins(
@@ -141,9 +155,13 @@ class HomeScreen extends StatelessWidget {
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.redAccent,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12.r),
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
                                         ),
-                                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 12.h,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -163,7 +181,9 @@ class HomeScreen extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
+                            userName.isNotEmpty
+                                ? userName[0].toUpperCase()
+                                : 'A',
                             style: TextStyle(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w500,
@@ -173,46 +193,89 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: TittleText(
+                        text: userName,
+                        size: 18.sp,
+                        maxLines: 1,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
 
-                   
-                    TittleText(text: userName,size: 16.sp,fontWeight: FontWeight.w800,),
-
-                   
                     Obx(() {
                       final messes = authController.ownedMesses;
-                      final selectedMessId = authController.selectedMessId.value;
+                      final selectedMessId =
+                          authController.selectedMessId.value;
 
                       return Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                        width: 130.w,
+                        height: 35.h,
+                        alignment: Alignment.centerLeft,
+                        //   constraints: BoxConstraints(maxWidth: 150.w, m),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 2.h,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF5F3F3),
                           borderRadius: BorderRadius.circular(12.r),
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: selectedMessId.isNotEmpty ? selectedMessId : null,
-                            hint: Text(
-                              messes.isEmpty ? "No Messes" : "Select Mess",
-                              style: TextStyle(fontSize: 12.sp, color: Colors.black54),
-                            ),
-                            items: messes
-                                .map((mess) => DropdownMenuItem<String>(
-                                      value: mess["id"],
-                                      child: Text(
-                                        mess["name"] ?? "Unnamed",
-                                        style: TextStyle(fontSize: 11.sp),
+                        child:
+                            (messes.length == 1)
+                                ? Text(
+                                  messes.first["name"],
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.black54,
+                                  ),
+                                )
+                                : DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    dropdownColor: Colors.white,
+                                    value:
+                                        selectedMessId.isNotEmpty
+                                            ? selectedMessId
+                                            : null,
+                                    hint: Text(
+                                      messes.isEmpty
+                                          ? "No Messes"
+                                          : "Select Mess",
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.black54,
                                       ),
-                                    ))
-                                .toList(),
-                            onChanged: (value) async {
-                              if (value != null) {
-                                authController.selectedMessId.value = value;
-                                final prefs = await SharedPreferences.getInstance();
-                                await prefs.setString("selectedMessId", value);
-                              }
-                            },
-                          ),
-                        ),
+                                    ),
+                                    items:
+                                        messes
+                                            .map(
+                                              (mess) =>
+                                                  DropdownMenuItem<String>(
+                                                    value: mess["id"],
+                                                    child: Text(
+                                                      mess["name"] ?? "Unnamed",
+                                                      style: TextStyle(
+                                                        fontSize: 11.sp,
+                                                      ),
+                                                    ),
+                                                  ),
+                                            )
+                                            .toList(),
+                                    onChanged: (value) async {
+                                      if (value != null) {
+                                        authController.selectedMessId.value =
+                                            value;
+                                        final prefs =
+                                            await SharedPreferences.getInstance();
+                                        await prefs.setString(
+                                          "selectedMessId",
+                                          value,
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ),
                       );
                     }),
                   ],
@@ -220,7 +283,6 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 20.h),
 
-              
                 RevenueCard(
                   totalRevenue: totalRevenue,
                   completedOrders: completedOrders,
@@ -229,13 +291,15 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 20.h),
 
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16.h,
-                  crossAxisSpacing: 16.w,
-                  childAspectRatio: 1.1,
+                Wrap(
+                  // shrinkWrap: true,
+                  // physics: const NeverScrollableScrollPhysics(),
+                  // crossAxisCount: 2,
+                  // mainAxisSpacing: 16.h,
+                  // crossAxisSpacing: 16.w,
+                  spacing: 10.w,
+                  runSpacing: 10.w,
+                  // childAspectRatio: 1.1,
                   children: [
                     AnalyticsCard(
                       icon: Icons.shopping_bag_outlined,
@@ -271,7 +335,6 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 20.h),
 
-               
                 Row(
                   children: [
                     Expanded(
@@ -302,7 +365,6 @@ class HomeScreen extends StatelessWidget {
 
                 SizedBox(height: 40.h),
 
-              
                 const MealChartCard(),
 
                 SizedBox(height: 60.h),
@@ -315,28 +377,32 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-
 void _showLogoutDialog(BuildContext context, AuthController authController) {
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
-      title: const Text("Confirm Logout"),
-      content: const Text("Are you sure you want to log out?"),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
+    builder:
+        (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.r),
+          ),
+          title: const Text("Confirm Logout"),
+          content: const Text("Are you sure you want to log out?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                await authController.logout();
+              },
+              child: const Text("Logout"),
+            ),
+          ],
         ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-          onPressed: () async {
-            Navigator.pop(context);
-            await authController.logout();
-          },
-          child: const Text("Logout"),
-        ),
-      ],
-    ),
   );
 }
