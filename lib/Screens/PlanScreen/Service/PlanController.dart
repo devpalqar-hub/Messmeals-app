@@ -32,7 +32,6 @@ class PlanController extends GetxController {
     }).toList();
   }
 
-
   Future<void> ensureLoaded() async {
     if (isReady) return;
     if (plans.isEmpty) {
@@ -74,8 +73,7 @@ class PlanController extends GetxController {
         totalPages = meta['totalPages'] ?? 1;
         limit = meta['limit'] ?? itemsPerPage;
       } else {
-        errorMessage =
-            "Failed to fetch plans (Status: ${response.statusCode})";
+        errorMessage = "Failed to fetch plans (Status: ${response.statusCode})";
       }
     } catch (e) {
       errorMessage = e.toString();
@@ -86,149 +84,138 @@ class PlanController extends GetxController {
     }
   }
 
-Future<bool> addPlan({
-  required String planName,
-  required String price,
-  required String minPrice,
-  required String description,
-  required List<String> variationIds,
-  File? imageFile,
-}) async {
-  try {
-    isLoading = true;
-    update();
+  Future<bool> addPlan({
+    required String planName,
+    required String price,
+    required String minPrice,
+    required String description,
+    required List<String> variationIds,
+    File? imageFile,
+  }) async {
+    try {
+      isLoading = true;
+      update();
 
-    final messId = authController.selectedMessId.value;
-    final uri = Uri.parse("$baseUrl/plans");
+      final messId = authController.selectedMessId.value;
+      final uri = Uri.parse("$baseUrl/plans");
 
-    final request = http.MultipartRequest('POST', uri)
-      ..headers["Authorization"] = bearerToken
-      ..fields.addAll({
-        'planName': planName,
-        'price': price,
-        'minPrice': minPrice,
-        'description': description,
-        'variationIds': jsonEncode(variationIds),
-        'messId': messId,
+      final request =
+          http.MultipartRequest('POST', uri)
+            ..headers["Authorization"] = bearerToken
+            ..fields.addAll({
+              'planName': planName,
+              'price': price,
+              'minPrice': minPrice,
+              "isDailyPlan": "true",
+              'description': description,
+              'variationIds': jsonEncode(variationIds),
+              'messId': messId,
+            });
+
+      request.fields.forEach((key, value) {
+        debugPrint("   $key : $value");
       });
 
-    
-    request.fields.forEach((key, value) {
-      debugPrint("   $key : $value");
-    });
+      if (imageFile != null && await imageFile.exists()) {
+        final file = await http.MultipartFile.fromPath(
+          'planImages',
+          imageFile.path,
+        );
+        request.files.add(file);
+      }
 
-    if (imageFile != null && await imageFile.exists()) {
-      final file = await http.MultipartFile.fromPath(
-        'planImages',
-        imageFile.path,
-      );
-      request.files.add(file);
+      final response = await request.send();
+      final body = await response.stream.bytesToString();
+      print(body);
+      if (response.statusCode == 201) {
+        await refreshPlans();
+        await dashboardController.fetchDashboardStats();
 
-     
-    }
+        _showSnackBar(
+          title: "Success",
+          message: "Plan added successfully",
+          color: Colors.green,
+        );
 
-    final response = await request.send();
-    final body = await response.stream.bytesToString();
-
-    
-    if (response.statusCode == 201) {
-      await refreshPlans();
-      await dashboardController.fetchDashboardStats();
-
-      _showSnackBar(
-        title: "Success",
-        message: "Plan added successfully",
-        color: Colors.green,
-      );
-
-      return true;
-    } else {
-      _showSnackBar(
-        title: "Error",
-        message: "Failed to add plan: ${response.statusCode}",
-        color: Colors.red,
-      );
+        return true;
+      } else {
+        _showSnackBar(
+          title: "Error",
+          message: "Failed to add plan: ${response.statusCode}",
+          color: Colors.red,
+        );
+        return false;
+      }
+    } catch (e, stack) {
+      _showSnackBar(title: "Error", message: e.toString(), color: Colors.red);
       return false;
+    } finally {
+      isLoading = false;
+      update();
     }
-  } catch (e, stack) {
-    
-    _showSnackBar(
-      title: "Error",
-      message: e.toString(),
-      color: Colors.red,
-    );
-    return false;
-  } finally {
-    isLoading = false;
-    update();
   }
-}
 
+  Future<bool> editPlan({
+    required String id,
+    required String planName,
+    required String price,
+    required String minPrice,
+    required String description,
+    required List<String> variationIds,
+    File? imageFile,
+  }) async {
+    try {
+      isLoading = true;
+      update();
 
-Future<bool> editPlan({
-  required String id,
-  required String planName,
-  required String price,
-  required String minPrice,
-  required String description,
-  required List<String> variationIds,
-  File? imageFile,
-}) async {
-  try {
-    isLoading = true;
-    update();
+      final messId = authController.selectedMessId.value;
+      final uri = Uri.parse("$baseUrl/plans/$id");
+      final request =
+          http.MultipartRequest('PATCH', uri)
+            ..headers["Authorization"] = bearerToken
+            ..fields.addAll({
+              'planName': planName,
+              'price': price,
+              'minPrice': minPrice,
+              'description': description,
+              'variationIds': jsonEncode(variationIds),
+              'messId': messId,
+            });
 
-    final messId = authController.selectedMessId.value;
-    final uri = Uri.parse("$baseUrl/plans/$id");
-    final request = http.MultipartRequest('PATCH', uri)
-      ..headers["Authorization"] = bearerToken
-      ..fields.addAll({
-        'planName': planName,
-        'price': price,
-        'minPrice': minPrice,
-        'description': description,
-        'variationIds': jsonEncode(variationIds),
-        'messId': messId,
-      });
+      if (imageFile != null && await imageFile.exists()) {
+        request.files.add(
+          await http.MultipartFile.fromPath('planImages', imageFile.path),
+        );
+      }
 
-    if (imageFile != null && await imageFile.exists()) {
-      request.files.add(
-        await http.MultipartFile.fromPath('planImages', imageFile.path),
-      );
-    }
+      final response = await request.send();
 
-    final response = await request.send();
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await refreshPlans();
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      await refreshPlans();
+        _showSnackBar(
+          title: "Updated",
+          message: "Plan updated successfully",
+          color: Colors.green,
+        );
 
-      _showSnackBar(
-        title: "Updated",
-        message: "Plan updated successfully",
-        color: Colors.green,
-      );
-
-      return true; 
-    } else {
-      _showSnackBar(
-        title: "Error",
-        message: "Failed to update plan: ${response.statusCode}",
-        color: Colors.red,
-      );
+        return true;
+      } else {
+        _showSnackBar(
+          title: "Error",
+          message: "Failed to update plan: ${response.statusCode}",
+          color: Colors.red,
+        );
+        return false;
+      }
+    } catch (e) {
+      _showSnackBar(title: "Error", message: e.toString(), color: Colors.red);
       return false;
+    } finally {
+      isLoading = false;
+      update();
     }
-  } catch (e) {
-    _showSnackBar(
-      title: "Error",
-      message: e.toString(),
-      color: Colors.red,
-    );
-    return false;
-  } finally {
-    isLoading = false;
-    update();
   }
-}
 
   Future<void> deletePlan(String id) async {
     try {
@@ -248,7 +235,7 @@ Future<bool> editPlan({
         plans.removeWhere((p) => p.id == id);
         await dashboardController.fetchDashboardStats();
 
-        update(); 
+        update();
         _showSnackBar(
           title: "Deleted",
           message: "Plan deleted successfully",
@@ -262,11 +249,7 @@ Future<bool> editPlan({
         );
       }
     } catch (e) {
-      _showSnackBar(
-        title: "Error",
-        message: e.toString(),
-        color: Colors.red,
-      );
+      _showSnackBar(title: "Error", message: e.toString(), color: Colors.red);
     }
   }
 
@@ -275,7 +258,6 @@ Future<bool> editPlan({
     await fetchPlans(page: 1);
   }
 
- 
   void _showSnackBar({
     required String title,
     required String message,
