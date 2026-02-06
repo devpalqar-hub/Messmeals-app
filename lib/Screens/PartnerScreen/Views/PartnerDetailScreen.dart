@@ -5,6 +5,9 @@ import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/StatusCard.dart';
+import 'package:mess/Screens/PartnerScreen/Views/PartnerCard.dart';
+import 'package:mess/Screens/PartnerScreen/Views/StatsCard.dart';
+
 
 class PartnerDetailsScreen extends StatefulWidget {
   final String partnerId;
@@ -161,8 +164,30 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                 ),
 
                 SizedBox(height: 16.h),
+                StatusCard(
+                  value: partner.isActive,
+                  onChanged: (val) async {
+                    await controller.updatePartner(
+                      id: partner.id,
+                      isActive: val,
+                    );
 
-               
+                    await controller.fetchPartnerById(widget.partnerId);
+
+                    Get.snackbar(
+                      "Updated",
+                      "Partner status updated successfully",
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
+                ),
+
+
+
+                SizedBox(height: 16.h),
+
+
+
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -197,6 +222,7 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                     ),
                   ],
                 ),
+
 
                 SizedBox(height: 16.h),
               ],

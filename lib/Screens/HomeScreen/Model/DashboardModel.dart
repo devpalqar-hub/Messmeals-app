@@ -1,4 +1,3 @@
-// lib/Screens/DashboardScreen/Model/DashboardModel.dart
 class DashboardModel {
   final double totalRevenue;
   final int completedOrders;
@@ -10,6 +9,9 @@ class DashboardModel {
   final double pendingRevenue;
   final double todaysRevenue;
 
+
+  final double partnerRevenue;
+
   DashboardModel({
     required this.totalRevenue,
     required this.completedOrders,
@@ -20,6 +22,9 @@ class DashboardModel {
     required this.avgPerCustomer,
     required this.pendingRevenue,
     required this.todaysRevenue,
+
+
+    required this.partnerRevenue,
   });
 
   factory DashboardModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +38,9 @@ class DashboardModel {
       avgPerCustomer: (json['avgPerCustomer'] ?? 0).toDouble(),
       pendingRevenue: (json['pendingRevenue'] ?? 0).toDouble(),
       todaysRevenue: (json['todaysRevenue'] ?? 0).toDouble(),
+
+
+      partnerRevenue: (json['partnerRevenue'] ?? 0).toDouble(),
     );
   }
 }

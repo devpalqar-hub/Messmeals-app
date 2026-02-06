@@ -83,7 +83,7 @@ class DashboardController extends GetxController {
 
   Future<void> fetchVariationCount(DateTime date) async {
     try {
-      isVariationLoading.value = true;
+      variationData.value = null;
       final token = await _getToken();
       final messId = authController.selectedMessId.value;
 

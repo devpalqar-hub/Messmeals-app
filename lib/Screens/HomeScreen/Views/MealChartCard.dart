@@ -14,7 +14,8 @@ class MealChartCard extends StatefulWidget {
 }
 
 class _MealChartCardState extends State<MealChartCard> {
-  final DashboardController controller = Get.put(DashboardController());
+  final DashboardController controller = Get.find<DashboardController>();
+
 
   Future<void> _pickDate(BuildContext context) async {
     final DateTime now = DateTime.now();

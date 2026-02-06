@@ -36,17 +36,17 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    signingConfigs {
-        create("release") {
-            val storeFilePath = keystoreProperties["storeFile"] as String?
-            if (storeFilePath != null) {
-                storeFile = file(storeFilePath)
-            }
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storePassword = keystoreProperties["storePassword"] as String
-        }
-    }
+   // signingConfigs {
+       // create("release") {
+            //val storeFilePath = keystoreProperties["storeFile"] as String?
+          //  if (storeFilePath != null) {
+               // storeFile = file(storeFilePath)
+          //  }
+          //  keyAlias = keystoreProperties["keyAlias"] as String
+          //  keyPassword = keystoreProperties["keyPassword"] as String
+          //  storePassword = keystoreProperties["storePassword"] as String
+      //  }
+   // }
 
     buildTypes {
         release {
@@ -56,7 +56,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+           // signingConfig = signingConfigs.getByName("release")
         }
 
         debug {

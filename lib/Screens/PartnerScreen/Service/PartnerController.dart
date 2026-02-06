@@ -169,9 +169,10 @@ class PartnerController extends GetxController {
         if (phone != null) "phone": phone,
         if (email != null) "email": email,
         if (address != null) "address": address,
-        if (isActive != null) "isActive": isActive,
+        if (isActive != null) "is_active": isActive,
         "messId": messId,
       };
+
 
       final response = await http.patch(
         Uri.parse('$baseUrl/delivery-agent/$id'),

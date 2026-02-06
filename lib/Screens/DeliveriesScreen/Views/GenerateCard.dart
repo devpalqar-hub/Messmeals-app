@@ -7,7 +7,8 @@ class GenerateDeliveriesDialog extends StatefulWidget {
   const GenerateDeliveriesDialog({super.key});
 
   @override
-  State<GenerateDeliveriesDialog> createState() => _GenerateDeliveriesDialogState();
+  State<GenerateDeliveriesDialog> createState() =>
+      _GenerateDeliveriesDialogState();
 }
 
 class _GenerateDeliveriesDialogState extends State<GenerateDeliveriesDialog> {
@@ -17,7 +18,6 @@ class _GenerateDeliveriesDialogState extends State<GenerateDeliveriesDialog> {
   Future<void> _pickDate(BuildContext context) async {
     DateTime initialDate = DateTime.now();
 
-    // if a valid date was already chosen
     if (dateController.text.isNotEmpty) {
       try {
         initialDate = DateFormat('yyyy-MM-dd').parse(dateController.text);
@@ -49,7 +49,7 @@ class _GenerateDeliveriesDialogState extends State<GenerateDeliveriesDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // HEADER
+            /// HEADER
             Row(
               children: [
                 const Spacer(),
@@ -58,48 +58,42 @@ class _GenerateDeliveriesDialogState extends State<GenerateDeliveriesDialog> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    fontFamily: "Inter",
-                    color: Colors.black87,
                   ),
                 ),
                 const Spacer(),
                 InkWell(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, size: 20, color: Colors.black54),
+                  child: const Icon(Icons.close, size: 20),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
 
+            const SizedBox(height: 16),
+
+            /// DESCRIPTION
             const Text(
               "Select a date to generate deliveries for all active customers",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                fontFamily: "Inter",
-                color: Color(0xff717182),
-              ),
             ),
+
             const SizedBox(height: 20),
 
-            // DATE INPUT
-            Align(
+            /// DATE LABEL
+            const Align(
               alignment: Alignment.centerLeft,
-              child: const Text(
+              child: Text(
                 "Delivery Date",
-                style: TextStyle(
-                  fontFamily: "Inter",
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xff0A0A0A),
-                  fontSize: 14,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
+
             const SizedBox(height: 8),
+
+            /// DATE INPUT
             TextField(
               controller: dateController,
               readOnly: true,
+              onTap: () => _pickDate(context),
               decoration: InputDecoration(
                 hintText: "Select date",
                 filled: true,
@@ -110,11 +104,11 @@ class _GenerateDeliveriesDialogState extends State<GenerateDeliveriesDialog> {
                 ),
                 suffixIcon: const Icon(Icons.calendar_today_outlined),
               ),
-              onTap: () => _pickDate(context),
             ),
-            const SizedBox(height: 14),
 
-            // INFO BOX
+            const SizedBox(height: 18),
+
+            /// INFO BOX
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -123,73 +117,68 @@ class _GenerateDeliveriesDialogState extends State<GenerateDeliveriesDialog> {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
-                "This will create 3 delivery records for all active customers on the selected date.",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: "Inter",
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black87,
-                ),
+                "This will create delivery records for all active customers on the selected date.",
               ),
             ),
 
             const SizedBox(height: 22),
 
-            // BUTTONS
+            /// BUTTONS
             Column(
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  height: 40,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff030213),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                /// GENERATE BUTTON
+                Obx(
+                      () => SizedBox(
+                    width: double.infinity,
+                    height: 40,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff030213),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
-                    ),
-                    onPressed: () async {
-                      if (dateController.text.isEmpty) {
-                        Get.snackbar("Error", "Please select a date");
-                        return;
-                      }
+                      onPressed: controller.isLoading.value
+                          ? null
+                          : () async {
+                        if (dateController.text.isEmpty) {
+                          Get.snackbar(
+                              "Error", "Please select a date");
+                          return;
+                        }
 
-                      // ✅ Convert String → DateTime before passing
-                      final selectedDate = DateFormat('yyyy-MM-dd').parse(dateController.text);
+                        final selectedDate =
+                        DateFormat('yyyy-MM-dd')
+                            .parse(dateController.text);
 
-                      await controller.generateDeliveriesByDate(selectedDate);
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                      "Generate",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: "Inter",
-                        fontSize: 14,
-                      ),
+                        await controller
+                            .generateDeliveriesByDate(selectedDate);
+
+                        if (mounted) Navigator.pop(context);
+                      },
+                      child: controller.isLoading.value
+                          ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                          : const Text("Generate"),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 10),
+
+                /// CANCEL BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 40,
                   child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey[300]!),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      "Cancel",
-                      style: TextStyle(
-                        color: Color(0xff0A0A0A),
-                        fontFamily: "Inter",
-                        fontSize: 14,
-                      ),
-                    ),
+                    child: const Text("Cancel"),
                   ),
                 ),
               ],

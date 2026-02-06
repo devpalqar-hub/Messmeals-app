@@ -228,73 +228,62 @@ class _AddPlanBottomSheetState extends State<AddPlanBottomSheet> {
                             onPressed: controller.isLoading
                                 ? null
                                 : () async {
-                                    if (!_formKey.currentState!.validate() ||
-                                        selectedVariationIds.isEmpty) {
-                                      _showSnack("Fill all required fields");
-                                      return;
-                                    }
+                              if (!_formKey.currentState!.validate() ||
+                                  selectedVariationIds.isEmpty) {
+                                _showSnack("Fill all required fields");
+                                return;
+                              }
 
-                                    if (!widget.isEdit &&
-                                        selectedImage == null) {
-                                      _showSnack("Please upload plan image");
-                                      return;
-                                    }
+                              if (!widget.isEdit && selectedImage == null) {
+                                _showSnack("Please upload plan image");
+                                return;
+                              }
 
-                                    final success = widget.isEdit
-                                        ? await controller.editPlan(
-                                            id: widget.planId!,
-                                            planName:
-                                                planNameController.text.trim(),
-                                            price:
-                                                priceController.text.trim(),
-                                            minPrice: minPriceController.text
-                                                .trim(),
-                                            description: descriptionController
-                                                .text
-                                                .trim(),
-                                            imageFile: selectedImage,
-                                            variationIds:
-                                                selectedVariationIds,
-                                          )
-                                        : await controller.addPlan(
-                                            planName:
-                                                planNameController.text.trim(),
-                                            price:
-                                                priceController.text.trim(),
-                                            minPrice: minPriceController.text
-                                                .trim(),
-                                            description: descriptionController
-                                                .text
-                                                .trim(),
-                                            imageFile: selectedImage!,
-                                            variationIds:
-                                                selectedVariationIds,
-                                          );
+                              final success = widget.isEdit
+                                  ? await controller.editPlan(
+                                id: widget.planId!,
+                                planName: planNameController.text.trim(),
+                                price: priceController.text.trim(),
+                                minPrice: minPriceController.text.trim(),
+                                description: descriptionController.text.trim(),
+                                imageFile: selectedImage,
+                                variationIds: selectedVariationIds,
+                              )
+                                  : await controller.addPlan(
+                                planName: planNameController.text.trim(),
+                                price: priceController.text.trim(),
+                                minPrice: minPriceController.text.trim(),
+                                description: descriptionController.text.trim(),
+                                imageFile: selectedImage!,
+                                variationIds: selectedVariationIds,
+                              );
 
-                                    if (success && mounted) {
-                                      Navigator.pop(context);
-                                    }
-                                  },
+                              if (success && mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
+
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.black,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(12.r),
+                                borderRadius: BorderRadius.circular(12.r),
                               ),
                             ),
+
                             child: controller.isLoading
                                 ? const SizedBox(
-                                    height: 18,
-                                    width: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white),
-                                  )
-                                : Text(widget.isEdit
-                                    ? "Update Plan"
-                                    : "Save Plan"),
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                                : Text(widget.isEdit ? "Update Plan" : "Save Plan"),
                           );
+
+
                         },
                       ),
                     ),

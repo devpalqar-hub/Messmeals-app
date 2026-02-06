@@ -52,6 +52,22 @@ class CustomerDetailScreen extends StatelessWidget {
         final activeSub = current.activeSubscriptions.isNotEmpty
             ? current.activeSubscriptions.first
             : null;
+        // 🔥 FIXED total spent calculation
+        int calculatedSpent = 0;
+
+        if (activeSub != null) {
+          final totalDays =
+              activeSub.endDate.difference(activeSub.startDate).inDays;
+
+          final pricePerDay =
+          activeSub.discountedPrice > 0
+              ? activeSub.discountedPrice
+              : activeSub.totalPrice;
+
+          calculatedSpent = totalDays * pricePerDay;
+        }
+
+
 
         final showRenewButton =
             activeSub != null && canRenew(activeSub.endDate);
@@ -188,30 +204,26 @@ class CustomerDetailScreen extends StatelessWidget {
                       Expanded(
                         child: WalletStatusCard(
                           icon: Icons.credit_card_rounded,
-                          iconColor:
-                              const Color(0xFFB066FF),
+                          iconColor: const Color(0xFFB066FF),
                           label: 'TOTAL\nSPENT',
-                          value:
-                              "₹${current.totalSpent}",
+                          value: "₹$calculatedSpent",
                         ),
                       ),
                       SizedBox(width: 12.w),
                       Expanded(
                         child: WalletStatusCard(
-                          icon:
-                              Icons.calendar_today_rounded,
-                          iconColor:
-                              const Color(0xFFFF8A3D),
+                          icon: Icons.calendar_today_rounded,
+                          iconColor: const Color(0xFFFF8A3D),
                           label: 'DAYS\nLEFT',
-                          value: current
-                                  .activeSubscriptions
-                                  .isNotEmpty
+                          value: current.activeSubscriptions.isNotEmpty
                               ? '${current.noOfDaysToEnd}'
                               : '0',
                         ),
                       ),
                     ],
                   ),
+
+
 
                   SizedBox(height: 16.h),
 

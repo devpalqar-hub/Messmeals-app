@@ -23,7 +23,7 @@ class AuthController extends GetxController {
   DateTime? tokenExpiry;
   Timer? _logoutTimer;
 
-  
+
   void log(String msg) => print("AUTH_LOG → $msg");
 
   void safeSnack(String title, String message) {
@@ -43,88 +43,88 @@ class AuthController extends GetxController {
   }
 
   Future<bool> sendOtp(String phone) async {
-  try {
-    isLoading(true); 
-    log("Sending OTP…");
+    try {
+      isLoading(true);
+      log("Sending OTP…");
 
-    final url = Uri.parse("$baseUrl/auth/send-login-otp");
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"phone": phone}),
-    );
+      final url = Uri.parse("$baseUrl/auth/send-login-otp");
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"phone": phone}),
+      );
 
-    final data = jsonDecode(response.body);
-    log("RAW RESPONSE → $data");
+      final data = jsonDecode(response.body);
+      log("RAW RESPONSE → $data");
 
-    if ((response.statusCode == 200 || response.statusCode == 201) &&
-        data["sessionId"] != null) {
-      sessionId.value = data["sessionId"];
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data["sessionId"] != null) {
+        sessionId.value = data["sessionId"];
+
+        Fluttertoast.showToast(
+          msg: data["message"] ?? "OTP sent successfully",
+          toastLength: Toast.LENGTH_SHORT,
+        );
+
+        return true;
+      }
+
 
       Fluttertoast.showToast(
-        msg: data["message"] ?? "OTP sent successfully",
+        msg: data["message"] ?? "User not registered",
         toastLength: Toast.LENGTH_SHORT,
       );
 
-      return true; 
+      return false;
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Something went wrong",
+        toastLength: Toast.LENGTH_SHORT,
+      );
+      log("Send OTP Error → $e");
+      return false;
+    } finally {
+      isLoading(false);
     }
-
-
-    Fluttertoast.showToast(
-      msg: data["message"] ?? "User not registered",
-      toastLength: Toast.LENGTH_SHORT,
-    );
-
-    return false;
-  } catch (e) {
-    Fluttertoast.showToast(
-      msg: "Something went wrong",
-      toastLength: Toast.LENGTH_SHORT,
-    );
-    log("Send OTP Error → $e");
-    return false;
-  } finally {
-    isLoading(false); 
   }
-}
 
 
- Future<bool> verifyOtp(String phone, String otp) async {
-  try {
-    log("Verifying OTP…");
+  Future<bool> verifyOtp(String phone, String otp) async {
+    try {
+      log("Verifying OTP…");
 
-    final url = Uri.parse("$baseUrl/auth/verify-otp");
-    final body = {
-      "phone": phone,
-      "sessionId": sessionId.value,
-      "otp": otp,
-    };
+      final url = Uri.parse("$baseUrl/auth/verify-otp");
+      final body = {
+        "phone": phone,
+        "sessionId": sessionId.value,
+        "otp": otp,
+      };
 
-    log("VERIFY BODY → $body");
+      log("VERIFY BODY → $body");
 
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(body),
-    );
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
 
-    final data = jsonDecode(response.body);
-    log("Verify OTP Response → $data");
+      final data = jsonDecode(response.body);
+      log("Verify OTP Response → $data");
 
-    if ((response.statusCode == 200 || response.statusCode == 201) &&
-        data["accessToken"] != null) {
-      await _onLoginSuccess(data);
-      return true; 
-    } else {
-      safeSnack("Error", data["message"] ?? "Invalid OTP");
-      return false; 
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data["accessToken"] != null) {
+        await _onLoginSuccess(data);
+        return true;
+      } else {
+        safeSnack("Error", data["message"] ?? "Invalid OTP");
+        return false;
+      }
+    } catch (e) {
+      safeSnack("Error", e.toString());
+      log("Verify OTP Error → $e");
+      return false;
     }
-  } catch (e) {
-    safeSnack("Error", e.toString());
-    log("Verify OTP Error → $e");
-    return false;
   }
-}
 
   Future<void> _onLoginSuccess(dynamic data) async {
     final prefs = await SharedPreferences.getInstance();
@@ -212,7 +212,7 @@ class AuthController extends GetxController {
 
         if (storedOwnedMesses != null) {
           ownedMesses.value =
-              List<Map<String, dynamic>>.from(jsonDecode(storedOwnedMesses));
+          List<Map<String, dynamic>>.from(jsonDecode(storedOwnedMesses));
         }
 
         tokenExpiry = expiry;
@@ -232,7 +232,8 @@ class AuthController extends GetxController {
     _logoutTimer?.cancel();
     if (tokenExpiry == null) return;
 
-    final secondsUntilLogout = tokenExpiry!.difference(DateTime.now()).inSeconds;
+    final secondsUntilLogout = tokenExpiry!.difference(DateTime.now())
+        .inSeconds;
 
     if (secondsUntilLogout > 0) {
       log("Auto-logout in $secondsUntilLogout seconds");
@@ -262,8 +263,11 @@ class AuthController extends GetxController {
 
   Future<void> logout({bool showMessage = true}) async {
     final prefs = await SharedPreferences.getInstance();
+
+    // 🔴 CLEAR ALL STORED DATA
     await prefs.clear();
 
+    // 🔴 RESET AUTH
     token.value = "";
     bearerToken = "";
     sessionId.value = "";
@@ -272,9 +276,10 @@ class AuthController extends GetxController {
     currentUser.value = null;
     isLoggedIn.value = false;
 
-    _logoutTimer?.cancel();
+    // 🔴 VERY IMPORTANT (fixes your bug)
+    Get.deleteAll(force: true); // clears ALL controllers
 
-    log("Logged out → Redirecting LoginScreen");
+    _logoutTimer?.cancel();
 
     Get.offAll(() => const LoginScreen());
 

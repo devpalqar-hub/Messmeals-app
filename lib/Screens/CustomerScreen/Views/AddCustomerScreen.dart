@@ -118,19 +118,32 @@ void _loadCustomerData() {
   }
 }
 
-    Future<void> _pickDate(BuildContext context, bool isStart) async {
+  Future<void> _pickDate(BuildContext context, bool isStart) async {
+    final today = DateTime.now();
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: (isStart ? startDate : endDate) ?? DateTime.now(),
-      firstDate: DateTime(2024),
+      initialDate: (isStart ? startDate : endDate) ?? today,
+      firstDate: today, // ✅ BLOCK PAST DATES
       lastDate: DateTime(2030),
     );
+
     if (picked != null) {
       setState(() {
-        if (isStart) startDate = picked; else endDate = picked;
+        if (isStart) {
+          startDate = picked;
+
+          // ✅ auto-fix end date if before start
+          if (endDate != null && endDate!.isBefore(startDate!)) {
+            endDate = startDate;
+          }
+        } else {
+          endDate = picked;
+        }
       });
     }
   }
+
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
@@ -362,7 +375,7 @@ void _loadCustomerData() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Address",
+        const Text("Address*",
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -373,7 +386,14 @@ void _loadCustomerData() {
           controller: addressController,
           maxLines: 2,
           decoration: _inputDecoration("Enter full address"),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Address is required";
+            }
+            return null;
+          },
         ),
+
         const SizedBox(height: 14),
         TextFormField(
           controller: locationController,

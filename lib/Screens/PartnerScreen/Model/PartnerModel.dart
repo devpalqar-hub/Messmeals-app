@@ -30,6 +30,21 @@ class Partner {
       stats: json['stats'] != null ? PartnerStats.fromJson(json['stats']) : null,
     );
   }
+
+  // ✅ ONLY ADD THIS (nothing else changed)
+  Partner copyWith({
+    bool? isActive,
+  }) {
+    return Partner(
+      id: id,
+      name: name,
+      email: email,
+      phone: phone,
+      isActive: isActive ?? this.isActive,
+      deliveryPartnerProfile: deliveryPartnerProfile,
+      stats: stats,
+    );
+  }
 }
 
 class PartnerProfile {

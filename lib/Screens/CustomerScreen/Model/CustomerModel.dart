@@ -14,6 +14,29 @@ class CustomerModel {
   final int totalSpent;
   final List<ActiveSubscription> activeSubscriptions;
 
+  int get daysLeft {
+    if (activeSubscriptions.isEmpty) return 0;
+
+    final today = DateTime.now();
+    final sub = activeSubscriptions.first;
+
+    final start = sub.startDate;
+    final end = sub.endDate;
+
+    // not started yet
+    if (today.isBefore(start)) return 0;
+
+    // expired
+    if (today.isAfter(end)) return 0;
+
+    // active
+    return end.difference(today).inDays;
+  }
+
+
+
+
+
   CustomerModel({
     required this.id,
     required this.customerProfileId,
