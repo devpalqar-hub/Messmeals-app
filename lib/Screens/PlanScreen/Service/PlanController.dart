@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
@@ -177,6 +178,8 @@ class PlanController extends GetxController {
               'planName': planName,
               'price': price,
               'minPrice': minPrice,
+              "isDailyPlan": "true",
+              "isMonthlyPlan": "false",
               'description': description,
               'variationIds': jsonEncode(variationIds),
               'messId': messId,
@@ -189,10 +192,8 @@ class PlanController extends GetxController {
       }
 
       final response = await request.send();
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         await refreshPlans();
-
         _showSnackBar(
           title: "Updated",
           message: "Plan updated successfully",
@@ -201,11 +202,7 @@ class PlanController extends GetxController {
 
         return true;
       } else {
-        _showSnackBar(
-          title: "Error",
-          message: "Failed to update plan: ${response.statusCode}",
-          color: Colors.red,
-        );
+        Fluttertoast.showToast(msg: "Plan updation Failed");
         return false;
       }
     } catch (e) {
