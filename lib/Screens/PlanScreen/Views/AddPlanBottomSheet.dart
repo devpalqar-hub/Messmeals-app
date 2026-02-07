@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class AddPlanBottomSheet extends StatefulWidget {
   final bool isEdit;
@@ -298,9 +299,13 @@ class _AddPlanBottomSheetState extends State<AddPlanBottomSheet> {
   }
 
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
-  }
+    Fluttertoast.showToast(
+      msg: msg,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
+
+}
 
   Widget _buildTextField(
     String label,

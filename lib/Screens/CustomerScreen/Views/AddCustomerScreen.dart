@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
@@ -148,15 +149,15 @@ void _loadCustomerData() {
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedMealPlan == null) {
-      Get.snackbar("Error", "Please select a meal plan");
+      Fluttertoast.showToast(msg: "Please select a meal plan");
       return;
     }
     if (selectedPartner == null) {
-      Get.snackbar("Error", "Please select a delivery partner");
+      Fluttertoast.showToast(msg: "Please select a delivery partner");
       return;
     }
     if (!isEdit && (startDate == null || endDate == null)) {
-      Get.snackbar("Error", "Please select start and end dates");
+      Fluttertoast.showToast(msg: "Please select start and end dates");
       return;
     }
 

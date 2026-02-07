@@ -22,44 +22,41 @@ class BottomBar extends StatelessWidget {
     ];
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1F2E),
-        borderRadius: const BorderRadius.all(
+      height: 60, // ✅ FIX 1 → fixed slim height
+      decoration: const BoxDecoration(
+        color: Color(0xFF1C1F2E),
+        borderRadius: BorderRadius.all(
           Radius.circular(16),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(items.length, (index) {
-            final item = items[index];
-            final isSelected = index == selectedIndex;
-        
-            return GestureDetector(
-              onTap: () => onItemTapped(index),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    item['icon'] as IconData,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(items.length, (index) {
+          final item = items[index];
+          final isSelected = index == selectedIndex;
+
+          return GestureDetector(
+            onTap: () => onItemTapped(index),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, // ✅ center items
+              children: [
+                Icon(
+                  item['icon'] as IconData,
+                  color: isSelected ? Colors.cyanAccent : Colors.grey,
+                  size: 20, // ✅ FIX 2 → smaller icon
+                ),
+                const SizedBox(height: 2), // ✅ less gap
+                Text(
+                  item['label'] as String,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10, // ✅ FIX 3 → smaller text
                     color: isSelected ? Colors.cyanAccent : Colors.grey,
-                    size: 28,
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    item['label'] as String,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: isSelected ? Colors.cyanAccent : Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ),
+                ),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }

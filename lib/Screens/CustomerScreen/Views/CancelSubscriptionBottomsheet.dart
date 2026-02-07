@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -243,10 +244,8 @@ class _CancelSubscriptionBottomSheetState
                             "end": rangeEnd,
                           });
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please select a valid cancel range'),
-                            ),
+                          Fluttertoast.showToast(
+                            msg: 'Please select a valid cancel range',
                           );
                         }
                       } else {

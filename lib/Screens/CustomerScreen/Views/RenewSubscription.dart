@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
   BuildContext context, {
@@ -223,10 +224,8 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                                   selectedPartnerId == null ||
                                   startCtrl.text.isEmpty ||
                                   endCtrl.text.isEmpty) {
-                                ScaffoldMessenger.of(ctx).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Please fill all required fields')),
+                                Fluttertoast.showToast(
+                                  msg: 'Please fill all required fields',
                                 );
                                 return;
                               }
@@ -240,10 +239,8 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                                   partner.deliveryPartnerProfile?.id;
                               if (partnerProfileId == null ||
                                   partnerProfileId.isEmpty) {
-                                ScaffoldMessenger.of(ctx).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Invalid delivery partner profile ID')),
+                                Fluttertoast.showToast(
+                                  msg: 'Invalid delivery partner profile ID',
                                 );
                                 return;
                               }
@@ -276,16 +273,12 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
 
                               if (success) {
                                 Navigator.pop(ctx);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Subscription renewed successfully!')),
+                                Fluttertoast.showToast(
+                                  msg: 'Subscription renewed successfully!',
                                 );
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Internal server error, please try again.')),
+                                Fluttertoast.showToast(
+                                  msg: 'Internal server error, please try again.',
                                 );
                               }
                             },

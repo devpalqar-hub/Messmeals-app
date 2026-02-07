@@ -664,7 +664,7 @@ class CustomerController extends GetxController {
         Uri.parse('$baseUrl/customer/$customerProfileId'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': bearerToken, // ⭐ MUST ADD THIS
+          'Authorization': bearerToken, //
         },
       );
 

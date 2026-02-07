@@ -7,6 +7,7 @@ import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/StatusCard.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerCard.dart';
 import 'package:mess/Screens/PartnerScreen/Views/StatsCard.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 
 class PartnerDetailsScreen extends StatefulWidget {
@@ -76,7 +77,11 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                         final selected = controller.selectedPartner.value;
 
                         if (selected == null) {
-                          Get.snackbar("Error", "Failed to load partner details");
+                          Fluttertoast.showToast(
+                            msg: "Failed to load partner details",
+                            gravity: ToastGravity.BOTTOM,
+                          );
+
                           return;
                         }
 
@@ -88,8 +93,10 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                         if (result == true) {
                           await controller.fetchPartners();
                           Get.back();
-                          Get.snackbar("Success", "Partner updated successfully",
-                              snackPosition: SnackPosition.BOTTOM);
+                          Fluttertoast.showToast(
+                            msg: "Partner updated successfully",
+                            gravity: ToastGravity.BOTTOM,
+                          );
                         }
                       },
                       child: _actionButton(Icons.edit_outlined, "Edit"),
@@ -174,11 +181,11 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
 
                     await controller.fetchPartnerById(widget.partnerId);
 
-                    Get.snackbar(
-                      "Updated",
-                      "Partner status updated successfully",
-                      snackPosition: SnackPosition.BOTTOM,
+                    Fluttertoast.showToast(
+                      msg: "Partner status updated successfully",
+                      gravity: ToastGravity.BOTTOM,
                     );
+
                   },
                 ),
 
@@ -299,9 +306,12 @@ class _PartnerDetailsScreenState extends State<PartnerDetailsScreen> {
                await controller.deletePartner(partnerId);
               await controller.fetchPartners();
               Get.back();
-              Get.snackbar("Success", "Partner deleted successfully",
-                  snackPosition: SnackPosition.BOTTOM);
-                   if (Navigator.canPop(context)) {
+              Fluttertoast.showToast(
+                msg: "Partner deleted successfully",
+                gravity: ToastGravity.BOTTOM,
+              );
+
+              if (Navigator.canPop(context)) {
                 Navigator.pop(context, true);
               }
             },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mess/Screens/DeliveriesScreen/Services/DeliveriesController.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class GenerateDeliveriesDialog extends StatefulWidget {
   const GenerateDeliveriesDialog({super.key});
@@ -142,8 +143,9 @@ class _GenerateDeliveriesDialogState extends State<GenerateDeliveriesDialog> {
                           ? null
                           : () async {
                         if (dateController.text.isEmpty) {
-                          Get.snackbar(
-                              "Error", "Please select a date");
+                          Fluttertoast.showToast(
+                            msg: "Please select a date",
+                          );
                           return;
                         }
 

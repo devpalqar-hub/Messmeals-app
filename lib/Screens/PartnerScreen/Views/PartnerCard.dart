@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerDetailScreen.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 
 class PartnerCard extends StatelessWidget {
   final String id;
@@ -97,7 +99,12 @@ class PartnerCard extends StatelessWidget {
 
                       final partner = controller.selectedPartner.value;
                       if (partner == null) {
-                        Get.snackbar("Error", "Failed to load partner details");
+                        Fluttertoast.showToast(
+                          msg: "Failed to load partner details",
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                        );
+
                         return;
                       }
 
@@ -111,8 +118,12 @@ class PartnerCard extends StatelessWidget {
                        
                         await controller.fetchPartners();
                          Get.back();
-                        Get.snackbar("Success", "Partner updated successfully",
-                            snackPosition: SnackPosition.BOTTOM);
+                        Fluttertoast.showToast(
+                          msg: "Partner updated successfully",
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                        );
+
                       }
                     },
                     icon:  Icon(Icons.edit_outlined, size: 22.sp),
@@ -246,10 +257,14 @@ class PartnerCard extends StatelessWidget {
               await controller.deletePartner(partnerId);
               await controller.fetchPartners();
 
-              Get.snackbar("Success", "Partner deleted successfully",
-                  snackPosition: SnackPosition.BOTTOM);
+              Fluttertoast.showToast(
+                msg: "Partner deleted successfully",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+              );
 
-              
+
+
               if (Navigator.canPop(context)) {
                 Navigator.pop(context, true); 
               }
