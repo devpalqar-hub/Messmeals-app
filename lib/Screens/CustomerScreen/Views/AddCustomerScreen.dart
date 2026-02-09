@@ -360,7 +360,7 @@ void _loadCustomerData() {
                 keyboardType: TextInputType.phone),
             const SizedBox(height: 14),
             buildTextField(
-                label: "Email",
+                label: "Email *",
                 hint: "email@example.com",
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress),

@@ -101,7 +101,7 @@ class PlanController extends GetxController {
       final uri = Uri.parse("$baseUrl/plans");
 
       final request =
-          http.MultipartRequest('POST', uri)
+          http.MultipartRequest('PUT', uri)
             ..headers["Authorization"] = bearerToken
             ..fields.addAll({
               'planName': planName,
@@ -172,7 +172,7 @@ class PlanController extends GetxController {
       final messId = authController.selectedMessId.value;
       final uri = Uri.parse("$baseUrl/plans/$id");
       final request =
-          http.MultipartRequest('POST', uri)
+          http.MultipartRequest('PUT', uri)
             ..headers["Authorization"] = bearerToken
             ..fields.addAll({
               'planName': planName,
@@ -195,7 +195,7 @@ class PlanController extends GetxController {
       if (response.statusCode == 200 || response.statusCode == 201) {
         await refreshPlans();
         _showSnackBar(
-          title: "Updated",
+          title: "Update",
           message: "Plan updated successfully",
           color: Colors.green,
         );

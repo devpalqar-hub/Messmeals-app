@@ -180,11 +180,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 if (!isOtpSent) {
                                   if (phone.length != 10) {
-                                    Get.snackbar(
-                                      "Error",
-                                      "Enter valid 10-digit phone number",
-                                      snackPosition: SnackPosition.BOTTOM,
-                                    );
+                                    Fluttertoast.showToast(
+                                      msg: "Enter valid 10-digit phone number",
+                                      toastLength: Toast.LENGTH_SHORT,
+                                      gravity: ToastGravity.BOTTOM,
+
+                          );
                                     return;
                                   }
 
@@ -203,11 +204,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   final otp = enteredOtp;
 
                                   if (otp.length != 6) {
-                                    Get.snackbar(
-                                      "Error",
-                                      "Enter valid 6-digit OTP",
-                                      snackPosition: SnackPosition.BOTTOM,
+                                    Fluttertoast.showToast(
+                                      msg: "Enter valid 6-digit OTP",
+                                      toastLength: Toast.LENGTH_SHORT,
+                                      gravity: ToastGravity.BOTTOM,
                                     );
+
                                     return;
                                   }
 

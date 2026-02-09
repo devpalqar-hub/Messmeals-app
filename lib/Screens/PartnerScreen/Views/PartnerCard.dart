@@ -92,44 +92,8 @@ class PartnerCard extends StatelessWidget {
 
               Row(
                 children: [
-                 
-                  IconButton(
-                    onPressed: () async {
-                      await controller.fetchPartnerById(id);
 
-                      final partner = controller.selectedPartner.value;
-                      if (partner == null) {
-                        Fluttertoast.showToast(
-                          msg: "Failed to load partner details",
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.BOTTOM,
-                        );
 
-                        return;
-                      }
-
-                     
-                      final result = await Get.to(() => AddPartnerScreen(
-                            isEdit: true,
-                            partner: partner,
-                          ));
-
-                      if (result == true) {
-                       
-                        await controller.fetchPartners();
-                         Get.back();
-                        Fluttertoast.showToast(
-                          msg: "Partner updated successfully",
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.BOTTOM,
-                        );
-
-                      }
-                    },
-                    icon:  Icon(Icons.edit_outlined, size: 22.sp),
-                  ),
-
-                  
                   IconButton(
                     onPressed: () => _confirmDelete(context, id, controller),
                     icon:  Icon(Icons.delete_outline, size: 20.sp),

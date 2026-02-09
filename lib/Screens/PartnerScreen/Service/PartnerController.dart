@@ -186,7 +186,6 @@ class PartnerController extends GetxController {
       if (response.statusCode == 200) {
         await fetchPartnerById(id);
         await fetchPartners();
-        Get.back();
         _showSnackBar("Updated", "Partner updated successfully", Colors.green);
       } else {
         final err = json.decode(response.body);

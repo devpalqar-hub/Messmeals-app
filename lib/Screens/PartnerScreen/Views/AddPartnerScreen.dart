@@ -56,7 +56,10 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.back(),
+          onPressed: () {
+            Get.back(result: false);
+          },
+
         ),
       ),
       body: Obx(() {
@@ -107,7 +110,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                             ),
                             SizedBox(height: 14.h),
                             buildTextField(
-                              label: "Email",
+                              label: "Email*",
                               hint: "email@example.com",
                               controller: emailController,
                               keyboardType: TextInputType.emailAddress,
@@ -197,7 +200,9 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => Get.back(),
+                      onPressed: () {
+        Get.back(result: false);
+        },
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(color: Colors.grey[300]!),
                               shape: RoundedRectangleBorder(
@@ -242,6 +247,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                                     // isActive: status == "Active",
                                   );
                                 }
+                                Get.back(result: true);
                               }
                             },
                             child: Text(
@@ -261,12 +267,16 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
               ),
             ),
 
-           
+
             if (controller.isLoading.value)
-              Container(
-                color: Colors.white70,
-                child: const Center(child: CircularProgressIndicator()),
+              IgnorePointer(
+                ignoring: true,
+                child: Container(
+                  color: Colors.white70,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
               ),
+
           ],
         );
       }),

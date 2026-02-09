@@ -45,9 +45,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         child: CircularProgressIndicator());
                   }
 
-                  final customers = customerCtrl.customers;
+                  final customers =
+                  customerCtrl.customers.where((c) => c.isActive).toList();
 
-                
+
+
                   final filteredCustomers = customers.where((c) {
                     final query = searchQuery.toLowerCase();
 
