@@ -457,10 +457,16 @@ class CustomerController extends GetxController {
           backgroundColor: Colors.green.shade100,
         );
 
-        // 🔥 refresh everything
         await dashboardController.fetchDashboardStats();
+
+        /// (this refreshes meal breakdown)
+        await dashboardController.fetchVariationCount(
+            dashboardController.selectedDate.value);
+
         await refreshCustomers();
         await fetchCustomerDetails(customerProfileId);
+        update();
+
       } else {
         final error = jsonDecode(response.body);
         Get.snackbar(
