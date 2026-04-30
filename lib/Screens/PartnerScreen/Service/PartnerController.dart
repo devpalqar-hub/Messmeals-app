@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
@@ -11,40 +12,55 @@ class PartnerController extends GetxController {
   final AuthController authController = Get.find<AuthController>();
   final DashboardController dashboardController = Get.find<DashboardController>();
 
-  var partners = <Partner>[].obs;
-  var selectedPartner = Rxn<Partner>();
-  var isLoading = false.obs;
-  var isReady = false.obs;
+  // Standard variables instead of .obs
+  List<Partner> partners = [];
+  Partner? selectedPartner;
+  bool isLoading = false;
+  bool isReady = false;
 
-  var currentPage = 1.obs;
-  var totalPages = 1.obs;
-  var totalRecords = 0.obs;
-  var limit = 10.obs;
+  int currentPage = 1;
+  int totalPages = 1;
+  int totalRecords = 0;
+  int limit = 10;
 
-  RxString errorMessage = ''.obs;
+  String errorMessage = '';
+
+  void _showToast(String message, {bool isError = false}) {
+  Fluttertoast.showToast(
+    msg: message,
+    toastLength: Toast.LENGTH_SHORT,
+    gravity: ToastGravity.BOTTOM,
+    backgroundColor: isError ? Colors.red : Colors.green,
+    textColor: Colors.white,
+    fontSize: 14.0,
+  );
+}
 
   Future<void> ensureLoaded() async {
-    if (isReady.value) return;
+    if (isReady) return;
     if (partners.isEmpty) {
       await fetchPartners();
     }
-    isReady.value = true;
+    isReady = true;
+    update();
   }
 
   Future<void> fetchPartners() async {
-    isLoading.value = true;
-    errorMessage.value = '';
+    isLoading = true;
+    errorMessage = '';
+    update(); // Notify UI to show loading state
 
-    final messId = authController.selectedMessId.value;
+    final messId = authController.selectedMessId;
     if (messId.isEmpty) {
-      _showSnackBar("Error", "Please select a mess first", Colors.red);
-      isLoading.value = false;
+    _showToast("Please select a mess first", isError: true);
+      isLoading = false;
+      update();
       return;
     }
 
     try {
       final url = Uri.parse(
-        '$baseUrl/delivery-agent/?messId=$messId&page=${currentPage.value}&limit=${limit.value}',
+        '$baseUrl/delivery-agent/?messId=$messId&page=$currentPage&limit=$limit',
       );
 
       final response = await http.get(
@@ -58,26 +74,29 @@ class PartnerController extends GetxController {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        currentPage.value = data['currentPage'] ?? 1;
-        totalPages.value = data['totalPages'] ?? 1;
-        totalRecords.value = data['totalRecords'] ?? 0;
+        currentPage = data['currentPage'] ?? 1;
+        totalPages = data['totalPages'] ?? 1;
+        totalRecords = data['totalRecords'] ?? 0;
 
         final List<dynamic> list = data['data'] ?? [];
-        partners.value = list.map((e) => Partner.fromJson(e)).toList();
+        partners = list.map((e) => Partner.fromJson(e)).toList();
       } else {
-        errorMessage.value = "Failed to fetch partners (Status: ${response.statusCode})";
+        errorMessage = "Failed to fetch partners (Status: ${response.statusCode})";
       }
     } catch (e) {
-      errorMessage.value = e.toString();
+      errorMessage = e.toString();
     } finally {
-      isLoading.value = false;
-      isReady.value = true;
+      isLoading = false;
+      isReady = true;
+      update(); // Refresh UI with new data
     }
   }
 
   Future<void> fetchPartnerById(String id) async {
     try {
-      isLoading(true);
+      isLoading = true;
+      update();
+      
       final url = Uri.parse('$baseUrl/delivery-agent/$id');
       final response = await http.get(
         url,
@@ -90,121 +109,116 @@ class PartnerController extends GetxController {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         final partnerData = jsonData['data'] ?? jsonData;
-        selectedPartner.value = Partner.fromJson(partnerData);
+        selectedPartner = Partner.fromJson(partnerData);
       } else {
-        _showSnackBar("Error", "Failed to fetch partner details", Colors.red);
+     
       }
     } catch (e) {
-      _showSnackBar("Error", e.toString(), Colors.red);
+    
     } finally {
-      isLoading(false);
+      isLoading = false;
+      update();
     }
   }
 
-  Future<void> addPartner({
-    required String name,
-    required String phone,
-    required String email,
-    required String address,
-  }) async {
-    try {
-      isLoading.value = true;
-      final messId = authController.selectedMessId.value;
+ Future<bool> addPartner({
+  required String name,
+  required String phone,
+  required String email,
+  required String address,
+}) async {
+  try {
+    isLoading = true;
+    update();
 
-      if (messId.isEmpty) {
-        _showSnackBar("Error", "Please select a mess first", Colors.red);
-        return;
-      }
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/delivery-agent'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": bearerToken,
-        },
-        body: json.encode({
-          "name": name,
-          "phone": phone,
-          "email": email,
-          "address": address,
-          "messId": messId,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        await refreshPartners();
-        Get.back();
-        _showSnackBar("Success", "Partner added successfully", Colors.green);
-         await dashboardController.fetchDashboardStats(); 
-      } else {
-        final err = json.decode(response.body);
-        _showSnackBar("Error", err['message'] ?? "Failed to add partner", Colors.red);
-      }
-    } catch (e) {
-      _showSnackBar("Error", e.toString(), Colors.red);
-    } finally {
-      isLoading.value = false;
+    final messId = authController.selectedMessId;
+    if (messId.isEmpty) {
+      _showToast("Please select a mess first",);
+      return false;
     }
-  }
 
-  Future<void> updatePartner({
-    required String id,
-    String? name,
-    String? phone,
-    String? email,
-    String? address,
-    bool? isActive,
-  }) async {
-    try {
-      isLoading.value = true;
-      final messId = authController.selectedMessId.value;
-
-      if (messId.isEmpty) {
-        _showSnackBar("Error", "Please select a mess first", Colors.red);
-        return;
-      }
-
-      final payload = {
-        if (name != null) "name": name,
-        if (phone != null) "phone": phone,
-        if (email != null) "email": email,
-        if (address != null) "address": address,
-        if (isActive != null) "isActive": isActive,
+    final response = await http.post(
+      Uri.parse('$baseUrl/delivery-agent'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": bearerToken,
+      },
+      body: json.encode({
+        "name": name,
+        "phone": phone,
+        "email": email,
+        "address": address,
         "messId": messId,
-      };
+      }),
+    );
 
-      final response = await http.patch(
-        Uri.parse('$baseUrl/delivery-agent/$id'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": bearerToken,
-        },
-        body: json.encode(payload),
-      );
-
-      if (response.statusCode == 200) {
-        await fetchPartnerById(id);
-        await fetchPartners();
-        Get.back();
-        _showSnackBar("Updated", "Partner updated successfully", Colors.green);
-      } else {
-        final err = json.decode(response.body);
-        _showSnackBar("Error", err['message'] ?? "Failed to update partner", Colors.red);
-      }
-    } catch (e) {
-      _showSnackBar("Error", e.toString(), Colors.red);
-    } finally {
-      isLoading.value = false;
+    if (response.statusCode == 201) {
+      await refreshPartners();
+      await dashboardController.fetchDashboardStats();
+      _showToast("Partner added successfully", );
+      return true; // ✅ IMPORTANT
+    } else {
+      final err = json.decode(response.body);
+      _showToast(err['message'] ?? "Failed to add partner",);
+      return false;
     }
+  } catch (e) {
+    _showToast(e.toString(),);
+    return false;
+  } finally {
+    isLoading = false;
+    update();
   }
+}
+ Future<bool> updatePartner({
+  required String id,
+  String? name,
+  String? address,
+}) async {
+  try {
+    isLoading = true;
+    update();
 
+    final messId = authController.selectedMessId;
+
+    final response = await http.patch(
+      Uri.parse('$baseUrl/delivery-agent/$id'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": bearerToken,
+      },
+      body: json.encode({
+        if (name != null) "name": name,
+        if (address != null) "address": address,
+        "messId": messId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      await fetchPartners();
+      _showToast("Partner updated", );
+      return true; // ✅ IMPORTANT
+    } else {
+      final err = json.decode(response.body);
+      _showToast(err['message'] ?? "Failed to update",);
+      return false;
+    }
+  } catch (e) {
+    _showToast(e.toString(),);
+    return false;
+  } finally {
+    isLoading = false;
+    update();
+  }
+}
   Future<void> deletePartner(String id) async {
     try {
-      isLoading.value = true;
-      final messId = authController.selectedMessId.value;
+      isLoading = true;
+      update();
 
+      final messId = authController.selectedMessId;
       if (messId.isEmpty) {
-        _showSnackBar("Error", "Please select a mess first", Colors.red);
+        _showToast("Please select a mess first", isError: true);
         return;
       }
 
@@ -219,50 +233,41 @@ class PartnerController extends GetxController {
 
       if (response.statusCode == 200) {
         await refreshPartners();
-        _showSnackBar("Deleted", "Partner deleted successfully", Colors.green);
-         await dashboardController.fetchDashboardStats(); 
+      _showToast("Partner deleted successfully");
+        await dashboardController.fetchDashboardStats(); 
         await Future.delayed(const Duration(milliseconds: 600));
         if (Get.previousRoute.isNotEmpty) {
           Get.back();
         }
       } else {
         final err = json.decode(response.body);
-        _showSnackBar("Error", err['message'] ?? "Failed to delete partner", Colors.red);
+      
       }
     } catch (e) {
-      _showSnackBar("Error", e.toString(), Colors.red);
+    
     } finally {
-      isLoading.value = false;
+      isLoading = false;
+      update();
     }
   }
 
   Future<void> refreshPartners() async {
-    currentPage.value = 1;
+    currentPage = 1;
     await fetchPartners();
   }
 
   void changePage(int newPage) {
-    if (newPage > 0 && newPage <= totalPages.value) {
-      currentPage.value = newPage;
+    if (newPage > 0 && newPage <= totalPages) {
+      currentPage = newPage;
       fetchPartners();
     }
   }
 
   void changeLimit(int newLimit) {
-    limit.value = newLimit;
-    currentPage.value = 1;
+    limit = newLimit;
+    currentPage = 1;
     fetchPartners();
   }
 
-  void _showSnackBar(String title, String message, Color color) {
-    Get.snackbar(
-      title,
-      message,
-      backgroundColor: color.withOpacity(0.1),
-      colorText: color,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
-      duration: const Duration(seconds: 2),
-    );
-  }
+  
 }

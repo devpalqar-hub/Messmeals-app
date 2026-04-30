@@ -20,7 +20,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   String selectedPlan = "All Plans";
   String searchQuery = "";
-/// goi
+
   @override
   void initState() {
     super.initState();
@@ -31,7 +31,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF7F9FB),
+      backgroundColor:  Color(0xffF7F9FB),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16.w),
@@ -99,7 +99,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) =>
-                                      const AddCustomerScreen(),
+                                       AddCustomerScreen(),
                                 ),
                               );
                             },
@@ -188,7 +188,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             ),
                             child:
                                 DropdownButtonHideUnderline(
+                                
                               child: DropdownButton<String>(
+                                dropdownColor: Colors.white,
+                                
                                 value: selectedPlan,
                                 items: planNames
                                     .map(

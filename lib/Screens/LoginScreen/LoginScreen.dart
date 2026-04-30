@@ -13,13 +13,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // Initialize the controller
   final AuthController authController = Get.put(AuthController());
 
   final TextEditingController phoneController = TextEditingController();
   final List<TextEditingController> otpControllers =
       List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> focusNodes =
-      List.generate(6, (_) => FocusNode());
+  final List<FocusNode> focusNodes = List.generate(6, (_) => FocusNode());
 
   bool isOtpSent = false;
 
@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-               
+                  // App Icon
                   Container(
                     height: 55.h,
                     width: 55.w,
@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   SizedBox(height: 16.h),
 
-                
+                  // Title
                   Text(
                     "SuperMeals Admin",
                     style: GoogleFonts.inter(
@@ -83,9 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: 6.h),
 
                   Text(
-                    isOtpSent
-                        ? "Verify your phone number"
-                        : "Sign in to your account",
+                    isOtpSent ? "Verify your phone number" : "Sign in to your account",
                     style: GoogleFonts.inter(
                       fontSize: 15.sp,
                       color: const Color(0xff717182),
@@ -93,6 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   SizedBox(height: 32.h),
 
+                  // Phone Input
                   if (!isOtpSent) ...[
                     Align(
                       alignment: Alignment.centerLeft,
@@ -121,12 +120,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderSide: BorderSide.none,
                           ),
                         ),
-                        enabled: !isOtpSent,
+                        enabled: true,
                       ),
                     ),
                   ],
 
-                
+                  // OTP Input
                   if (isOtpSent) ...[
                     SizedBox(height: 10.h),
                     Row(
@@ -172,79 +171,66 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   SizedBox(height: 24.h),
 
-                  Obx(() => ElevatedButton(
-                        onPressed: authController.isLoading.value
+                  // Action Button with GetBuilder
+                  GetBuilder<AuthController>(
+                    builder: (auth) {
+                      return ElevatedButton(
+                        onPressed: auth.isLoading
                             ? null
                             : () async {
                                 final phone = phoneController.text.trim();
 
                                 if (!isOtpSent) {
                                   if (phone.length != 10) {
-                                    Get.snackbar(
-                                      "Error",
-                                      "Enter valid 10-digit phone number",
-                                      snackPosition: SnackPosition.BOTTOM,
-                                    );
+                                    Get.snackbar("Error", "Enter valid 10-digit phone number",
+                                        snackPosition: SnackPosition.BOTTOM);
                                     return;
                                   }
 
-                                  final success =
-                                      await authController.sendOtp(phone);
-
+                                  final success = await auth.sendOtp(phone);
                                   if (success) {
-                                    setState(() {
-                                      isOtpSent = true;
-                                    });
+                                    setState(() => isOtpSent = true);
                                   }
-                                }
-
-                         
-                                else {
+                                } else {
                                   final otp = enteredOtp;
-
                                   if (otp.length != 6) {
-                                    Get.snackbar(
-                                      "Error",
-                                      "Enter valid 6-digit OTP",
-                                      snackPosition: SnackPosition.BOTTOM,
-                                    );
+                                    Get.snackbar("Error", "Enter valid 6-digit OTP",
+                                        snackPosition: SnackPosition.BOTTOM);
                                     return;
                                   }
 
-                                  final verified = await authController
-                                      .verifyOtp(phone, otp);
-
-                                
+                                  final verified = await auth.verifyOtp(phone, otp);
                                   if (verified) {
-                                    Fluttertoast.showToast(
-                                      msg: "OTP verified successfully",
-                                      toastLength: Toast.LENGTH_SHORT,
-                                    );
+                                    Fluttertoast.showToast(msg: "OTP verified successfully");
                                   } else {
-                                    Fluttertoast.showToast(
-                                      msg: "Invalid OTP",
-                                      toastLength: Toast.LENGTH_SHORT,
-                                    );
+                                    Fluttertoast.showToast(msg: "Invalid OTP");
                                   }
                                 }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0474B9),
                           minimumSize: Size(double.infinity, 50.h),
-                           shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8.r), 
-   
-    ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
                         ),
-                        child: authController.isLoading.value
-                            ? const CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                        child: auth.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
-                            : Text(isOtpSent ? "Verify OTP" : "Send OTP",style: TextStyle(color: Colors.white),),
-                      )),
+                            : Text(
+                                isOtpSent ? "Verify OTP" : "Send OTP",
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                      );
+                    },
+                  ),
 
-                  
                   if (isOtpSent)
                     TextButton(
                       onPressed: () {

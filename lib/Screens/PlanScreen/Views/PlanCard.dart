@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mess/main.dart';
-
 class PlanCard extends StatelessWidget {
   final String title;
   final String description;
@@ -25,201 +24,167 @@ class PlanCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  IconData? getMealIcon(String meal) {
-    switch (meal.toLowerCase()) {
-      case 'breakfast':
-        return Icons.local_drink;
-      case 'lunch':
-        return Icons.restaurant;
-      case 'dinner':
-        return Icons.nights_stay;
-      default:
-        return null;
+  String get displayImage {
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return "https://via.placeholder.com/300";
     }
+    final clean = imageUrl!.replaceAll("\\", "/");
+    return clean.startsWith("http")
+        ? clean
+        : "$baseUrl/$clean".replaceAll("//uploads", "/uploads");
   }
 
   @override
   Widget build(BuildContext context) {
-    /// 🧩 Robust image URL builder
-    final displayImage = () {
-      if (imageUrl == null || imageUrl!.isEmpty) {
-        return "https://via.placeholder.com/100x100.png?text=No+Image";
-      }
-
-      final cleanUrl = imageUrl!.replaceAll("\\", "/");
-      if (cleanUrl.startsWith("http")) {
-        return cleanUrl;
-      }
-
-      return "$baseUrl/$cleanUrl".replaceAll("//uploads", "/uploads");
-    }();
-
-    return Center(
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: Colors.grey.shade300, width: 1.w),
-        ),
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 6.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IntrinsicHeight( // 🔥 KEY for full height image
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            /// ---------- Left Image ----------
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10.r),
-              child: Image.network(
-                displayImage,
-                height: 65.w,
-                width: 65.w,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return Container(
-                    height: 65.w,
-                    width: 65.w,
-                    alignment: Alignment.center,
-                    child: SizedBox(
-                      height: 18.w,
-                      width: 18.w,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 65.w,
-                  width: 65.w,
-                  color: Colors.grey.shade100,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.image_not_supported,
-                    color: Colors.grey,
-                    size: 28.sp,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 14.w),
+           Container(
+  padding: EdgeInsets.all(10.w),
+  decoration: BoxDecoration(
+    color: Colors.grey.shade100, // 👈 soft background
+    borderRadius: BorderRadius.circular(12.r),
+  ),
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(10.r),
+    child: Image.network(
+      displayImage,
+      height: 70.w,
+      width: 100.w,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        height: 70.w,
+        width: 70.w,
+        color: Colors.grey.shade200,
+        child: Icon(Icons.image_not_supported, size: 22.sp),
+      ),
+    ),
+  ),
+),
 
-           
+            /// CONTENT
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          overflow: TextOverflow.ellipsis,
+              child: Padding(
+                padding: EdgeInsets.all(14.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// TITLE + ACTIONS
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: onEdit,
+                              child: Icon(Icons.edit_outlined, size: 18.sp),
+                            ),
+                            SizedBox(width: 8.w),
+                            GestureDetector(
+                              onTap: onDelete,
+                              child: Icon(Icons.delete_outline, size: 18.sp),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+
+                    SizedBox(height: 6.h),
+
+                    /// DESCRIPTION
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+
+                    SizedBox(height: 10.h),
+
+                    /// PRICE
+                    Row(
+                      children: [
+                        Text(
+                          "₹${price.toStringAsFixed(0)}",
                           style: GoogleFonts.inter(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xff1A1D29),
                           ),
                         ),
-                      ),
-                      Text(
-                        "₹${price.toStringAsFixed(0)}",
-                        style: GoogleFonts.inter(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xff1A1D29),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 8.h),
-
-                  
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          description,
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            color: const Color(0xff6B7280),
-                            fontWeight: FontWeight.w400,
+                        SizedBox(width: 10.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 8.w, vertical: 3.h),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(6.r),
                           ),
-                          softWrap: true,
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        "Min: ₹${minPrice.toStringAsFixed(0)}",
-                        style: GoogleFonts.inter(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xff6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 10.h),
-
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Wrap(
-                          spacing: 8.w,
-                          runSpacing: 6.h,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            if (meals.any((m) => m.toLowerCase() == 'breakfast'))
-                              Icon(Icons.local_drink,
-                                  size: 18.sp, color: Colors.black54),
-                            if (meals.any((m) => m.toLowerCase() == 'lunch'))
-                              Icon(Icons.restaurant,
-                                  size: 18.sp, color: Colors.black54),
-                            if (meals.any((m) => m.toLowerCase() == 'dinner'))
-                              Icon(Icons.nights_stay,
-                                  size: 18.sp, color: Colors.black54),
-                            ...meals.map(
-                              (meal) => Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w, vertical: 5.h),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(10.r),
-                                ),
-                                child: Text(
-                                  meal,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13.sp,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
+                          child: Text(
+                            "Min ₹${minPrice.toStringAsFixed(0)}",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              color: Colors.grey.shade600,
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.edit_outlined, size: 20.sp),
-                            color: Colors.black87,
-                            onPressed: onEdit,
+                      ],
+                    ),
+
+                    SizedBox(height: 10.h),
+
+                    /// MEALS
+                    Wrap(
+                      spacing: 6.w,
+                      runSpacing: 6.h,
+                      children: meals.map((meal) {
+                        return Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.w, vertical: 5.h),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(10.r),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.delete_outline_sharp, size: 20.sp),
-                            color: Colors.black87,
-                            onPressed: onDelete,
+                          child: Text(
+                            meal,
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700,
+                            ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

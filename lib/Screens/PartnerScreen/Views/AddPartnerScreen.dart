@@ -16,6 +16,7 @@ class AddPartnerScreen extends StatefulWidget {
 
 class _AddPartnerScreenState extends State<AddPartnerScreen> {
   final _formKey = GlobalKey<FormState>();
+  // Use find as the controller is already initialized in PartnerScreen
   final PartnerController controller = Get.find<PartnerController>();
 
   final nameController = TextEditingController();
@@ -56,78 +57,22 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.back(),
+          onPressed: () =>Navigator.pop(context),
         ),
       ),
-      body: Obx(() {
-        return Stack(
-          children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.all(16.w),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// ---------- BASIC INFO ----------
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(18.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Basic Information",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16.sp,
-                              color: const Color(0xff1A1D29),
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-
-                          buildTextField(
-                            label: "Name *",
-                            hint: "Enter full name",
-                            controller: nameController,
-                          ),
-                          SizedBox(height: 14.h),
-
-                          if (!widget.isEdit) ...[
-                            buildTextField(
-                              label: "Phone *",
-                              hint: "+91 98765 43210",
-                              controller: phoneController,
-                              keyboardType: TextInputType.phone,
-                            ),
-                            SizedBox(height: 14.h),
-                            buildTextField(
-                              label: "Email",
-                              hint: "email@example.com",
-                              controller: emailController,
-                              keyboardType: TextInputType.emailAddress,
-                            ),
-                            SizedBox(height: 14.h),
-                          ],
-
-                          buildTextField(
-                            label: "Address *",
-                            hint: "Enter address",
-                            controller: addressController,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20.h),
-
-                    /// ---------- STATUS (for Add only) ----------
-                    if (!widget.isEdit)
+      
+      body: GetBuilder<PartnerController>(
+        builder: (controller) {
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                padding: EdgeInsets.all(16.w),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// ---------- BASIC INFO ----------
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(18.w),
@@ -140,7 +85,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Status",
+                              "Basic Information",
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16.sp,
@@ -148,128 +93,188 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                               ),
                             ),
                             SizedBox(height: 16.h),
-                            Text(
-                              "Current Status *",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            buildTextField(
+                              label: "Name *",
+                              hint: "Enter full name",
+                              controller: nameController,
                             ),
-                            SizedBox(height: 8.h),
-                            DropdownButtonFormField<String>(
-                              value: status,
-                              icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: const Color(0xffF0F2F5),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12.w, vertical: 12.h),
-                                border: OutlineInputBorder(
-                                  borderSide: BorderSide.none,
-                                  borderRadius: BorderRadius.circular(16.r),
-                                ),
+                            SizedBox(height: 14.h),
+                            if (!widget.isEdit) ...[
+                              buildTextField(
+                                label: "Phone *",
+                                hint: "+91 98765 43210",
+                                controller: phoneController,
+                                keyboardType: TextInputType.phone,
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Active',
-                                  child: Text("Active"),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Inactive',
-                                  child: Text("Inactive"),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  status = value!;
-                                });
-                              },
+                              SizedBox(height: 14.h),
+                              buildTextField(
+                                label: "Email",
+                                hint: "email@example.com",
+                                controller: emailController,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              SizedBox(height: 14.h),
+                            ],
+                            buildTextField(
+                              label: "Address *",
+                              hint: "Enter address",
+                              controller: addressController,
                             ),
                           ],
                         ),
                       ),
-
-                    SizedBox(height: 24.h),
-
-                    /// ---------- ACTION BUTTONS ----------
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Get.back(),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.grey[300]!),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
+                      SizedBox(height: 20.h),
+                      if (!widget.isEdit)
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(18.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Status",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16.sp,
+                                  color: const Color(0xff1A1D29),
+                                ),
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 14.h),
-                            ),
-                            child: Text(
-                              "Cancel",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: const Color(0xff1A1D29),
-                                fontWeight: FontWeight.w500,
+                              SizedBox(height: 16.h),
+                              Text(
+                                "Current Status *",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              DropdownButtonFormField<String>(
+                                value: status,
+                                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xffF0F2F5),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12.w, vertical: 12.h),
+                                  border: OutlineInputBorder(
+                                    borderSide: BorderSide.none,
+                                    borderRadius: BorderRadius.circular(16.r),
+                                  ),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Active',
+                                    child: Text("Active"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Inactive',
+                                    child: Text("Inactive"),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    status = value!;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      SizedBox(height: 24.h),
+
+                      /// ---------- ACTION BUTTONS ----------
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                 backgroundColor: Colors.white,   
+                                side: BorderSide(color: Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                              ),
+                              child: Text(
+                                "Cancel",
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xff0474B9),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black, 
+                foregroundColor: Colors.white, 
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 14.h),
-                            ),
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                if (widget.isEdit && widget.partner != null) {
-                                  await controller.updatePartner(
-                                    id: widget.partner!.id,
-                                    name: nameController.text.trim(),
-                                    address: addressController.text.trim(),
-                                  );
-                                } else {
-                                  await controller.addPartner(
-                                    name: nameController.text.trim(),
-                                    phone: phoneController.text.trim(),
-                                    email: emailController.text.trim(),
-                                    address: addressController.text.trim(),
-                                    // isActive: status == "Active",
-                                  );
-                                }
-                              }
-                            },
-                            child: Text(
-                              widget.isEdit ? "Update Partner" : "Add Partner",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                             onPressed: () async {
+  if (_formKey.currentState!.validate()) {
+    bool success = false;
+
+    if (widget.isEdit && widget.partner != null) {
+      success = await controller.updatePartner(
+        id: widget.partner!.id,
+        name: nameController.text.trim(),
+        address: addressController.text.trim(),
+      );
+    } else {
+      success = await controller.addPartner(
+        name: nameController.text.trim(),
+        phone: phoneController.text.trim(),
+        email: emailController.text.trim(),
+        address: addressController.text.trim(),
+      );
+    }
+
+    
+    if (success) {
+      Navigator.pop(context, true); // or Get.back(result: true);
+    }
+  }
+},
+                              child: Text(
+                                widget.isEdit ? "Update Partner" : "Add Partner",
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-           
-            if (controller.isLoading.value)
-              Container(
-                color: Colors.white70,
-                child: const Center(child: CircularProgressIndicator()),
-              ),
-          ],
-        );
-      }),
+              
+              if (controller.isLoading)
+                Container(
+                  color: Colors.white70,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 

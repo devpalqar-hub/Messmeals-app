@@ -42,12 +42,12 @@ class CustomerDetailScreen extends StatelessWidget {
 
     return GetBuilder<CustomerController>(
       builder: (controller) {
-        final current = controller.customers.firstWhereOrNull(
-              (c) =>
-                  c.customerProfileId ==
-                  customer.customerProfileId,
-            ) ??
-            customer;
+      final current = controller.customers
+    .where((c) => c.customerProfileId == customer.customerProfileId)
+    .isNotEmpty
+    ? controller.customers.firstWhere(
+        (c) => c.customerProfileId == customer.customerProfileId)
+    : customer;
 
         final activeSub = current.activeSubscriptions.isNotEmpty
             ? current.activeSubscriptions.first

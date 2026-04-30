@@ -23,10 +23,10 @@ class CustomerController extends GetxController {
 
  
  Future<void> fetchCustomers({bool refresh = false, String? planName}) async {
-    final messId = authController.selectedMessId.value;
+    final messId = authController.selectedMessId;
 
     if (messId.isEmpty) {
-      Get.snackbar("Error", "Please select a mess first");
+     
       return;
     }
 
@@ -78,7 +78,7 @@ class CustomerController extends GetxController {
         page++;
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+     
     } finally {
       isLoading = false;
       isMoreLoading = false;
@@ -149,13 +149,7 @@ Future<void> addCustomer({
       await dashboardController.fetchDashboardStats();
       await refreshCustomers();
 
-      Get.snackbar(
-        "Success",
-        data['message'] ?? "Customer added successfully",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withOpacity(0.9),
-        colorText: Colors.white,
-      );
+     
 
       await Future.delayed(const Duration(milliseconds: 500));
 
@@ -411,10 +405,6 @@ Future<void> pauseSubscription(
   "pause_end_date": DateFormat('yyyy-MM-dd').format(endDate),
     });
 
-    print('🔹 [PauseSubscription] URL => $url');
-    print('🔹 [PauseSubscription] Body => $body');
-    print('🔹 [PauseSubscription] Token => $token');
-
     final response = await http.patch(
       url,
       headers: {
@@ -600,32 +590,55 @@ Future<bool> cancelSubscriptionRange(
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      Get.snackbar("Success", "Wallet updated successfully");
 
-      await dashboardController.fetchDashboardStats();
+      // 🔥 FETCH UPDATED CUSTOMER
+      final customerUrl =
+          Uri.parse('$baseUrl/customer/$customerProfileId');
 
-      final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
-      final customerResponse = await http.get(customerUrl, headers: {
-        'Authorization': bearerToken,
-      });
+      final customerResponse = await http.get(
+        customerUrl,
+        headers: {'Authorization': bearerToken},
+      );
 
       if (customerResponse.statusCode == 200) {
-        final updatedData = jsonDecode(customerResponse.body)['data'];
-        final updatedCustomer = CustomerModel.fromJson(updatedData);
+         await dashboardController.fetchDashboardStats();
+      await refreshCustomers();
+        final updatedData =
+            jsonDecode(customerResponse.body)['data'];
 
-        final index = customers.indexWhere((c) => c.id == customerProfileId);
+        final updatedCustomer =
+            CustomerModel.fromJson(updatedData);
+
+        /// ✅ CORRECT MATCH KEY
+        final index = customers.indexWhere(
+          (c) => c.customerProfileId == customerProfileId,
+        );
+
         if (index != -1) {
           customers[index] = updatedCustomer;
+
+          /// 🔥 FORCE UI UPDATE IMMEDIATELY
+          customers = List.from(customers);
+
           update();
         }
 
+        /// CLOSE SHEET
         if (Get.isBottomSheetOpen ?? false) {
-          Get.back(result: updatedCustomer);
+          Get.back();
         }
       }
+
+      Get.snackbar("Success", "Wallet updated successfully");
+
+      await dashboardController.fetchDashboardStats();
+      
     } else {
       final error = jsonDecode(response.body);
-      Get.snackbar("Error", error['message'] ?? "Failed to update wallet");
+      Get.snackbar(
+        "Error",
+        error['message'] ?? "Failed to update wallet",
+      );
     }
   } catch (e) {
     Get.snackbar("Error", e.toString());
@@ -634,7 +647,6 @@ Future<bool> cancelSubscriptionRange(
     update();
   }
 }
-
 
 
   Future<void> fetchCustomerDetails(String customerProfileId) async {

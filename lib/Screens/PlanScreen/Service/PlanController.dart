@@ -10,21 +10,24 @@ import 'package:mess/main.dart';
 
 class PlanController extends GetxController {
   final AuthController authController = Get.find<AuthController>();
-  final DashboardController dashboardController =
-      Get.find<DashboardController>();
+  final DashboardController dashboardController = Get.find<DashboardController>();
 
+  
   bool isLoading = false;
   bool isReady = false;
   List<PlanModel> plans = [];
+  
+
   int currentPage = 1;
   int totalPages = 1;
   int limit = 10;
+  
   String errorMessage = '';
   String searchQuery = '';
 
+
   List<PlanModel> get filteredPlans {
     if (searchQuery.isEmpty) return plans;
-
     final query = searchQuery.toLowerCase();
     return plans.where((plan) {
       return plan.planName.toLowerCase().contains(query) ||
@@ -32,244 +35,195 @@ class PlanController extends GetxController {
     }).toList();
   }
 
-  Future<void> ensureLoaded() async {
-    if (isReady) return;
-    if (plans.isEmpty) {
-      await fetchPlans(page: currentPage, perPage: limit);
-    }
-    isReady = true;
-    update();
+  @override
+  void onInit() {
+    super.onInit();
+    ensureLoaded();
   }
 
-  Future<void> fetchPlans({int? page, int? perPage}) async {
-    isLoading = true;
-    errorMessage = '';
-    update();
+  Future<void> ensureLoaded() async {
+    if (isReady) return;
+    await fetchPlans();
+  }
 
+ 
+
+
+  Future<void> fetchPlans({int? page, int? perPage}) async {
+    _setLoading(true);
     final pageNumber = page ?? currentPage;
     final itemsPerPage = perPage ?? limit;
-    final messId = authController.selectedMessId.value;
+    final messId = authController.selectedMessId;
 
     try {
-      final url = Uri.parse(
-        "$baseUrl/plans?messId=$messId&page=$pageNumber&limit=$itemsPerPage",
-      );
-
+      final url = Uri.parse("$baseUrl/plans?messId=$messId&page=$pageNumber&limit=$itemsPerPage");
+      
       final response = await http.get(
         url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": bearerToken,
-        },
+        headers: {"Content-Type": "application/json", "Authorization": bearerToken},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final List list = data['data'];
-        final meta = data['meta'];
+        final List list = data['data'] ?? [];
+        final meta = data['meta'] ?? {};
 
         plans = list.map((e) => PlanModel.fromJson(e)).toList();
         currentPage = meta['page'] ?? 1;
         totalPages = meta['totalPages'] ?? 1;
-        limit = meta['limit'] ?? itemsPerPage;
+        errorMessage = '';
       } else {
-        errorMessage = "Failed to fetch plans (Status: ${response.statusCode})";
+        errorMessage = "Failed to load plans";
       }
     } catch (e) {
       errorMessage = e.toString();
     } finally {
-      isLoading = false;
+      _setLoading(false);
       isReady = true;
-      update();
     }
   }
 
-  Future<bool> addPlan({
-    required String planName,
-    required String price,
-    required String minPrice,
-    required String description,
-    required List<String> variationIds,
-    File? imageFile,
-  }) async {
-    try {
-      isLoading = true;
-      update();
+Future<bool> savePlan({
+  String? id,
+  required String planName,
+  required String price,
+  required String minPrice,
+  required String description,
+  required List<String> variationIds,
 
-      final messId = authController.selectedMessId.value;
-      final uri = Uri.parse("$baseUrl/plans");
+  File? imageFile,
+  String? existingImage,
+}) async {
+  try {
+    _setLoading(true);
 
-      final request =
-          http.MultipartRequest('POST', uri)
-            ..headers["Authorization"] = bearerToken
-            ..fields.addAll({
-              'planName': planName,
-              'price': price,
-              'minPrice': minPrice,
-              "isDailyPlan": "true",
-              'description': description,
-              'variationIds': jsonEncode(variationIds),
-              'messId': messId,
-            });
+    final bool isEdit = id != null;
+    final uri = Uri.parse(isEdit ? "$baseUrl/plans/$id" : "$baseUrl/plans");
 
-      request.fields.forEach((key, value) {
-        debugPrint("   $key : $value");
-      });
+    final parsedPrice = double.tryParse(price) ?? 0;
+    final parsedMinPrice = double.tryParse(minPrice) ?? 0;
 
-      if (imageFile != null && await imageFile.exists()) {
-        final file = await http.MultipartFile.fromPath(
-          'planImages',
-          imageFile.path,
-        );
-        request.files.add(file);
-      }
+    if (imageFile == null) {
+      final body = {
+        "planName": planName,
+        "price": parsedPrice,                 
+        "minPrice": parsedMinPrice,          
+        "description": description,
+        "variationIds": variationIds,         
+        "planImages": existingImage != null
+            ? [existingImage]                 
+            : [],
+        "messId": authController.selectedMessId,
+      
+      };
 
-      final response = await request.send();
-      final body = await response.stream.bytesToString();
-      print(body);
-      if (response.statusCode == 201) {
-        await refreshPlans();
-        await dashboardController.fetchDashboardStats();
+    
+      final response = await (isEdit
+          ? http.patch(
+              uri,
+              headers: {
+                "Authorization": bearerToken,
+                "Content-Type": "application/json",
+              },
+              body: jsonEncode(body),
+            )
+          : http.post(
+              uri,
+              headers: {
+                "Authorization": bearerToken,
+                "Content-Type": "application/json",
+              },
+              body: jsonEncode(body),
+            ));
 
-        _showSnackBar(
-          title: "Success",
-          message: "Plan added successfully",
-          color: Colors.green,
-        );
-
-        return true;
-      } else {
-        _showSnackBar(
-          title: "Error",
-          message: "Failed to add plan: ${response.statusCode}",
-          color: Colors.red,
-        );
-        return false;
-      }
-    } catch (e, stack) {
-      _showSnackBar(title: "Error", message: e.toString(), color: Colors.red);
-      return false;
-    } finally {
-      isLoading = false;
-      update();
-    }
-  }
-
-  Future<bool> editPlan({
-    required String id,
-    required String planName,
-    required String price,
-    required String minPrice,
-    required String description,
-    required List<String> variationIds,
-    File? imageFile,
-  }) async {
-    try {
-      isLoading = true;
-      update();
-
-      final messId = authController.selectedMessId.value;
-      final uri = Uri.parse("$baseUrl/plans/$id");
-      final request =
-          http.MultipartRequest('PATCH', uri)
-            ..headers["Authorization"] = bearerToken
-            ..fields.addAll({
-              'planName': planName,
-              'price': price,
-              'minPrice': minPrice,
-              'description': description,
-              'variationIds': jsonEncode(variationIds),
-              'messId': messId,
-            });
-
-      if (imageFile != null && await imageFile.exists()) {
-        request.files.add(
-          await http.MultipartFile.fromPath('planImages', imageFile.path),
-        );
-      }
-
-      final response = await request.send();
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         await refreshPlans();
-
-        _showSnackBar(
-          title: "Updated",
-          message: "Plan updated successfully",
-          color: Colors.green,
-        );
-
+        if (!isEdit) await dashboardController.fetchDashboardStats();
         return true;
-      } else {
-        _showSnackBar(
-          title: "Error",
-          message: "Failed to update plan: ${response.statusCode}",
-          color: Colors.red,
-        );
-        return false;
       }
-    } catch (e) {
-      _showSnackBar(title: "Error", message: e.toString(), color: Colors.red);
+
       return false;
-    } finally {
-      isLoading = false;
-      update();
     }
+
+   
+    final request =
+        http.MultipartRequest(isEdit ? 'PATCH' : 'POST', uri);
+
+    request.headers["Authorization"] = bearerToken;
+
+    request.fields.addAll({
+      'planName': planName,
+      'price': parsedPrice.toString(),
+      'minPrice': parsedMinPrice.toString(),
+      'description': description,
+      'variationIds': jsonEncode(variationIds),
+      'messId': authController.selectedMessId,
+    
+    });
+
+    request.files.add(
+      await http.MultipartFile.fromPath('planImages', imageFile.path),
+    );
+
+  
+
+    final res = await request.send();
+    final responseBody = await res.stream.bytesToString();
+
+    
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      await refreshPlans();
+      if (!isEdit) await dashboardController.fetchDashboardStats();
+      return true;
+    }
+
+    return false;
+  } catch (e) {
+   
+    return false;
+  } finally {
+    _setLoading(false);
   }
-
-  Future<void> deletePlan(String id) async {
+}
+  
+  Future<bool> deletePlan(String id) async {
     try {
-      final messId = authController.selectedMessId.value;
       final url = Uri.parse("$baseUrl/plans/$id");
-
       final response = await http.delete(
         url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": bearerToken,
-        },
-        body: jsonEncode({"messId": messId}),
+        headers: {"Content-Type": "application/json", "Authorization": bearerToken},
+        body: jsonEncode({"messId": authController.selectedMessId}),
       );
 
       if (response.statusCode == 200) {
         plans.removeWhere((p) => p.id == id);
         await dashboardController.fetchDashboardStats();
-
         update();
-        _showSnackBar(
-          title: "Deleted",
-          message: "Plan deleted successfully",
-          color: Colors.green,
-        );
-      } else {
-        _showSnackBar(
-          title: "Error",
-          message: "Failed to delete plan",
-          color: Colors.red,
-        );
+        return true;
       }
+      return false;
     } catch (e) {
-      _showSnackBar(title: "Error", message: e.toString(), color: Colors.red);
+      debugPrint('DELETE ERROR: $e');
+      return false;
     }
   }
+
+  // --- Helpers ---
 
   Future<void> refreshPlans() async {
     currentPage = 1;
     await fetchPlans(page: 1);
   }
 
-  void _showSnackBar({
-    required String title,
-    required String message,
-    required Color color,
-  }) {
-    Get.snackbar(
-      title,
-      message,
-      backgroundColor: color.withOpacity(0.1),
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
-      duration: const Duration(seconds: 2),
-    );
+  void _setLoading(bool value) {
+    isLoading = value;
+    update();
+  }
+
+  void updateSearch(String query) {
+    searchQuery = query;
+    update();
   }
 }

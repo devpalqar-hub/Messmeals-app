@@ -1,106 +1,100 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:fluttertoast/fluttertoast.dart' show Fluttertoast, Toast, ToastGravity;
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart' show Fluttertoast, Toast;
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mess/main.dart';
+import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
 
 String bearerToken = "";
 
 class AuthController extends GetxController {
-  RxBool isLoggedIn = false.obs;
-  RxBool isLoading = false.obs;
-  RxString token = "".obs;
-  RxString sessionId = "".obs;
-  Rx<UserModel?> currentUser = Rx<UserModel?>(null);
-  RxList<Map<String, dynamic>> ownedMesses = <Map<String, dynamic>>[].obs;
-  RxString selectedMessId = "".obs;
+  bool isLoggedIn = false;
+  bool isLoading = false;
+  String token = "";
+  String sessionId = "";
+  UserModel? currentUser;
+  
+  // List of messes owned by the user
+  List<Map<String, dynamic>> ownedMesses = [];
+  String selectedMessId = "";
 
   DateTime? tokenExpiry;
   Timer? _logoutTimer;
 
-  
   void log(String msg) => print("AUTH_LOG → $msg");
 
+  void _refreshUI() => update();
+
   void safeSnack(String title, String message) {
-    if (Get.context == null) {
-      log("SNACK BLOCKED ($title): $message");
-      return;
-    }
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (Get.context != null) {
-        Get.snackbar(
-          title,
-          message,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
-    });
+    if (Get.context == null) return;
+    Get.snackbar(title, message, snackPosition: SnackPosition.BOTTOM);
   }
 
-  Future<bool> sendOtp(String phone) async {
+  // --- Auth Methods ---
+Future<bool> sendOtp(String phone) async {
   try {
-    isLoading(true); 
-    log("Sending OTP…");
+    isLoading = true;
+    _refreshUI();
 
     final url = Uri.parse("$baseUrl/auth/send-login-otp");
+
+    final requestBody = {"phone": phone};
+
+    debugPrint("🚀 SEND OTP API");
+    debugPrint("➡️ URL: $url");
+    debugPrint("➡️ BODY: ${jsonEncode(requestBody)}");
+
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"phone": phone}),
+      body: jsonEncode(requestBody),
     );
 
+    debugPrint("✅ STATUS: ${response.statusCode}");
+    debugPrint("✅ RESPONSE: ${response.body}");
+
     final data = jsonDecode(response.body);
-    log("RAW RESPONSE → $data");
 
     if ((response.statusCode == 200 || response.statusCode == 201) &&
         data["sessionId"] != null) {
-      sessionId.value = data["sessionId"];
-
+      sessionId = data["sessionId"];
       Fluttertoast.showToast(
-        msg: data["message"] ?? "OTP sent successfully",
-        toastLength: Toast.LENGTH_SHORT,
-      );
-
-      return true; 
+          msg: data["message"] ?? "OTP sent successfully");
+      return true;
     }
 
-
     Fluttertoast.showToast(
-      msg: data["message"] ?? "User not registered",
-      toastLength: Toast.LENGTH_SHORT,
-    );
-
+        msg: data["message"] ?? "User not registered");
     return false;
   } catch (e) {
-    Fluttertoast.showToast(
-      msg: "Something went wrong",
-      toastLength: Toast.LENGTH_SHORT,
-    );
-    log("Send OTP Error → $e");
+    debugPrint("❌ SEND OTP ERROR: $e");
     return false;
   } finally {
-    isLoading(false); 
+    isLoading = false;
+    _refreshUI();
   }
 }
-
-
- Future<bool> verifyOtp(String phone, String otp) async {
+Future<bool> verifyOtp(String phone, String otp) async {
   try {
-    log("Verifying OTP…");
+    isLoading = true;
+    _refreshUI();
 
     final url = Uri.parse("$baseUrl/auth/verify-otp");
+
     final body = {
       "phone": phone,
-      "sessionId": sessionId.value,
+      "sessionId": sessionId,
       "otp": otp,
     };
 
-    log("VERIFY BODY → $body");
+    debugPrint("🚀 VERIFY OTP API");
+    debugPrint("➡️ URL: $url");
+    debugPrint("➡️ BODY: ${jsonEncode(body)}");
 
     final response = await http.post(
       url,
@@ -108,135 +102,156 @@ class AuthController extends GetxController {
       body: jsonEncode(body),
     );
 
+    debugPrint("✅ STATUS: ${response.statusCode}");
+    debugPrint("✅ RESPONSE: ${response.body}");
+
     final data = jsonDecode(response.body);
-    log("Verify OTP Response → $data");
 
     if ((response.statusCode == 200 || response.statusCode == 201) &&
         data["accessToken"] != null) {
       await _onLoginSuccess(data);
-      return true; 
+      return true;
     } else {
       safeSnack("Error", data["message"] ?? "Invalid OTP");
-      return false; 
+      return false;
     }
   } catch (e) {
-    safeSnack("Error", e.toString());
-    log("Verify OTP Error → $e");
+    debugPrint("❌ VERIFY OTP ERROR: $e");
     return false;
+  } finally {
+    isLoading = false;
+    _refreshUI();
   }
 }
-
   Future<void> _onLoginSuccess(dynamic data) async {
     final prefs = await SharedPreferences.getInstance();
 
-    token.value = data["accessToken"];
-    bearerToken = "Bearer ${token.value}";
+    token = data["accessToken"];
+    bearerToken = "Bearer $token";
+    currentUser = UserModel.fromJson(data["user"]);
+    isLoggedIn = true;
+    tokenExpiry = _decodeTokenExpiry(token);
 
-    currentUser.value = UserModel.fromJson(data["user"]);
-    isLoggedIn.value = true;
-
-    tokenExpiry = _decodeTokenExpiry(token.value);
-
+    // Fetch messes from API
     await fetchOwnedMesses();
 
+    // Default to first mess if available
     if (ownedMesses.isNotEmpty) {
-      selectedMessId.value = ownedMesses.first["id"];
-      await prefs.setString("selectedMessId", selectedMessId.value);
+      selectedMessId = ownedMesses.first["id"]?.toString() ?? "";
+      await prefs.setString("selectedMessId", selectedMessId);
     }
 
-    await prefs.setString("token", token.value);
+    await prefs.setString("token", token);
     await prefs.setString("user", jsonEncode(data["user"]));
     await prefs.setString("ownedMesses", jsonEncode(ownedMesses));
+    
     if (tokenExpiry != null) {
       await prefs.setString("tokenExpiry", tokenExpiry!.toIso8601String());
     }
 
     _startAutoLogoutTimer();
-
-    log("LOGIN SUCCESS → Redirecting Dashboard");
+    _refreshUI();
     Get.offAll(() => const DashboardScreen());
   }
 
-  Future<void> fetchOwnedMesses() async {
-    try {
-      isLoading(true);
-
-      final url = Uri.parse("$baseUrl/customer/owners/messes");
-      final response = await http.get(
-        url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": bearerToken,
-        },
-      );
-
-      log("Fetch Messes Response → ${response.body}");
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        if (decoded is List) {
-          ownedMesses.value = List<Map<String, dynamic>>.from(decoded);
-        } else {
-          ownedMesses.clear();
-        }
-      } else {
-        ownedMesses.clear();
-      }
-    } catch (e) {
-      safeSnack("Error", e.toString());
-      log("Fetch Messes Error → $e");
-    } finally {
-      isLoading(false);
-    }
-  }
+  // --- Logic Methods ---
 
   Future<void> checkLoginStatus() async {
-    log("Checking login status…");
-    isLoading(true);
+    isLoading = true;
+    _refreshUI();
 
     final prefs = await SharedPreferences.getInstance();
     final storedToken = prefs.getString("token");
     final storedUser = prefs.getString("user");
-    final storedSelectedMessId = prefs.getString("selectedMessId");
-    final storedOwnedMesses = prefs.getString("ownedMesses");
 
     if (storedToken != null && storedUser != null) {
       final expiry = _decodeTokenExpiry(storedToken);
-      final now = DateTime.now();
-
-      if (expiry != null && expiry.isAfter(now)) {
-        token.value = storedToken;
-        bearerToken = "Bearer ${token.value}";
-        currentUser.value = UserModel.fromJson(jsonDecode(storedUser));
-        selectedMessId.value = storedSelectedMessId ?? "";
-
-        if (storedOwnedMesses != null) {
-          ownedMesses.value =
-              List<Map<String, dynamic>>.from(jsonDecode(storedOwnedMesses));
+      if (expiry != null && expiry.isAfter(DateTime.now())) {
+        token = storedToken;
+        bearerToken = "Bearer $token";
+        currentUser = UserModel.fromJson(jsonDecode(storedUser));
+        selectedMessId = prefs.getString("selectedMessId") ?? "";
+        
+        final storedMesses = prefs.getString("ownedMesses");
+        if (storedMesses != null) {
+          try {
+            final List<dynamic> decoded = jsonDecode(storedMesses);
+            // Robust parsing into List<Map>
+            ownedMesses = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+          } catch (e) {
+            ownedMesses = [];
+          }
         }
 
         tokenExpiry = expiry;
-        isLoggedIn.value = true;
-
+        isLoggedIn = true;
         _startAutoLogoutTimer();
-        isLoading(false);
+        isLoading = false;
+        _refreshUI();
         return;
       }
     }
 
-    logout(showMessage: false);
-    isLoading(false);
+    await _clearSessionData();
+    isLoading = false;
+    _refreshUI();
+  }
+
+  Future<void> fetchOwnedMesses() async {
+    try {
+      final url = Uri.parse("$baseUrl/customer/owners/messes");
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json", 
+          "Authorization": bearerToken
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          // Map each item to Map<String, dynamic> safely
+          ownedMesses = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+        }
+      }
+    } catch (e) {
+      log("Fetch Messes Error → $e");
+    } finally {
+      _refreshUI(); // Ensure UI knows messes are loaded
+    }
+  }
+
+  Future<void> logout({bool showMessage = true}) async {
+    await _clearSessionData();
+    _refreshUI();
+
+    if (Get.context != null) {
+      Get.offAll(() => const LoginScreen());
+    }
+    
+    if (showMessage) safeSnack("Session expired", "Please login again.");
+  }
+
+  Future<void> _clearSessionData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    token = "";
+    bearerToken = "";
+    sessionId = "";
+    selectedMessId = "";
+    ownedMesses = [];
+    currentUser = null;
+    isLoggedIn = false;
+    _logoutTimer?.cancel();
   }
 
   void _startAutoLogoutTimer() {
     _logoutTimer?.cancel();
     if (tokenExpiry == null) return;
-
-    final secondsUntilLogout = tokenExpiry!.difference(DateTime.now()).inSeconds;
-
-    if (secondsUntilLogout > 0) {
-      log("Auto-logout in $secondsUntilLogout seconds");
-      _logoutTimer = Timer(Duration(seconds: secondsUntilLogout), logout);
+    final seconds = tokenExpiry!.difference(DateTime.now()).inSeconds;
+    if (seconds > 0) {
+      _logoutTimer = Timer(Duration(seconds: seconds), logout);
     } else {
       logout();
     }
@@ -246,40 +261,13 @@ class AuthController extends GetxController {
     try {
       final parts = jwt.split('.');
       if (parts.length != 3) return null;
-
       final payload = base64Url.normalize(parts[1]);
       final decoded = jsonDecode(utf8.decode(base64Url.decode(payload)));
-
-      if (decoded.containsKey('exp')) {
-        return DateTime.fromMillisecondsSinceEpoch(decoded['exp'] * 1000);
-      }
-      return null;
+      return decoded.containsKey('exp') 
+          ? DateTime.fromMillisecondsSinceEpoch(decoded['exp'] * 1000) 
+          : null;
     } catch (e) {
-      log("JWT Decode Error → $e");
       return null;
-    }
-  }
-
-  Future<void> logout({bool showMessage = true}) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    token.value = "";
-    bearerToken = "";
-    sessionId.value = "";
-    selectedMessId.value = "";
-    ownedMesses.clear();
-    currentUser.value = null;
-    isLoggedIn.value = false;
-
-    _logoutTimer?.cancel();
-
-    log("Logged out → Redirecting LoginScreen");
-
-    Get.offAll(() => const LoginScreen());
-
-    if (showMessage) {
-      safeSnack("Session expired", "Please login again.");
     }
   }
 }

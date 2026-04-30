@@ -15,6 +15,7 @@ class DeliveriesScreen extends StatefulWidget {
 }
 
 class _DeliveriesScreenState extends State<DeliveriesScreen> {
+  // Use find if it's already initialized, or keep put if this is the entry point
   final DeliveriesController controller = Get.put(DeliveriesController());
 
   String selectedStatus = "All Status";
@@ -23,10 +24,10 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
   @override
   void initState() {
     super.initState();
+    // Call fetch on init
     controller.fetchDeliveries();
   }
 
-  /// Open date picker and update deliveries list
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -45,7 +46,6 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
     }
   }
 
- 
   String? _statusToApiValue(String value) {
     switch (value) {
       case "Pending":
@@ -66,97 +66,95 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16.w),
-          child: Obx(() {
-            if (controller.isLoading.value) {
-              return const Center(child: CircularProgressIndicator());
-            }
+          child: GetBuilder<DeliveriesController>( // 1. Replaced Obx with GetBuilder
+            builder: (controller) {
+              // 2. Access variables directly (no .value)
+              if (controller.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            final deliveries = controller.deliveries;
+              final deliveries = controller.deliveries;
 
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TittleText(text: "Deliveries"),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => GenerateDeliveriesDialog(),
-                          );
-                        },
-                        icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
-                        label: Text(
-                          "Generate",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TittleText(text: "Deliveries"),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => GenerateDeliveriesDialog(),
+                            );
+                          },
+                          icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
+                          label: Text(
+                            "Generate",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff0474B9),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 25.w,
+                              vertical: 13.h,
+                            ),
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff0474B9),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 25.w,
-                            vertical: 13.h,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 4.h),
-                  Text(
-                    "${deliveries.length} total",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.grey[600],
+                      ],
                     ),
-                  ),
-                  SizedBox(height: 16.h),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "${deliveries.length} total",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
 
-                
-                  _buildFilterRow(context),
+                    _buildFilterRow(context),
 
-                  SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-                  if (deliveries.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 50.h),
-                        child: Text(
-                          "No deliveries found",
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500,
+                    if (deliveries.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 50.h),
+                          child: Text(
+                            "No deliveries found",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                  else
-                    ...deliveries.map((delivery) {
-                      final customer = delivery.customer;
-                      final user = customer?.user;
-
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: 12.h),
-                        child: OrderCard(
-                          delivery: delivery,
-                        ),
-                      );
-                    }).toList(),
-                ],
-              ),
-            );
-          }),
+                      )
+                    else
+                      // 3. Map directly from the standard List
+                      ...deliveries.map((delivery) {
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          child: OrderCard(
+                            delivery: delivery,
+                          ),
+                        );
+                      }).toList(),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -165,7 +163,6 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
   Widget _buildFilterRow(BuildContext context) {
     return Row(
       children: [
-
         Expanded(
           child: _dropdown(
             value: selectedStatus,
@@ -182,8 +179,6 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
           ),
         ),
         SizedBox(width: 10.w),
-
-       
         Expanded(
           child: InkWell(
             onTap: () => _selectDate(context),
@@ -229,7 +224,9 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
       ),
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       child: DropdownButtonHideUnderline(
+      
         child: DropdownButton<String>(
+          dropdownColor:Colors.white,
           value: value,
           icon: Icon(Icons.keyboard_arrow_down_rounded,
               size: 20.sp, color: Colors.grey),

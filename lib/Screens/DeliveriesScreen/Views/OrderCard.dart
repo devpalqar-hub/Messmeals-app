@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 import 'package:mess/Screens/DeliveriesScreen/Services/DeliveriesController.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
-import 'package:get/get.dart';
 
 class OrderCard extends StatefulWidget {
   final Delivery delivery;
@@ -14,21 +16,14 @@ class OrderCard extends StatefulWidget {
   State<OrderCard> createState() => _OrderCardState();
 }
 
-class _OrderCardState extends State<OrderCard> {
+class _OrderCardState extends State<OrderCard>
+    with TickerProviderStateMixin {
   bool _expanded = false;
   int _selectedStatus = 0;
 
-  final DeliveriesController _controller = Get.find<DeliveriesController>();
+  final DeliveriesController _controller = Get.find();
 
   final List<String> _statusValues = ["PENDING", "PROGRESS", "DELIVERED"];
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedStatus =
-        _statusValues.indexOf(widget.delivery.status.toUpperCase());
-    if (_selectedStatus == -1) _selectedStatus = 0;
-  }
 
   Customer? get customer => widget.delivery.customer;
   User? get user => customer?.user;
@@ -46,8 +41,17 @@ class _OrderCardState extends State<OrderCard> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _selectedStatus =
+        _statusValues.indexOf(widget.delivery.status.toUpperCase());
+    if (_selectedStatus == -1) _selectedStatus = 0;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -57,66 +61,75 @@ class _OrderCardState extends State<OrderCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// TOP ROW (Status + Details + Price)
+          /// ===== TOP SECTION =====
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// LEFT SIDE
+              /// LEFT
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                     SizedBox(height: 6),
                     _Capsule(label: _statusValues[_selectedStatus]),
-                    SizedBox(height: 3),
+                     SizedBox(height: 8.h),
 
-                    if (_has(user?.name)) Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: _text(user!.name, bold: true),
-                    ),
-                     SizedBox(height: 3),
+                    if (_has(user?.name))
+                      Text(
+                        user!.name,
+                        style:  TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                     SizedBox(height: 4.h),
+
                     if (_has(user?.phone))
                       _rowInfo(Icons.call_outlined, user!.phone),
+
                     if (_has(customer?.address))
-                      SizedBox(height: 3),
                       _rowInfo(Icons.location_on_outlined, customer!.address),
                   ],
                 ),
               ),
 
-              /// RIGHT SIDE (TIGHT — NO TOP SPACE)
+               SizedBox(width: 10.w),
+
+            
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                   SizedBox(height: 10),
                   Text(
                     formattedDate,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 12.sp,
                       color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                      height: 1.2,
                     ),
                   ),
-                   const SizedBox(height: 10),
+
+                   SizedBox(height: 6),
+
                   Text(
-                    "₹${plan?.price ?? '0'}",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.1,
-                    ),
-                  ),
-                   const SizedBox(height: 10),
-                  Text(
-                    plan?.planName ?? '',
+                    "₹${plan?.price ?? 0}",
                     style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      height: 1.2,
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                   SizedBox(height: 4.h),
+
+                  SizedBox(
+                    width: 110,
+                    child: Text(
+                      plan?.planName ?? '',
+                      maxLines: 2,
+                      textAlign: TextAlign.right,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ),
                 ],
@@ -124,32 +137,37 @@ class _OrderCardState extends State<OrderCard> {
             ],
           ),
 
-          /// EXPAND BUTTON
+       
           Align(
             alignment: Alignment.centerRight,
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon:
-                  Icon(_expanded ? Icons.expand_less : Icons.expand_more),
-              onPressed: () =>
-                  setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                ),
+                onPressed: () => setState(() => _expanded = !_expanded),
+              ),
             ),
           ),
 
-          /// EXPANDED CONTENT
+         
           AnimatedSize(
             duration: const Duration(milliseconds: 250),
             child: !_expanded
-                ? const SizedBox.shrink()
+                ? const SizedBox()
                 : Column(
                     children: [
-                      const SizedBox(height: 15),
-                      Divider(height:1,),
-                       const SizedBox(height: 20),
+                      const SizedBox(height: 6),
+                      const Divider(height: 1),
+                      const SizedBox(height: 10),
 
                       _statusPillsContainer(),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
 
                       Row(
                         children: [
@@ -161,17 +179,19 @@ class _OrderCardState extends State<OrderCard> {
                               _openInMap,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: _actionButton(
                               Icons.call_outlined,
-                              "Call Now",
+                              "Call",
                               Colors.green,
                               _callNow,
                             ),
                           ),
                         ],
                       ),
+
+                      const SizedBox(height: 6),
                     ],
                   ),
           ),
@@ -180,31 +200,26 @@ class _OrderCardState extends State<OrderCard> {
     );
   }
 
-  /// ---------------- HELPERS ----------------
+  /// ===== HELPERS =====
 
-  Widget _text(String text, {bool bold = false}) => Padding(
-        padding: const EdgeInsets.only(bottom: 2),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-      );
-
-  Widget _rowInfo(IconData icon, String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 2),
-        child: Row(
-          children: [
-            Icon(icon, size: 14, color: Colors.grey[600]),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(text, style: const TextStyle(fontSize: 13)),
+  Widget _rowInfo(IconData icon, String text) {
+    return Padding(
+      padding:  EdgeInsets.only(top: 3.h),
+      child: Row(
+        children: [
+          Icon(icon, size: 14.sp, color: Colors.grey[600]),
+           SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 14.sp),
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _statusPillsContainer() {
     return Container(
@@ -231,19 +246,18 @@ class _OrderCardState extends State<OrderCard> {
               },
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color:
-                      isSelected ? Colors.white : Colors.transparent,
+                  color: isSelected ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   text,
                   style: TextStyle(
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.w500,
+                    fontSize: 12,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
                 ),
               ),
@@ -262,11 +276,11 @@ class _OrderCardState extends State<OrderCard> {
   ) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        height: 44,
+        height: 40,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.grey.shade300),
         ),
         child: Row(
@@ -276,8 +290,11 @@ class _OrderCardState extends State<OrderCard> {
             const SizedBox(width: 6),
             Text(
               label,
-              style:
-                  TextStyle(color: color, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ],
         ),
@@ -285,25 +302,27 @@ class _OrderCardState extends State<OrderCard> {
     );
   }
 
-  /// ---------------- ACTIONS ----------------
+  /// ===== ACTIONS =====
 
   Future<void> _openInMap() async {
     if (!_has(customer?.address)) return;
+
     final encoded = Uri.encodeComponent(customer!.address);
+
     await launchUrl(
-      Uri.parse(
-          "https://www.google.com/maps/search/?api=1&query=$encoded"),
+      Uri.parse("https://www.google.com/maps/search/?api=1&query=$encoded"),
       mode: LaunchMode.externalApplication,
     );
   }
 
   Future<void> _callNow() async {
     if (!_has(user?.phone)) return;
+
     await launchUrl(Uri(scheme: 'tel', path: user!.phone));
   }
 }
 
-/// ---------------- STATUS CAPSULE ----------------
+/// ===== STATUS CAPSULE =====
 
 class _Capsule extends StatelessWidget {
   final String label;
@@ -314,17 +333,17 @@ class _Capsule extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.black87,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         label,
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w600,
-          fontSize: 12,
+          fontSize: 11,
         ),
       ),
     );

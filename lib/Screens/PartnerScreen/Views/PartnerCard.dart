@@ -27,6 +27,7 @@ class PartnerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     final controller = Get.find<PartnerController>();
 
     return Container(
@@ -35,11 +36,11 @@ class PartnerCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      padding:  EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(16.r),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Top Row: Name + Active badge + icons ---
+         
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -50,16 +51,16 @@ class PartnerCard extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style:  TextStyle(
+                      style: TextStyle(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w500,
                         fontFamily: "Inter",
-                        color: Color(0xff0A0A0A),
+                        color: const Color(0xff0A0A0A),
                       ),
                     ),
                     if (isActive)
                       Container(
-                        padding:  EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 10.w,
                           vertical: 4.h,
                         ),
@@ -67,10 +68,11 @@ class PartnerCard extends StatelessWidget {
                           color: Colors.black,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child:  Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.check_circle, size: 14.sp, color: Colors.white),
+                            Icon(Icons.check_circle,
+                                size: 14.sp, color: Colors.white),
                             SizedBox(width: 4.w),
                             Text(
                               "active",
@@ -87,85 +89,66 @@ class PartnerCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               Row(
                 children: [
-                 
                   IconButton(
                     onPressed: () async {
+                     
                       await controller.fetchPartnerById(id);
 
-                      final partner = controller.selectedPartner.value;
+                     
+                      final partner = controller.selectedPartner;
                       if (partner == null) {
                         Get.snackbar("Error", "Failed to load partner details");
                         return;
                       }
 
-                     
                       final result = await Get.to(() => AddPartnerScreen(
                             isEdit: true,
                             partner: partner,
                           ));
 
                       if (result == true) {
-                       
                         await controller.fetchPartners();
-                         Get.back();
-                        Get.snackbar("Success", "Partner updated successfully",
-                            snackPosition: SnackPosition.BOTTOM);
                       }
                     },
-                    icon:  Icon(Icons.edit_outlined, size: 22.sp),
+                    icon: Icon(Icons.edit_outlined, size: 22.sp),
                   ),
-
-                  
                   IconButton(
                     onPressed: () => _confirmDelete(context, id, controller),
-                    icon:  Icon(Icons.delete_outline, size: 20.sp),
+                    icon: Icon(Icons.delete_outline, size: 20.sp),
                   ),
-
-                
                   IconButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PartnerDetailsScreen(partnerId: id),
-                        ),
-                      );
+                      Get.to(() => PartnerDetailsScreen(partnerId: id));
                     },
-                    icon:  Icon(Icons.chevron_right, size: 22.sp),
+                    icon: Icon(Icons.chevron_right, size: 22.sp),
                   ),
                 ],
               ),
             ],
           ),
-
-         
           Text(
             phone,
-            style:  TextStyle(
+            style: TextStyle(
               fontSize: 15.sp,
               fontFamily: "Inter",
               fontWeight: FontWeight.w400,
-              color: Color(0xff717182),
+              color: const Color(0xff717182),
             ),
           ),
-           SizedBox(height: 2.h),
+          SizedBox(height: 2.h),
           Text(
             email,
             style: TextStyle(
               fontSize: 15.sp,
               fontFamily: "Inter",
               fontWeight: FontWeight.w400,
-              color: Color(0xff717182),
+              color: const Color(0xff717182),
             ),
           ),
-
-           SizedBox(height: 12.h),
+          SizedBox(height: 12.h),
           Divider(color: Colors.grey[300]),
-
-       
           SizedBox(height: 8.h),
           Row(
             children: [
@@ -173,19 +156,19 @@ class PartnerCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     Text(
+                    Text(
                       "TOTAL ORDERS",
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontFamily: "Inter",
                         fontWeight: FontWeight.w500,
-                        color: Color(0xff717182),
+                        color: const Color(0xff717182),
                       ),
                     ),
-                     SizedBox(height: 4.h),
+                    SizedBox(height: 4.h),
                     Text(
                       "$totalOrders",
-                      style:  TextStyle(
+                      style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         fontFamily: "Inter",
@@ -205,13 +188,13 @@ class PartnerCard extends StatelessWidget {
                         fontSize: 13.sp,
                         fontFamily: "Inter",
                         fontWeight: FontWeight.w500,
-                        color: Color(0xff717182),
+                        color: const Color(0xff717182),
                       ),
                     ),
-                     SizedBox(height: 4.h),
+                    SizedBox(height: 4.h),
                     Text(
                       location,
-                      style:  TextStyle(
+                      style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
@@ -227,37 +210,114 @@ class PartnerCard extends StatelessWidget {
       ),
     );
   }
+void _confirmDelete(
+  BuildContext context,
+  String partnerId,
+  PartnerController controller,
+) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext ctx) {
+      return Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              /// ICON
+              Icon(
+                Icons.warning_amber_rounded,
+                color: const Color(0xffF28B82),
+                size: 45.sp,
+              ),
 
+              SizedBox(height: 12.h),
 
-  void _confirmDelete(BuildContext context, String partnerId, PartnerController controller) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Delete Partner"),
-        content: const Text("Are you sure you want to delete this partner?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+              /// TITLE
+              Text(
+                "Delete Partner?",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18.sp,
+                ),
+              ),
+
+              SizedBox(height: 8.h),
+
+              /// MESSAGE
+              Text(
+                "Are you sure you want to delete this partner?",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14.sp,
+                ),
+              ),
+
+              SizedBox(height: 20.h),
+
+              /// BUTTONS
+              Row(
+                children: [
+                  /// CANCEL
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 10.w),
+
+                  /// DELETE
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx); // close dialog first
+                        await controller.deletePartner(partnerId);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: Text(
+                        "Delete",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await controller.deletePartner(partnerId);
-              await controller.fetchPartners();
-
-              Get.snackbar("Success", "Partner deleted successfully",
-                  snackPosition: SnackPosition.BOTTOM);
-
-              
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context, true); 
-              }
-            },
-            child:  Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 }

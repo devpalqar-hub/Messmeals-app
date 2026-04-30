@@ -8,30 +8,29 @@ import 'package:mess/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardController extends GetxController {
-  var dashboardData = Rxn<DashboardModel>();
-  var variationData = Rxn<VariationCountModel>();
-  var isLoading = false.obs;
-  var isVariationLoading = false.obs;
-  var selectedDate = DateTime.now().obs;
+  // Standard variables instead of Rx
+  DashboardModel? dashboardData;
+  VariationCountModel? variationData;
+  bool isLoading = false;
+  bool isVariationLoading = false;
+  DateTime selectedDate = DateTime.now();
 
-  final AuthController authController = Get.put(AuthController());
+  final AuthController authController = Get.find<AuthController>();
 
   @override
   void onInit() {
     super.onInit();
-
-    ever(authController.selectedMessId, (_) {
-      if (authController.selectedMessId.value.isNotEmpty) {
-        fetchDashboardStats();
-        fetchVariationCount(selectedDate.value);
-      }
-    });
-
-
-    if (authController.selectedMessId.value.isNotEmpty) {
-      fetchDashboardStats();
-      fetchVariationCount(selectedDate.value);
+    
+    // Initial fetch if messId exists
+    if (authController.selectedMessId.isNotEmpty) {
+      refreshAllData();
     }
+  }
+
+  // Helper to refresh everything and update UI
+  void refreshAllData() {
+    fetchDashboardStats();
+    fetchVariationCount(selectedDate);
   }
 
   Future<String?> _getToken() async {
@@ -39,17 +38,15 @@ class DashboardController extends GetxController {
     return prefs.getString('token');
   }
 
-
   Future<void> fetchDashboardStats() async {
     try {
-      isLoading.value = true;
-      final token = await _getToken();
-      final messId = authController.selectedMessId.value;
+      isLoading = true;
+      update(); // Notify UI to show loader
 
-      if (messId.isEmpty) {
-       
-        return;
-      }
+      final token = await _getToken();
+      final messId = authController.selectedMessId;
+
+      if (messId.isEmpty) return;
 
       final url = Uri.parse('$baseUrl/auth/stats?messId=$messId');
     
@@ -61,44 +58,37 @@ class DashboardController extends GetxController {
         },
       );
 
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        dashboardData.value = DashboardModel.fromJson(data);
+        dashboardData = DashboardModel.fromJson(data);
       } else if (response.statusCode == 403) {
-        Get.snackbar("Session Expired", "Please log in again.");
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
-        Get.offAllNamed('/login');
+        _handleLogout();
       } else {
         Get.snackbar("Error", "Failed to fetch dashboard stats");
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
-      isLoading.value = false;
+      isLoading = false;
+      update(); // Notify UI that loading is finished
     }
   }
 
-
   Future<void> fetchVariationCount(DateTime date) async {
     try {
-      isVariationLoading.value = true;
-      final token = await _getToken();
-      final messId = authController.selectedMessId.value;
+      isVariationLoading = true;
+      update();
 
-      if (messId.isEmpty) {
-        print("⚠️ No mess selected. Skipping fetchVariationCount.");
-        return;
-      }
+      final token = await _getToken();
+      final messId = authController.selectedMessId;
+
+      if (messId.isEmpty) return;
 
       final formattedDate =
           "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      
       final url = Uri.parse(
           '$baseUrl/customer/variation/count?date=$formattedDate&messId=$messId');
-
-      print("📅 Fetching variation for: $formattedDate");
-      print("🟢 URL: $url");
 
       final response = await http.get(
         url,
@@ -108,24 +98,30 @@ class DashboardController extends GetxController {
         },
       );
 
-      print("🔹 Status: ${response.statusCode}");
-      print("🔹 Body: ${response.body}");
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        variationData.value = VariationCountModel.fromJson(data);
+        variationData = VariationCountModel.fromJson(data);
       } else {
         Get.snackbar("Error", "Failed to fetch variation count");
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
-      isVariationLoading.value = false;
+      isVariationLoading = false;
+      update();
     }
   }
 
   void updateDate(DateTime newDate) {
-    selectedDate.value = newDate;
+    selectedDate = newDate;
     fetchVariationCount(newDate);
+    // update() is called inside fetchVariationCount finally block
+  }
+
+  Future<void> _handleLogout() async {
+    Get.snackbar("Session Expired", "Please log in again.");
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Get.offAllNamed('/login');
   }
 }

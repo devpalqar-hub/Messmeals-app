@@ -221,9 +221,11 @@ void _showDeleteDialog(
 ) {
   showDialog(
     context: context,
-    barrierDismissible: false, // optional but recommended
+    barrierDismissible: false,
+   
     builder: (BuildContext ctx) {
       return Dialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.r),
         ),
@@ -234,7 +236,7 @@ void _showDeleteDialog(
             children: [
               Icon(
                 Icons.warning_amber_rounded,
-                color: Colors.redAccent,
+                color: const Color.fromARGB(255, 240, 162, 156),
                 size: 45.sp,
               ),
               SizedBox(height: 12.h),
@@ -260,9 +262,10 @@ void _showDeleteDialog(
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pop(ctx); // ✅ FIX
+                        Navigator.pop(ctx); 
                       },
                       style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,   
                         side: BorderSide(color: Colors.grey.shade300),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
@@ -271,7 +274,7 @@ void _showDeleteDialog(
                       ),
                       child: Text(
                         "Cancel",
-                        style: TextStyle(fontSize: 14.sp),
+                        style: TextStyle(fontSize: 14.sp,color: Colors.black),
                       ),
                     ),
                   ),
@@ -284,7 +287,7 @@ void _showDeleteDialog(
                         await controller.refreshPlans();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
                         ),

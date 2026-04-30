@@ -87,7 +87,11 @@ class CustomerCard extends StatelessWidget {
                  
                     IconButton(
                       onPressed: () {
-                        _showDeleteDialog(context, controller);
+                      _showDeleteDialog(
+                context,
+                controller,
+                customer,
+              );
                       },
                       icon: const Icon(Icons.delete_outline,
                           size: 20, color: Colors.red),
@@ -164,33 +168,114 @@ class CustomerCard extends StatelessWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, CustomerController controller) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text("Delete Customer"),
-        content: Text(
-            "Are you sure you want to delete ${customer.name}? This action cannot be undone."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+  void _showDeleteDialog(
+  BuildContext context,
+  CustomerController controller,
+  CustomerModel customer,
+) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext ctx) {
+      return Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: const Color.fromARGB(255, 240, 162, 156),
+                size: 45.sp,
+              ),
+
+              SizedBox(height: 12.h),
+
+              Text(
+                "Delete Customer?",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18.sp,
+                ),
+              ),
+
+              SizedBox(height: 8.h),
+
+              Text(
+                "Are you sure you want to delete ${customer.name}?\nThis action cannot be undone.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14.sp,
+                ),
+              ),
+
+              SizedBox(height: 20.h),
+
+              Row(
+                children: [
+                  /// Cancel
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 10.w),
+
+                  /// Delete
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx); // close dialog first
+                        await controller.deleteCustomer(customer.id);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: Text(
+                        "Delete",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await controller.deleteCustomer(customer.id);
-            },
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 }
 
 class _InfoItem extends StatelessWidget {

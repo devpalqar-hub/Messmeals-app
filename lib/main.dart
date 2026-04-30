@@ -6,16 +6,18 @@ import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 
-String baseUrl = "https://api.messmeals.com";
+String baseUrl = "https://staging-api.messmeals.com";
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize the controller
   final authController = Get.put(AuthController());
 
+  // Check status before running the app
   await authController.checkLoginStatus();
 
-  runApp(DevicePreview(builder: (value) => MessMeals(), enabled: false));
+  runApp(DevicePreview(builder: (value) => const MessMeals(), enabled: false));
 }
 
 class MessMeals extends StatelessWidget {
@@ -23,19 +25,20 @@ class MessMeals extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = Get.find<AuthController>();
-
     return ScreenUtilInit(
       designSize: const Size(390, 840),
       builder: (context, child) {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: "Mess Meals",
-          home: Obx(() {
-            return auth.isLoggedIn.value
-                ? const DashboardScreen()
-                : const LoginScreen();
-          }),
+          // Replaced Obx with GetBuilder
+          home: GetBuilder<AuthController>(
+            builder: (auth) {
+              return auth.isLoggedIn
+                  ? const DashboardScreen()
+                  : const LoginScreen();
+            },
+          ),
         );
       },
     );

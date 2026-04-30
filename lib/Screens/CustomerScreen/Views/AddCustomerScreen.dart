@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
@@ -7,8 +8,12 @@ import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 
 class AddCustomerScreen extends StatefulWidget {
   final CustomerModel? customer;
-   final bool isEdit;
-  const AddCustomerScreen({super.key, this.customer, this.isEdit = false, });
+  final bool isEdit;
+  const AddCustomerScreen({
+    super.key,
+    this.customer,
+    this.isEdit = false,
+  });
 
   @override
   State<AddCustomerScreen> createState() => _AddCustomerScreenState();
@@ -30,7 +35,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   String? selectedPartner;
   DateTime? startDate;
   DateTime? endDate;
-  String? selectedDeliveryType; 
+  String? selectedDeliveryType;
   final List<String> selectedDays = [];
   final List<String> weekDays = [
     "Monday",
@@ -67,58 +72,55 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     setState(() => _bootLoading = false);
   }
 
-void _loadCustomerData() {
-  final c = widget.customer!;
-  nameController.text = c.name;
-  phoneController.text = c.phone;
-  emailController.text = c.email;
-  addressController.text = c.address;
-  locationController.text = c.currentLocation;
-  coordinatesController.text = c.latitudeLongitude;
-  walletController.text = c.walletBalance.toString();
+  void _loadCustomerData() {
+    final c = widget.customer!;
+    nameController.text = c.name;
+    phoneController.text = c.phone;
+    emailController.text = c.email;
+    addressController.text = c.address;
+    locationController.text = c.currentLocation;
+    coordinatesController.text = c.latitudeLongitude;
+    walletController.text = c.walletBalance.toString();
 
-  if (c.activeSubscriptions.isNotEmpty) {
-    final s = c.activeSubscriptions.first;
-    discountController.text = s.discountedPrice.toString();
+    if (c.activeSubscriptions.isNotEmpty) {
+      final s = c.activeSubscriptions.first;
+      discountController.text = s.discountedPrice.toString();
 
-    final hasPlan = planController.plans.any((p) => p.id == s.plan.id);
-    selectedMealPlan = hasPlan ? s.plan.id : null;
+      final hasPlan = planController.plans.any((p) => p.id == s.plan.id);
+      selectedMealPlan = hasPlan ? s.plan.id : null;
 
+      final hasPartner = partnerController.partners.any(
+        (p) => (p.deliveryPartnerProfile?.id ?? '') == s.deliveryPartnerProfileId,
+      );
+      selectedPartner = hasPartner ? s.deliveryPartnerProfileId : null;
 
-    final hasPartner = partnerController.partners.any(
-      (p) => (p.deliveryPartnerProfile?.id ?? '') == s.deliveryPartnerProfileId,
-    );
-    selectedPartner = hasPartner ? s.deliveryPartnerProfileId : null;
+      startDate = s.startDate;
+      endDate = s.endDate;
 
-    
-    startDate = s.startDate;
-    endDate = s.endDate;
-
-
-    if (!widget.isEdit) {
-      if (s.scheduleType == "EVERYDAY") {
-        selectedDeliveryType = "everyday";
-        selectedDays.clear();
-      } else if (s.scheduleType == "CUSTOM") {
-        selectedDeliveryType = "custom";
-        selectedDays.clear();
-        if (s.days != null) {
-          selectedDays.addAll(s.days);
+      if (!widget.isEdit) {
+        if (s.scheduleType == "EVERYDAY") {
+          selectedDeliveryType = "everyday";
+          selectedDays.clear();
+        } else if (s.scheduleType == "CUSTOM") {
+          selectedDeliveryType = "custom";
+          selectedDays.clear();
+          if (s.days != null) {
+            selectedDays.addAll(s.days!);
+          }
         }
       }
+    } else {
+      selectedMealPlan = null;
+      selectedPartner = null;
+      startDate = null;
+      endDate = null;
+      discountController.text = '';
+      selectedDeliveryType = null;
+      selectedDays.clear();
     }
-  } else {
-    selectedMealPlan = null;
-    selectedPartner = null;
-    startDate = null;
-    endDate = null;
-    discountController.text = '';
-    selectedDeliveryType = null;
-    selectedDays.clear();
   }
-}
 
-    Future<void> _pickDate(BuildContext context, bool isStart) async {
+  Future<void> _pickDate(BuildContext context, bool isStart) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: (isStart ? startDate : endDate) ?? DateTime.now(),
@@ -198,11 +200,6 @@ void _loadCustomerData() {
       );
     }
 
- 
-    final plansReady = planController.isReady && !planController.isLoading;
-    final partnersReady = partnerController.isReady.value && !partnerController.isLoading.value;
-    final formReady = plansReady && partnersReady;
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -221,96 +218,114 @@ void _loadCustomerData() {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Form(
-              key: _formKey,
-              child: AbsorbPointer(
-                absorbing: !formReady,
-                child: Opacity(
-                  opacity: formReady ? 1.0 : 0.5,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBasicInfoCard(),
-                      const SizedBox(height: 20),
-                      _buildPlanAndSubscriptionCard(formReady),
-                      const SizedBox(height: 20),
-                      _buildWalletCard(),
-                      const SizedBox(height: 20),
-                      _buildDiscountCard(),
-                      const SizedBox(height: 20),
-                    if (!isEdit)
-  _buildScheduleDeliveryTypeCard(),
+      body: GetBuilder<PlanController>(
+        builder: (planCtrl) {
+          return GetBuilder<PartnerController>(
+            builder: (partnerCtrl) {
+              // Removed .value logic and use the controller directly
+              final plansReady = planCtrl.isReady && !planCtrl.isLoading;
+              final partnersReady = partnerCtrl.isReady && !partnerCtrl.isLoading;
+              final formReady = plansReady && partnersReady;
 
-                      const SizedBox(height: 20),
-                      Row(
+              return SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Form(
+                  key: _formKey,
+                  child: AbsorbPointer(
+                    absorbing: !formReady,
+                    child: Opacity(
+                      opacity: formReady ? 1.0 : 0.5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: Colors.grey.shade300),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text(
-                                "Cancel",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xff1A1D29),
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: "Inter",
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0D47A1),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              onPressed: (!formReady || customerController.isLoading)
-                                  ? null
-                                  : _submitForm,
-                              child: customerController.isLoading
-                                  ? const SizedBox(
-                                      height: 22,
-                                      width: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Text(
-                                      buttonText,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: "Inter",
-                                      ),
+                          _buildBasicInfoCard(),
+                          const SizedBox(height: 20),
+                          _buildPlanAndSubscriptionCard(formReady, planCtrl, partnerCtrl),
+                          const SizedBox(height: 20),
+                          _buildWalletCard(),
+                          const SizedBox(height: 20),
+                          _buildDiscountCard(),
+                          const SizedBox(height: 20),
+                          if (!isEdit) _buildScheduleDeliveryTypeCard(),
+                          const SizedBox(height: 20),
+                          
+                          // ACTION BUTTONS
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: Colors.white, 
+                                    side: BorderSide(color: Colors.grey.shade300),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
                                     ),
-                            ),
+                                    padding:  EdgeInsets.symmetric(vertical: 14.h),
+                                  ),
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text(
+                                    "Cancel",
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: "Inter",
+                                    ),
+                                  ),
+                                ),
+                              ),
+                               SizedBox(width: 12.w),
+                              
+                             
+                              Expanded(
+                                child: GetBuilder<CustomerController>(
+                                  builder: (custCtrl) {
+                                    return ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.black, 
+                foregroundColor: Colors.white, 
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12.r),
+                                        ),
+                                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                                      ),
+                                      onPressed: (!formReady || custCtrl.isLoading)
+                                          ? null
+                                          : _submitForm,
+                                      child: custCtrl.isLoading
+                                          ? const SizedBox(
+                                              height: 22,
+                                              width: 22,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : Text(
+                                              buttonText,
+                                              style:  TextStyle(
+                                                fontSize: 16.sp,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: "Inter",
+                                              ),
+                                            ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 10.h,),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-        ],
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -390,9 +405,9 @@ void _loadCustomerData() {
     );
   }
 
-  Widget _buildPlanAndSubscriptionCard(bool formReady) {
-    final plans = planController.plans;
-    final partners = partnerController.partners
+  Widget _buildPlanAndSubscriptionCard(bool formReady, PlanController planCtrl, PartnerController partnerCtrl) {
+    final plans = planCtrl.plans;
+    final partners = partnerCtrl.partners
         .where((p) => (p.deliveryPartnerProfile?.id ?? '').isNotEmpty)
         .toList();
 
@@ -428,6 +443,7 @@ void _loadCustomerData() {
           plans.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : DropdownButtonFormField<String>(
+                dropdownColor: Colors.white,
                   value: selectedPlanValue,
                   hint: const Text("Select Meal Plan"),
                   items: plans
@@ -449,6 +465,7 @@ void _loadCustomerData() {
           partners.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : DropdownButtonFormField<String>(
+                dropdownColor: Colors.white,
                   value: selectedPartnerValue,
                   hint: const Text("Select Partner"),
                   items: partners
@@ -631,6 +648,7 @@ void _loadCustomerData() {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
+            dropdownColor: Colors.white,
             value: selectedDeliveryType,
             hint: const Text("Select Delivery Type"),
             items: const [
