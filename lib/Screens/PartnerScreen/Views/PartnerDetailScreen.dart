@@ -5,6 +5,10 @@ import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/StatusCard.dart';
+import 'package:mess/Screens/PartnerScreen/Views/PartnerCard.dart';
+import 'package:mess/Screens/PartnerScreen/Views/StatsCard.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 
 class PartnerDetailsScreen extends StatelessWidget {
   final String partnerId;

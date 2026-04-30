@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 
 class PauseOrderBottomSheet extends StatefulWidget {
   final DateTime orderStart;
@@ -152,9 +154,10 @@ class _PauseOrderBottomSheetState extends State<PauseOrderBottomSheet> {
                         // Handle pause order with rangeStart & rangeEnd 
                         if (rangeStart != null && rangeEnd != null) { Navigator.pop(context, 
                         { 'start': rangeStart, 'end': rangeEnd, }); } 
-                        else { ScaffoldMessenger.of(context).showSnackBar( 
-                          const SnackBar( content: Text('Please select a valid pause date range'),
-                           ), ); } },
+                        else { Fluttertoast.showToast(
+                          msg: 'Please select a valid pause date range',
+                        );
+                        } },
                             style: ElevatedButton.styleFrom( 
                               backgroundColor: const Color(0xFF0474B9),
                                foregroundColor: Colors.white, 

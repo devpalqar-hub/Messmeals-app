@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -40,29 +41,26 @@ class _CancelSubscriptionBottomSheetState
     final start = widget.startDate;
     final end = widget.endDate;
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        constraints: BoxConstraints(
-          maxHeight: cancelType == "ALL"
-              ? MediaQuery.of(context).size.height * 0.4
-              : MediaQuery.of(context).size.height * 0.85,
-        ),
-        child: SingleChildScrollView(
-          physics: cancelType == "ALL"
-              ? const NeverScrollableScrollPhysics()
-              : const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.85, // default height
+        minChildSize: 0.4,     // small
+        maxChildSize: 0.95,    // almost full screen
+        builder: (context, scrollController) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController, // ⭐ VERY IMPORTANT
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
 
-              Center(
+
+                  Center(
                 child: Container(
                   width: 40,
                   height: 5,
@@ -216,60 +214,63 @@ class _CancelSubscriptionBottomSheetState
                 const SizedBox(height: 20),
               ],
 
-              const Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0474B9),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  const Divider(),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0474B9),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 28, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text("Close"),
                       ),
-                    ),
-                    child: const Text("Close"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (cancelType == "RANGE") {
-                        if (rangeStart != null && rangeEnd != null) {
-                          Navigator.pop(context, {
-                            "type": "RANGE",
-                            "start": rangeStart,
-                            "end": rangeEnd,
-                          });
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please select a valid cancel range'),
-                            ),
-                          );
-                        }
-                      } else {
-                        Navigator.pop(context, {"type": "ALL"});
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0474B9),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+
+                      ElevatedButton(
+                        onPressed: () {
+                          if (cancelType == "RANGE") {
+                            if (rangeStart != null && rangeEnd != null) {
+                              Navigator.pop(context, {
+                                "type": "RANGE",
+                                "start": rangeStart,
+                                "end": rangeEnd,
+                              });
+                            } else {
+                              Fluttertoast.showToast(
+                                msg: 'Please select a valid cancel range',
+                              );
+                            }
+                          } else {
+                            Navigator.pop(context, {"type": "ALL"});
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0474B9),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 28, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text("Confirm Cancel"),
                       ),
-                    ),
-                    child: const Text("Confirm Cancel"),
+                    ],
                   ),
+
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
+          );
+
+        },
     );
   }
 }

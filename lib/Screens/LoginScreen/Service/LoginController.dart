@@ -96,11 +96,11 @@ Future<bool> verifyOtp(String phone, String otp) async {
     debugPrint("➡️ URL: $url");
     debugPrint("➡️ BODY: ${jsonEncode(body)}");
 
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(body),
-    );
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
 
     debugPrint("✅ STATUS: ${response.statusCode}");
     debugPrint("✅ RESPONSE: ${response.body}");

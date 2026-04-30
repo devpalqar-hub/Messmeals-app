@@ -123,29 +123,40 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   Future<void> _pickDate(BuildContext context, bool isStart) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: (isStart ? startDate : endDate) ?? DateTime.now(),
-      firstDate: DateTime(2024),
+      initialDate: (isStart ? startDate : endDate) ?? today,
+      firstDate: today, // ✅ BLOCK PAST DATES
       lastDate: DateTime(2030),
     );
+
     if (picked != null) {
       setState(() {
-        if (isStart) startDate = picked; else endDate = picked;
+        if (isStart) {
+          startDate = picked;
+
+          // ✅ auto-fix end date if before start
+          if (endDate != null && endDate!.isBefore(startDate!)) {
+            endDate = startDate;
+          }
+        } else {
+          endDate = picked;
+        }
       });
     }
   }
 
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedMealPlan == null) {
-      Get.snackbar("Error", "Please select a meal plan");
+      Fluttertoast.showToast(msg: "Please select a meal plan");
       return;
     }
     if (selectedPartner == null) {
-      Get.snackbar("Error", "Please select a delivery partner");
+      Fluttertoast.showToast(msg: "Please select a delivery partner");
       return;
     }
     if (!isEdit && (startDate == null || endDate == null)) {
-      Get.snackbar("Error", "Please select start and end dates");
+      Fluttertoast.showToast(msg: "Please select start and end dates");
       return;
     }
 
@@ -361,7 +372,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 keyboardType: TextInputType.phone),
             const SizedBox(height: 14),
             buildTextField(
-                label: "Email",
+                label: "Email *",
                 hint: "email@example.com",
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress),
@@ -377,7 +388,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Address",
+        const Text("Address*",
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -388,7 +399,14 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
           controller: addressController,
           maxLines: 2,
           decoration: _inputDecoration("Enter full address"),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Address is required";
+            }
+            return null;
+          },
         ),
+
         const SizedBox(height: 14),
         TextFormField(
           controller: locationController,

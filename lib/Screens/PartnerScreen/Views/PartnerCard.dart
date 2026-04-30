@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerDetailScreen.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 
 class PartnerCard extends StatelessWidget {
   final String id;

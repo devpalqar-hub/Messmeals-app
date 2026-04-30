@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class StatsCard extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final String value;
+class StatusCard extends StatelessWidget {
+  final bool value;
+  final Function(bool) onChanged;
 
-  const StatsCard({
+  const StatusCard({
     super.key,
-    required this.icon,
-    required this.iconColor,
-    required this.label,
     required this.value,
+    required this.onChanged,
   });
 
   @override
@@ -24,50 +20,19 @@ class StatsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-       
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                padding: EdgeInsets.all(8.w),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 20.sp,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: const Color(0xff717182),
-                    fontFamily: "Inter",
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 10.h),
-
-         
           Text(
-            value,
+            "Active Status",
             style: TextStyle(
-              fontSize: 20.sp,
+              fontSize: 15.sp,
               fontWeight: FontWeight.w600,
-              fontFamily: "Inter",
-              color: Colors.black,
             ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
           ),
         ],
       ),
