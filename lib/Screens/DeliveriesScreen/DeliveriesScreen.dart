@@ -100,7 +100,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff0474B9),
+                            backgroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.r),
                             ),

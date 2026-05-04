@@ -126,7 +126,7 @@ class WalletStatusCard extends StatelessWidget {
                              EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                         minimumSize: const Size(0, 0),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        backgroundColor: const Color(0xFF1976D2),
+                        backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.r),

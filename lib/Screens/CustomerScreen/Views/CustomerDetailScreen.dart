@@ -42,17 +42,16 @@ class CustomerDetailScreen extends StatelessWidget {
 
     return GetBuilder<CustomerController>(
       builder: (controller) {
-      final current = controller.customers
-    .where((c) => c.customerProfileId == customer.customerProfileId)
-    .isNotEmpty
+    final current = controller.customers
+        .any((c) => c.id == customer.id)
     ? controller.customers.firstWhere(
-        (c) => c.customerProfileId == customer.customerProfileId)
+        (c) => c.id == customer.id)
     : customer;
 
         final activeSub = current.activeSubscriptions.isNotEmpty
             ? current.activeSubscriptions.first
             : null;
-        // 🔥 FIXED total spent calculation
+       
         int calculatedSpent = 0;
 
         if (activeSub != null) {
@@ -114,8 +113,7 @@ class CustomerDetailScreen extends StatelessWidget {
                             ),
                           );
                           if (changed == true) {
-                            await controller.fetchCustomerDetails(
-                                current.customerProfileId);
+                          await controller.fetchCustomerDetails(current.id);
                           }
                         },
                         child: _headerButton(
@@ -176,7 +174,7 @@ class CustomerDetailScreen extends StatelessWidget {
                                 await controller
                                     .fetchCustomerDetails(
                                         current
-                                            .customerProfileId);
+                                            .id);
                               }
                             }
                           },
@@ -275,39 +273,33 @@ class CustomerDetailScreen extends StatelessWidget {
                           );
                         }
                       },
-                      onRenew: showRenewButton
-                          ? () async {
-                              final result =
-                                  await showRenewSubscriptionSheet(
-                                context,
-                                customerProfileId:
-                                    current.customerProfileId,
-                              );
-                              if (result is Map<String, dynamic>) {
-                                final ok =
-                                    await controller
-                                        .renewSubscription(
-                                  planId: result['planId'],
-                                  startDate: _toIsoDate(
-                                      result['start']),
-                                  endDate: _toIsoDate(
-                                      result['end']),
-                                  deliveryPartnerId:
-                                      result['partnerId'],
-                                  discount:
-                                      result['discount'] ?? '0',
-                                  customerProfileId:
-                                      current.customerProfileId,
-                                );
-                                if (ok) {
-                                  await controller
-                                      .fetchCustomerDetails(
-                                          current
-                                              .customerProfileId);
-                                }
-                              }
-                            }
-                          : () {},
+                       onRenew: () async {
+  final result = await showRenewSubscriptionSheet(
+    context,
+    customerProfileId: current.customerProfileId,
+  );
+
+  if (result != null) {
+    final ok = await controller.renewSubscription(
+      planId: result['planId'],
+      startDate: result['start'],   // already ISO
+      endDate: result['end'],
+      deliveryPartnerId: result['partnerId'],
+      discount: result['discount'] ?? '0',
+      customerProfileId: current.customerProfileId,
+    );
+
+    if (ok) {
+      // 🔥 IMPORTANT: refresh from API
+      await controller.fetchCustomerDetails(
+        current.id,
+      );
+
+      // 🔥 Force UI rebuild (extra safety)
+      controller.update();
+    }
+  }
+},
                       onCancel: () async {
                         final result =
                             await showModalBottomSheet(
@@ -327,7 +319,7 @@ class CustomerDetailScreen extends StatelessWidget {
                             result is Map<String, dynamic>) {
                           await controller
                               .fetchCustomerDetails(
-                                  current.customerProfileId);
+                                  current.id);
                         }
                       },
                     ),
@@ -446,7 +438,7 @@ class CustomerDetailScreen extends StatelessWidget {
               await controller.deleteCustomer(current.id);
               Get.back();
             },
-            child: const Text("Delete"),
+            child:Text("Delete"),
           ),
         ],
       ),
@@ -456,6 +448,7 @@ class CustomerDetailScreen extends StatelessWidget {
   Widget _noSubscriptionCard(BuildContext context,
       CustomerController controller, CustomerModel current) {
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14.r),
@@ -468,6 +461,11 @@ class CustomerDetailScreen extends StatelessWidget {
           Text("No subscriptions added yet"),
           SizedBox(height: 12.h),
           ElevatedButton(
+         style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.black,
+    foregroundColor: Colors.white,            // text/icon color
+  ),
+            
             onPressed: () async {
               final result =
                   await showRenewSubscriptionSheet(
@@ -479,7 +477,7 @@ class CustomerDetailScreen extends StatelessWidget {
                     current.customerProfileId);
               }
             },
-            child: const Text("Add Subscription"),
+            child: const Text("Add Subscription",style: TextStyle(color: Colors.white),),
           ),
         ],
       ),

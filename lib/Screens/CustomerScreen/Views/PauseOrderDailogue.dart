@@ -66,7 +66,7 @@ class _PauseOrderBottomSheetState extends State<PauseOrderBottomSheet> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0474B9),
+                  color: Colors.black,
                 ),
               ),
               const Divider(thickness: 1),
@@ -104,8 +104,8 @@ class _PauseOrderBottomSheetState extends State<PauseOrderBottomSheet> {
                         onRangeSelected: (start, end, fd) { setState(() { rangeStart = start; rangeEnd = end; focusedDay = fd; }); }, 
                         headerStyle: const HeaderStyle( titleCentered: true, formatButtonVisible: false, ), 
                         calendarStyle: CalendarStyle( rangeHighlightColor: const Color(0x330474B9),
-                         rangeStartDecoration: const BoxDecoration( color: Color(0xFF0474B9), shape: BoxShape.circle, ), 
-                         rangeEndDecoration: const BoxDecoration( color: Color(0xFF0474B9), shape: BoxShape.circle, ), 
+                         rangeStartDecoration: const BoxDecoration( color: Colors.black, shape: BoxShape.circle, ), 
+                         rangeEndDecoration: const BoxDecoration( color: Colors.black, shape: BoxShape.circle, ), 
                          todayDecoration: BoxDecoration( color: Colors.red.shade100, shape: BoxShape.circle, ), ), ), ), ),
 
 
@@ -122,15 +122,15 @@ class _PauseOrderBottomSheetState extends State<PauseOrderBottomSheet> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0474B9).withOpacity(0.1),
+                    color:Colors.black,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF0474B9)),
+                    border: Border.all(color:  Colors.black),
                   ),
                   child: Center(
                     child: Text(
                       "${formatter.format(rangeStart!)} → ${formatter.format(rangeEnd!)}",
                       style: const TextStyle(
-                        color: Color(0xFF0474B9),
+                        color:Colors.white,
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
                       ),
@@ -144,7 +144,7 @@ class _PauseOrderBottomSheetState extends State<PauseOrderBottomSheet> {
                children: [
                  ElevatedButton( onPressed: () => Navigator.pop(context), 
                  style: ElevatedButton.styleFrom(
-                   backgroundColor: const Color(0xFF0474B9), 
+                   backgroundColor:Colors.black,
                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric( horizontal: 24, vertical: 12, ),
                      shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(8),
@@ -159,7 +159,7 @@ class _PauseOrderBottomSheetState extends State<PauseOrderBottomSheet> {
                         );
                         } },
                             style: ElevatedButton.styleFrom( 
-                              backgroundColor: const Color(0xFF0474B9),
+                              backgroundColor:Colors.black,
                                foregroundColor: Colors.white, 
                                padding: const EdgeInsets.symmetric( horizontal: 24, vertical: 12, ), 
                                shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(8), ), ),

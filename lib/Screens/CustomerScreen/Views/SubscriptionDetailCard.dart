@@ -173,7 +173,7 @@ class SubscriptionDetailsCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onRenew,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0474B9),
+                backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
@@ -197,11 +197,11 @@ class SubscriptionDetailsCard extends StatelessWidget {
             child: OutlinedButton(
               onPressed: onPause,
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF0474B9)),
+                side: const BorderSide(color: Colors.black12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
                 ),
-                foregroundColor: const Color(0xFF0474B9),
+                foregroundColor:  const Color.fromARGB(255, 106, 103, 103),
                 backgroundColor: const Color(0xFFE9F6FF),
                 textStyle: TextStyle(
                   fontFamily: 'Inter',

@@ -77,8 +77,8 @@ class _CancelSubscriptionBottomSheetState
                   "Cancel Subscription",
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0474B9),
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
                     fontFamily: "Inter",
                   ),
                 ),
@@ -102,14 +102,14 @@ class _CancelSubscriptionBottomSheetState
                 title: const Text("Cancel for a specific range"),
                 value: "RANGE",
                 groupValue: cancelType,
-                activeColor: const Color(0xFF0474B9),
+                activeColor: Colors.black,
                 onChanged: (v) => setState(() => cancelType = v!),
               ),
               RadioListTile<String>(
                 title: const Text("Cancel entire subscription"),
                 value: "ALL",
                 groupValue: cancelType,
-                activeColor: const Color(0xFF0474B9),
+                activeColor:Colors.black,
                 onChanged: (v) => setState(() => cancelType = v!),
               ),
 
@@ -165,11 +165,11 @@ class _CancelSubscriptionBottomSheetState
                     calendarStyle: CalendarStyle(
                       rangeHighlightColor: const Color(0x330474B9),
                       rangeStartDecoration: const BoxDecoration(
-                        color: Color(0xFF0474B9),
+                        color:Colors.black,
                         shape: BoxShape.circle,
                       ),
                       rangeEndDecoration: const BoxDecoration(
-                        color: Color(0xFF0474B9),
+                        color: Colors.black,
                         shape: BoxShape.circle,
                       ),
                       todayDecoration: BoxDecoration(
@@ -222,7 +222,7 @@ class _CancelSubscriptionBottomSheetState
                       OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0474B9),
+                          backgroundColor: Colors.black,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 28, vertical: 12),
@@ -252,7 +252,7 @@ class _CancelSubscriptionBottomSheetState
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0474B9),
+                          backgroundColor:Colors.black,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 28, vertical: 12),

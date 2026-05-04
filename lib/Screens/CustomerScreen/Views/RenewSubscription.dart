@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -14,12 +13,9 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
   final endCtrl = TextEditingController();
   final discountCtrl = TextEditingController();
 
-  // Find or Put controllers
-  final planController = Get.find<PlanController>();
-  final partnerController = Get.find<PartnerController>();
-  final customerController = Get.find<CustomerController>();
+  final planController = Get.put(PlanController());
+  final partnerController = Get.put(PartnerController());
 
-  // Trigger fetches if data is missing
   if (planController.plans.isEmpty) planController.fetchPlans();
   if (partnerController.partners.isEmpty) partnerController.fetchPartners();
 
@@ -47,9 +43,8 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
               lastDate: DateTime(now.year + 5),
             );
             if (picked != null) {
-              setState(() {
-                target.text = '${_mon(picked.month)} ${picked.day}, ${picked.year}';
-              });
+              target.text =
+                  '${_mon(picked.month)} ${picked.day}, ${picked.year}';
             }
           }
 
@@ -58,14 +53,11 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
               hintText: hint,
               filled: true,
               fillColor: const Color(0xFFF2F3F7),
-              contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(color: Colors.grey.shade100),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: BorderSide(color: Colors.grey.shade200),
               ),
               suffixIcon: suffixIcon,
             );
@@ -78,15 +70,14 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
             color: Colors.black,
           );
 
-          // Use GetBuilder for PlanController as the primary wrapper
           return GetBuilder<PlanController>(
             builder: (planCtrl) {
-              // Nested GetBuilder for PartnerController to react to its updates
               return GetBuilder<PartnerController>(
                 builder: (partnerCtrl) {
-                  final isLoading = planCtrl.isLoading || partnerCtrl.isLoading;
                   final plans = planCtrl.plans;
                   final partners = partnerCtrl.partners;
+                  final isLoading =
+                      planCtrl.isLoading || partnerCtrl.isLoading;
 
                   return Stack(
                     children: [
@@ -95,177 +86,16 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                           left: 16.w,
                           right: 16.w,
                           top: 20.h,
-                          bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+                          bottom:
+                              MediaQuery.of(ctx).viewInsets.bottom + 16,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-<<<<<<< HEAD
                             Row(
                               children: [
                                 Expanded(
                                   child: Text(
-=======
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Start Date *', style: caption),
-                                   SizedBox(height: 8.h),
-                                  TextField(
-                                    controller: startCtrl,
-                                    readOnly: true,
-                                    onTap: () => pickDate(startCtrl),
-                                    decoration: inputDec(
-                                      suffixIcon: const Icon(
-                                        Icons.calendar_today_rounded,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                             SizedBox(width: 16.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('End Date *', style: caption),
-                                   SizedBox(height: 8.h),
-                                  TextField(
-                                    controller: endCtrl,
-                                    readOnly: true,
-                                    onTap: () => pickDate(endCtrl),
-                                    decoration: inputDec(
-                                      suffixIcon: Icon(
-                                        Icons.calendar_today_rounded,
-                                        size: 18.sp,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                         SizedBox(height: 16.h),
-
-                        const Text('Delivery Partner *', style: caption),
-                        SizedBox(height: 8.h),
-                        DropdownButtonFormField<String>(
-                          value: selectedPartnerId,
-                          items: partners
-                              .map((partner) => DropdownMenuItem(
-                                    value: partner.id,
-                                    child: Text(partner.name),
-                                  ))
-                              .toList(),
-                          onChanged: (v) => setState(() => selectedPartnerId = v),
-                          decoration: inputDec(
-                            hint: 'Select partner',
-                            suffixIcon: const Icon(
-                                Icons.keyboard_arrow_down_rounded),
-                          ),
-                          icon: const SizedBox.shrink(),
-                        ),
-                         SizedBox(height: 16.h),
-
-                        const Text('Discount', style: caption),
-                        SizedBox(height: 8.h),
-                        TextField(
-                          controller: discountCtrl,
-                          decoration: inputDec(hint: 'Discount'),
-                          keyboardType: TextInputType.number,
-                        ),
-                        SizedBox(height: 20.h),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48.h,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (selectedPlanId == null ||
-                                  selectedPartnerId == null ||
-                                  startCtrl.text.isEmpty ||
-                                  endCtrl.text.isEmpty) {
-                                Fluttertoast.showToast(
-                                  msg: 'Please fill all required fields',
-                                );
-                                return;
-                              }
-
-                              final plan = plans.firstWhere(
-                                  (p) => p.id == selectedPlanId);
-                              final partner = partners.firstWhere(
-                                  (p) => p.id == selectedPartnerId);
-
-                              final partnerProfileId =
-                                  partner.deliveryPartnerProfile?.id;
-                              if (partnerProfileId == null ||
-                                  partnerProfileId.isEmpty) {
-                                Fluttertoast.showToast(
-                                  msg: 'Invalid delivery partner profile ID',
-                                );
-                                return;
-                              }
-
-                              setState(() => isSubmitting = true);
-
-                              String _toIso(String formattedDate) {
-                                final parts = formattedDate.split(' ');
-                                final month = _monToNum(parts[0]);
-                                final day =
-                                    parts[1].replaceAll(',', '');
-                                final year = parts[2];
-                                return "$year-$month-$day";
-                              }
-
-                              final controller =
-                                  Get.put(CustomerController());
-                              final success = await controller.renewSubscription(
-                                planId: plan.id,
-                                startDate: _toIso(startCtrl.text),
-                                endDate: _toIso(endCtrl.text),
-                                deliveryPartnerId: partnerProfileId,
-                                discount: discountCtrl.text.isEmpty
-                                    ? '0'
-                                    : discountCtrl.text,
-                                customerProfileId: customerProfileId, 
-                              );
-
-                              setState(() => isSubmitting = false);
-
-                              if (success) {
-                                Navigator.pop(ctx);
-                                Fluttertoast.showToast(
-                                  msg: 'Subscription renewed successfully!',
-                                );
-                              } else {
-                                Fluttertoast.showToast(
-                                  msg: 'Internal server error, please try again.',
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0D6EBA),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                            ),
-                            child: isSubmitting
-                                ?  SizedBox(
-                                    height: 22.h,
-                                    width: 22.w,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                :  Text(
->>>>>>> 90b00250960be0a158d80503deec22c3951fdebb
                                     'Renew Subscription',
                                     style: TextStyle(
                                       fontFamily: 'Inter',
@@ -281,11 +111,12 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                               ],
                             ),
                             SizedBox(height: 10.h),
+
                             if (isLoading)
                               Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(20.w),
-                                  child: const CircularProgressIndicator(),
+                                  child: CircularProgressIndicator(),
                                 ),
                               )
                             else ...[
@@ -293,32 +124,44 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                               SizedBox(height: 8.h),
                               DropdownButtonFormField<String>(
                                 value: selectedPlanId,
-                                items: plans.map((plan) => DropdownMenuItem(
-                                      value: plan.id,
-                                      child: Text(plan.planName),
-                                    )).toList(),
-                                onChanged: (v) => setState(() => selectedPlanId = v),
+                                items: plans
+                                    .map((plan) => DropdownMenuItem(
+                                          value: plan.id,
+                                          child: Text(plan.planName),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) =>
+                                    setState(() => selectedPlanId = v),
                                 decoration: inputDec(
                                   hint: 'Select plan',
-                                  suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
+                                  suffixIcon: const Icon(
+                                      Icons.keyboard_arrow_down_rounded),
                                 ),
                                 icon: const SizedBox.shrink(),
                               ),
+
                               SizedBox(height: 16.h),
+
                               Row(
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Start Date *', style: caption),
+                                        const Text('Start Date *',
+                                            style: caption),
                                         SizedBox(height: 8.h),
                                         TextField(
                                           controller: startCtrl,
                                           readOnly: true,
-                                          onTap: () => pickDate(startCtrl),
+                                          onTap: () =>
+                                              pickDate(startCtrl),
                                           decoration: inputDec(
-                                            suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
+                                            suffixIcon: const Icon(
+                                              Icons.calendar_today_rounded,
+                                              size: 18,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -327,16 +170,22 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                                   SizedBox(width: 16.w),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        const Text('End Date *', style: caption),
+                                        const Text('End Date *',
+                                            style: caption),
                                         SizedBox(height: 8.h),
                                         TextField(
                                           controller: endCtrl,
                                           readOnly: true,
-                                          onTap: () => pickDate(endCtrl),
+                                          onTap: () =>
+                                              pickDate(endCtrl),
                                           decoration: inputDec(
-                                            suffixIcon: Icon(Icons.calendar_today_rounded, size: 18.sp),
+                                            suffixIcon: Icon(
+                                              Icons.calendar_today_rounded,
+                                              size: 18.sp,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -344,119 +193,125 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
                                   ),
                                 ],
                               ),
+
                               SizedBox(height: 16.h),
-                              const Text('Delivery Partner *', style: caption),
+
+                              const Text('Delivery Partner *',
+                                  style: caption),
                               SizedBox(height: 8.h),
                               DropdownButtonFormField<String>(
                                 value: selectedPartnerId,
-                                items: partners.map((partner) => DropdownMenuItem(
-                                      value: partner.id,
-                                      child: Text(partner.name),
-                                    )).toList(),
-                                onChanged: (v) => setState(() => selectedPartnerId = v),
+                                items: partners
+                                    .map((partner) => DropdownMenuItem(
+                                          value: partner.id,
+                                          child: Text(partner.name),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) => setState(
+                                    () => selectedPartnerId = v),
                                 decoration: inputDec(
                                   hint: 'Select partner',
-                                  suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
+                                  suffixIcon: const Icon(
+                                      Icons.keyboard_arrow_down_rounded),
                                 ),
                                 icon: const SizedBox.shrink(),
                               ),
+
                               SizedBox(height: 16.h),
+
                               const Text('Discount', style: caption),
                               SizedBox(height: 8.h),
                               TextField(
                                 controller: discountCtrl,
-                                decoration: inputDec(hint: 'Discount'),
+                                decoration:
+                                    inputDec(hint: 'Discount'),
                                 keyboardType: TextInputType.number,
                               ),
+
                               SizedBox(height: 20.h),
+
                               SizedBox(
                                 width: double.infinity,
                                 height: 48.h,
                                 child: ElevatedButton(
-                                  onPressed: isSubmitting ? null : () async {
+                                  onPressed: () {
                                     if (selectedPlanId == null ||
                                         selectedPartnerId == null ||
                                         startCtrl.text.isEmpty ||
                                         endCtrl.text.isEmpty) {
-                                      Get.snackbar("Missing Info", "Please fill all required fields", 
-                                          snackPosition: SnackPosition.BOTTOM);
+                                      Fluttertoast.showToast(
+                                          msg:
+                                              'Please fill all required fields');
                                       return;
                                     }
 
-                                    final plan = plans.firstWhere((p) => p.id == selectedPlanId);
-                                    final partner = partners.firstWhere((p) => p.id == selectedPartnerId);
+                                    final partner =
+                                        partners.firstWhere((p) =>
+                                            p.id ==
+                                            selectedPartnerId);
 
-                                    final partnerProfileId = partner.deliveryPartnerProfile?.id;
-                                    if (partnerProfileId == null || partnerProfileId.isEmpty) {
-                                      Get.snackbar("Error", "Invalid delivery partner profile ID");
+                                    final partnerProfileId =
+                                        partner
+                                            .deliveryPartnerProfile
+                                            ?.id;
+
+                                    if (partnerProfileId == null ||
+                                        partnerProfileId.isEmpty) {
+                                      Fluttertoast.showToast(
+                                          msg:
+                                              'Invalid delivery partner profile ID');
                                       return;
                                     }
-
-                                    setState(() => isSubmitting = true);
 
                                     String toIso(String formattedDate) {
-                                      final parts = formattedDate.split(' ');
-                                      final month = _monToNum(parts[0]);
-                                      final day = parts[1].replaceAll(',', '').padLeft(2, '0');
+                                      final parts =
+                                          formattedDate.split(' ');
+                                      final month =
+                                          _monToNum(parts[0]);
+                                      final day = parts[1]
+                                          .replaceAll(',', '');
                                       final year = parts[2];
                                       return "$year-$month-$day";
                                     }
 
-                                    final success = await customerController.renewSubscription(
-                                      planId: plan.id,
-                                      startDate: toIso(startCtrl.text),
-                                      endDate: toIso(endCtrl.text),
-                                      deliveryPartnerId: partnerProfileId,
-                                      discount: discountCtrl.text.isEmpty ? '0' : discountCtrl.text,
-                                      customerProfileId: customerProfileId,
-                                    );
-
-                                    setState(() => isSubmitting = false);
-
-                                    if (success) {
-                                      Navigator.pop(ctx);
-                                      Get.snackbar("Success", "Subscription renewed successfully!", 
-                                          backgroundColor: Colors.green.withOpacity(0.1),
-                                          colorText: Colors.green);
-                                    }
+                                    // ✅ RETURN DATA (NO API CALL)
+                                    Navigator.pop(ctx, {
+                                      "planId": selectedPlanId,
+                                      "start":
+                                          toIso(startCtrl.text),
+                                      "end": toIso(endCtrl.text),
+                                      "partnerId":
+                                          partnerProfileId,
+                                      "discount":
+                                          discountCtrl.text
+                                                  .isEmpty
+                                              ? '0'
+                                              : discountCtrl.text,
+                                    });
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0D6EBA),
+                                    backgroundColor: Colors.black,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.r),
+                                      borderRadius:
+                                          BorderRadius.circular(8.r),
                                     ),
                                   ),
-                                  child: isSubmitting
-                                      ? SizedBox(
-                                          height: 22.h,
-                                          width: 22.w,
-                                          child: const CircularProgressIndicator(
-                                            strokeWidth: 2.5,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : Text(
-                                          'Renew Subscription',
-                                          style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 16.sp,
-                                          ),
-                                        ),
+                                  child: Text(
+                                    'Renew Subscription',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16.sp,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              SizedBox(height: 10.h),
                             ],
                           ],
                         ),
                       ),
-                      if (isSubmitting)
-                        Positioned.fill(
-                          child: Container(
-                            color: Colors.white.withOpacity(0.5),
-                          ),
-                        ),
                     ],
                   );
                 },
@@ -470,14 +325,27 @@ Future<Map<String, dynamic>?> showRenewSubscriptionSheet(
 }
 
 String _mon(int m) {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
   return months[m - 1];
 }
 
 String _monToNum(String mon) {
   const map = {
-    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
-    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12',
+    'Jan': '01',
+    'Feb': '02',
+    'Mar': '03',
+    'Apr': '04',
+    'May': '05',
+    'Jun': '06',
+    'Jul': '07',
+    'Aug': '08',
+    'Sep': '09',
+    'Oct': '10',
+    'Nov': '11',
+    'Dec': '12',
   };
   return map[mon] ?? '01';
 }

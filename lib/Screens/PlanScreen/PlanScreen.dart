@@ -55,7 +55,7 @@ class PlanScreen extends StatelessWidget {
                               TextStyle(color: Colors.white, fontSize: 14.sp),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff0474B9),
+                          backgroundColor: Colors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),

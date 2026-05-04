@@ -5,14 +5,12 @@ import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/CustomerScreen/Views/AddCustomerScreen.dart';
 import 'package:mess/Screens/CustomerScreen/Views/CustomerDetailScreen.dart';
-
 class CustomerCard extends StatelessWidget {
   final CustomerModel customer;
 
   const CustomerCard({
     super.key,
     required this.customer,
-    
   });
 
   @override
@@ -32,134 +30,172 @@ class CustomerCard extends StatelessWidget {
         : null;
 
     return InkWell(
+      borderRadius: BorderRadius.circular(14.r),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CustomerDetailScreen(customer: customer),
+            builder: (_) => CustomerDetailScreen(customer: customer),
           ),
         );
       },
-      borderRadius: BorderRadius.circular(12.r),
       child: Container(
         margin: EdgeInsets.only(bottom: 14.h),
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-           
+
+            /// 🔷 HEADER
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  customer.name,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                /// Avatar
+                CircleAvatar(
+                  radius: 20.r,
+                  backgroundColor: const Color(0xFFF3F3F3),
+                  child: Text(
+                    customer.name.isNotEmpty
+                        ? customer.name[0].toUpperCase()
+                        : "C",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14.sp,
+                    ),
                   ),
                 ),
+
+                SizedBox(width: 10.w),
+
+                /// Name + Contact
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customer.name,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        customer.phone,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        customer.email,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                /// Actions
                 Row(
                   children: [
-                  
-                    IconButton(
-                      onPressed: () {
+                    _iconBtn(
+                      icon: Icons.edit_outlined,
+                      onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AddCustomerScreen(
-                              customer: customer, 
-                              isEdit: true, 
+                            builder: (_) => AddCustomerScreen(
+                              customer: customer,
+                              isEdit: true,
                             ),
                           ),
                         );
                       },
-                      icon: const Icon(Icons.edit_note,
-                          size: 22, color: Colors.black),
-                      tooltip: "Edit",
                     ),
-
-                 
-                    IconButton(
-                      onPressed: () {
-                      _showDeleteDialog(
-                context,
-                controller,
-                customer,
-              );
+                    _iconBtn(
+                      icon: Icons.delete_outline,
+                      color: Colors.red,
+                      onTap: () {
+                        _showDeleteDialog(context, controller, customer);
                       },
-                      icon: const Icon(Icons.delete_outline,
-                          size: 20, color: Colors.red),
-                      tooltip: "Delete",
                     ),
-
-               
-                    IconButton(
-                      onPressed: () {
+                    _iconBtn(
+                      icon: Icons.chevron_right,
+                      onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
+                            builder: (_) =>
                                 CustomerDetailScreen(customer: customer),
                           ),
                         );
                       },
-                      icon: const Icon(Icons.chevron_right,
-                          size: 22, color: Colors.black),
-                      tooltip: "View Details",
                     ),
                   ],
                 ),
               ],
             ),
 
-            SizedBox(height: 6.h),
+            SizedBox(height: 14.h),
 
-   
-            Text(
-              customer.phone,
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey[700]),
-            ),
-            Text(
-              customer.email,
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey[700]),
-            ),
+            Divider(color: Colors.grey.shade200),
 
-            SizedBox(height: 10.h),
-            Divider(color: Colors.grey[300], thickness: 1),
-            SizedBox(height: 8.h),
+            SizedBox(height: 12.h),
 
-
+            /// 🔷 INFO GRID
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _InfoItem(
-                    title: "WALLET",
-                    value: "₹${customer.walletBalance.toStringAsFixed(0)}"),
-                _InfoItem(title: "PLAN", value: plan),
+                Expanded(
+                  child: _InfoItem(
+                    title: "Wallet",
+                    value:
+                        "₹${customer.walletBalance.toStringAsFixed(0)}",
+                  ),
+                ),
+                Expanded(
+                  child: _InfoItem(
+                    title: "Plan",
+                    value: plan,
+                  ),
+                ),
               ],
             ),
 
-            SizedBox(height: 10.h),
+            SizedBox(height: 12.h),
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _InfoItem(
-                    title: "START DATE",
+                Expanded(
+                  child: _InfoItem(
+                    title: "Start Date",
                     value: startDate != null
                         ? "${startDate.day}/${startDate.month}/${startDate.year}"
-                        : "-"),
-                _InfoItem(
-                    title: "END DATE",
+                        : "-",
+                  ),
+                ),
+                Expanded(
+                  child: _InfoItem(
+                    title: "End Date",
                     value: endDate != null
                         ? "${endDate.day}/${endDate.month}/${endDate.year}"
-                        : "-"),
+                        : "-",
+                  ),
+                ),
               ],
             ),
           ],
@@ -168,6 +204,83 @@ class CustomerCard extends StatelessWidget {
     );
   }
 
+  /// 🔘 Reusable icon button
+  Widget _iconBtn({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color color = Colors.black,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8.r),
+      child: Padding(
+        padding: EdgeInsets.all(6.w),
+        child: Icon(icon, size: 20, color: color),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(
+    BuildContext context,
+    CustomerController controller,
+    CustomerModel customer,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.warning_amber_rounded,
+                  color: Colors.redAccent, size: 40.sp),
+              SizedBox(height: 10.h),
+              Text(
+                "Delete Customer?",
+                style: TextStyle(
+                    fontSize: 16.sp, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                "This action cannot be undone.",
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+              SizedBox(height: 18.h),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text("Cancel"),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await controller.deleteCustomer(customer.id);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                      ),
+                      child: const Text("Delete"),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
   void _showDeleteDialog(
   BuildContext context,
   CustomerController controller,
@@ -276,7 +389,7 @@ class CustomerCard extends StatelessWidget {
     },
   );
 }
-}
+
 
 class _InfoItem extends StatelessWidget {
   final String title;
