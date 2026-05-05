@@ -60,19 +60,19 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // App Icon
+                 
                   Container(
                     height: 55.h,
                     width: 55.w,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0073CF),
+                      color:  Colors.black,
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: const Icon(Icons.restaurant, color: Colors.white),
                   ),
                   SizedBox(height: 16.h),
 
-                  // Title
+                 
                   Text(
                     "SuperMeals Admin",
                     style: GoogleFonts.inter(
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   SizedBox(height: 32.h),
 
-                  // Phone Input
+                
                   if (!isOtpSent) ...[
                     Align(
                       alignment: Alignment.centerLeft,
@@ -125,53 +125,64 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
 
-                  // OTP Input
-                  if (isOtpSent) ...[
-                    SizedBox(height: 10.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(6, (index) {
-                        return SizedBox(
-                          width: 44.w,
-                          height: 44.h,
-                          child: TextField(
-                            controller: otpControllers[index],
-                            focusNode: focusNodes[index],
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            maxLength: 1,
-                            onChanged: (value) {
-                              if (value.isNotEmpty && index < 5) {
-                                focusNodes[index + 1].requestFocus();
-                              } else if (value.isEmpty && index > 0) {
-                                focusNodes[index - 1].requestFocus();
-                              }
-                            },
-                            decoration: InputDecoration(
-                              counterText: "",
-                              filled: true,
-                              fillColor: Colors.grey.shade100,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF0474B9),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
+                 
+                if (isOtpSent) ...[
+  SizedBox(height: 12.h),
+
+  Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: List.generate(6, (index) {
+      return SizedBox(
+        width: 46.w,
+        height: 46.w, // 🔥 perfect square
+        child: TextField(
+          controller: otpControllers[index],
+          focusNode: focusNodes[index],
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          textAlignVertical: TextAlignVertical.center, // 🔥 vertical center
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+          ),
+          maxLength: 1,
+          onChanged: (value) {
+            if (value.isNotEmpty && index < 5) {
+              focusNodes[index + 1].requestFocus();
+            } else if (value.isEmpty && index > 0) {
+              focusNodes[index - 1].requestFocus();
+            }
+          },
+          decoration: InputDecoration(
+            counterText: "",
+            filled: true,
+            fillColor: Colors.grey.shade100,
+
+            // 🔥 IMPORTANT FIX FOR CENTERING
+            contentPadding: EdgeInsets.zero,
+
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: BorderSide.none,
+            ),
+
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: const BorderSide(
+                color: Colors.black,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      );
+    }),
+  ),
+],
 
                   SizedBox(height: 24.h),
 
-                  // Action Button with GetBuilder
+                
                   GetBuilder<AuthController>(
                     builder: (auth) {
                       return ElevatedButton(
@@ -182,8 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 if (!isOtpSent) {
                                   if (phone.length != 10) {
-                                    Get.snackbar("Error", "Enter valid 10-digit phone number",
-                                        snackPosition: SnackPosition.BOTTOM);
+                                  
                                     return;
                                   }
 
@@ -194,8 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 } else {
                                   final otp = enteredOtp;
                                   if (otp.length != 6) {
-                                    Get.snackbar("Error", "Enter valid 6-digit OTP",
-                                        snackPosition: SnackPosition.BOTTOM);
+                                   
                                     return;
                                   }
 
@@ -208,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0474B9),
+                          backgroundColor:  Colors.black,
                           minimumSize: Size(double.infinity, 50.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.r),
@@ -245,7 +254,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         "Change Phone Number",
                         style: GoogleFonts.inter(
                           fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
                         ),
                       ),
                     ),

@@ -23,7 +23,7 @@ class AnalyticsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 150.w,
-      width: 160.w,
+      width: 170.w,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),

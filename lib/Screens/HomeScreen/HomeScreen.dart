@@ -59,7 +59,7 @@ class HomeScreen extends StatelessWidget {
                     // Analytics
                     Wrap(
                       spacing: 10.w,
-                      runSpacing: 10.w,
+                      runSpacing: 20.w,
                       children: [
                         AnalyticsCard(
                           icon: Icons.shopping_bag_outlined,
