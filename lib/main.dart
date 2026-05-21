@@ -36,7 +36,7 @@ class MessMeals extends StatelessWidget {
             builder: (auth) {
               return auth.isLoggedIn
                   ? const DashboardScreen()
-                  : const LoginScreen();
+                  :  LoginScreen();
             },
           ),
         );

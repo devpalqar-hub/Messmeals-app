@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart' show Fluttertoast, Toast;
 import 'package:get/get.dart';
@@ -25,6 +26,19 @@ class AuthController extends GetxController {
 
   DateTime? tokenExpiry;
   Timer? _logoutTimer;
+
+  TextEditingController phoneController =
+      TextEditingController();
+
+
+String selectedCountry = "IN";
+
+String get countryCode =>
+    "+${CountryPickerUtils
+        .getCountryByIsoCode(
+          selectedCountry,
+        )
+        .phoneCode}";
 
   void log(String msg) => print("AUTH_LOG → $msg");
 
@@ -227,7 +241,7 @@ Future<bool> verifyOtp(String phone, String otp) async {
     _refreshUI();
 
     if (Get.context != null) {
-      Get.offAll(() => const LoginScreen());
+      Get.offAll(() =>  LoginScreen());
     }
     
     if (showMessage) safeSnack("Session expired", "Please login again.");
