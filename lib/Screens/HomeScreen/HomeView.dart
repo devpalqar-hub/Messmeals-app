@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/CustomerScreen/CustomerScreen.dart';
@@ -18,14 +17,12 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
 
-  
   final List<Widget> screens = [
-    HomeScreen(),
+    Homescreen(),
     CustomersScreen(),
     PartnerScreen(),
     DeliveriesScreen(),
     PlanScreen(),
-    
   ];
 
   void onTabTapped(int index) {
@@ -38,36 +35,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-           
-            Positioned.fill(
-              child: screens[selectedIndex],
-            ),
-
-          
-            Positioned(
-              left: 0,
-              right: 0,
-             bottom: 0.1, 
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 0.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    BottomBar(
-                      selectedIndex: selectedIndex,
-                      onItemTapped: onTabTapped,
-                    ),
-                    const SizedBox(height: 20), 
-                  ],
-                ),
-              ),
-            ),
-          ],
+      bottomNavigationBar: SafeArea(
+        child: BottomBar(
+          selectedIndex: selectedIndex,
+          onItemTapped: onTabTapped,
         ),
       ),
+      body: SafeArea(child: screens[selectedIndex]),
     );
   }
 }

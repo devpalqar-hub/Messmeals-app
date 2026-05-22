@@ -24,10 +24,8 @@ class BottomBar extends StatelessWidget {
     return Container(
       height: 60, // ✅ FIX 1 → fixed slim height
       decoration: const BoxDecoration(
-        color: Color(0xFF1C1F2E),
-        borderRadius: BorderRadius.all(
-          Radius.circular(16),
-        ),
+        // color: Color(0xFF1C1F2E),
+        borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -42,15 +40,16 @@ class BottomBar extends StatelessWidget {
               children: [
                 Icon(
                   item['icon'] as IconData,
-                  color: isSelected ? Colors.cyanAccent : Colors.grey,
+                  color: isSelected ? Color(0xff07A4A5) : Colors.grey,
                   size: 20, // ✅ FIX 2 → smaller icon
                 ),
                 const SizedBox(height: 2), // ✅ less gap
                 Text(
                   item['label'] as String,
                   style: GoogleFonts.poppins(
-                    fontSize: 10, // ✅ FIX 3 → smaller text
-                    color: isSelected ? Colors.cyanAccent : Colors.grey,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500, // ✅ FIX 3 → smaller text
+                    color: isSelected ? Color(0xff07A4A5) : Colors.grey,
                   ),
                 ),
               ],
