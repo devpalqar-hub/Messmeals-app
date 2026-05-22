@@ -14,14 +14,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
 
-  final DashboardController dashboardController =
-      Get.put(DashboardController());
+  final HomeScreenController dashboardController =
+      Get.put(HomeScreenController());
   final AuthController authController = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: GetBuilder<DashboardController>(
+      child: GetBuilder<HomeScreenController>(
         builder: (controller) {
           final stats = controller.dashboardData;
           final isLoading = controller.isLoading;

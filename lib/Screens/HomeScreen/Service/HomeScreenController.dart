@@ -7,7 +7,7 @@ import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DashboardController extends GetxController {
+class HomeScreenController extends GetxController {
   // Standard variables instead of Rx
   DashboardModel? dashboardData;
   VariationCountModel? variationData;

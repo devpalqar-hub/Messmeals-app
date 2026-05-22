@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:mess/Screens/LoginScreen/OtScreen.dart';
 
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/LoginScreen/SignUpScreen.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
@@ -31,7 +32,7 @@ class LoginScreen extends StatelessWidget {
                 decoration: const BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage(
-                      "assets/images/login_bg.png",
+                      "assets/Firefly.png",
                     ),
                     fit: BoxFit.cover,
                   ),
@@ -40,8 +41,8 @@ class LoginScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.black.withOpacity(.75),
-                        const Color(0xFF003B2F).withOpacity(.85),
+                       // Colors.black.withOpacity(.75),
+                       // const Color(0xFF003B2F).withOpacity(.85),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -314,13 +315,7 @@ Padding(
                                 decoration: BoxDecoration(
                                   borderRadius:
                                       BorderRadius.circular(16.r),
-                                  gradient:
-                                      const LinearGradient(
-                                    colors: [
-                                      Color(0xFF69B34C),
-                                      Color(0xFF3C8A2E),
-                                    ],
-                                  ),
+                                color:  const Color(0xFF569937),
                                 ),
                                 child: Center(
                                   child: authCtrl.isLoading
@@ -400,16 +395,19 @@ Padding(
                                     fontSize: 15.sp,
                                   ),
                                 ),
-                                Text(
-                                  "Sign Up",
-                                  style: TextStyle(
-                                    color:
-                                        const Color(0xFF5BA13A),
-                                    fontSize: 15.sp,
-                                    fontWeight:
-                                        FontWeight.w600,
-                                  ),
-                                ),
+                               GestureDetector(
+  onTap: () {
+    Get.to(() =>  SignUpScreen());
+  },
+  child: Text(
+    "Sign Up",
+    style: TextStyle(
+      color: const Color(0xFF569937),
+      fontSize: 15.sp,
+      fontWeight: FontWeight.w600,
+    ),
+  ),
+),
                               ],
                             ),
                           ],

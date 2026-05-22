@@ -3,14 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/LoginScreen/Service/SignUpController.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
+  final bool isSignup; 
+  
 
   const OtpVerificationScreen({
     super.key,
     required this.phoneNumber,
+    this.isSignup = false,
   });
 
   @override
@@ -163,103 +168,49 @@ class _OtpVerificationScreenState
           return Column(
             children: [
               /// TOP SECTION
-              Stack(
-                children: [
-                  Container(
-                    height: 360.h,
-                    width: double.infinity,
-                    decoration:
-                        const BoxDecoration(
-                      gradient:
-                          LinearGradient(
-                        colors: [
-                          Color(0xFF003D32),
-                          Color(0xFF005D4A),
-                        ],
-                        begin:
-                            Alignment.topLeft,
-                        end: Alignment
-                            .bottomRight,
-                      ),
-                    ),
-                  ),
+Stack(
+  children: [
+    /// BACKGROUND IMAGE ONLY
+    SizedBox(
+      height: 360.h,
+      width: double.infinity,
+      child: Image.asset(
+        "assets/verify.png",
+        fit: BoxFit.cover,
+      ),
+    ),
 
-                  /// BACKGROUND IMAGE
-                  Positioned.fill(
-                    child: Opacity(
-                      opacity: .15,
-                      child: Image.asset(
-                        "assets/images/login_bg.png",
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+    /// BACK BUTTON
+    Positioned(
+      top: 55.h,
+      left: 20.w,
+      child: GestureDetector(
+        onTap: () => Get.back(),
+        child: const Icon(
+          Icons.arrow_back,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+    ),
 
-                  /// BACK BUTTON
-                  Positioned(
-                    top: 55.h,
-                    left: 20.w,
-                    child: GestureDetector(
-                      onTap: () =>
-                          Get.back(),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color:
-                            Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-
-                  /// SHIELD IMAGE
-                  Positioned(
-                    top: 120.h,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        width: 130.w,
-                        height: 130.h,
-                        decoration:
-                            BoxDecoration(
-                          borderRadius:
-                              BorderRadius.circular(
-                                  100),
-                        ),
-                        child:
-                            Image.asset(
-                          "assets/images/shield.png",
-                          fit:
-                              BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  /// CURVE
-                  Positioned(
-                    bottom: -1,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      height: 70.h,
-                      decoration:
-                          const BoxDecoration(
-                        color:
-                            Colors.white,
-                        borderRadius:
-                            BorderRadius.vertical(
-                          top: Radius
-                              .circular(
-                            100,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
+    /// CURVE
+    Positioned(
+      bottom: -30,
+      left: 0,
+      right: 0,
+      child: Container(
+        height: 70.h,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(24),
+          ),
+        ),
+      ),
+    ),
+  ],
+),
               SizedBox(height: 20.h),
 
               /// TITLE
@@ -267,7 +218,7 @@ class _OtpVerificationScreenState
                 "Verify OTP",
                 style:
                     GoogleFonts.inter(
-                  fontSize: 30.sp,
+                  fontSize: 24.sp,
                   fontWeight:
                       FontWeight.w700,
                   color:
@@ -304,7 +255,7 @@ class _OtpVerificationScreenState
                       fontWeight:
                           FontWeight
                               .w700,
-                      fontSize: 18.sp,
+                      fontSize: 16.sp,
                     ),
                   ),
 
@@ -321,7 +272,9 @@ class _OtpVerificationScreenState
                         color:
                             const Color(
                           0xFF5BA43A,
+                         
                         ),
+                        
                         fontWeight:
                             FontWeight
                                 .w600,
@@ -356,7 +309,7 @@ class _OtpVerificationScreenState
 
               SizedBox(height: 45.h),
 
-              /// RESEND OTP
+         
               secondsRemaining == 0
                   ? GestureDetector(
                       onTap:
@@ -377,9 +330,7 @@ class _OtpVerificationScreenState
                         style:
                             GoogleFonts.inter(
                           color:
-                              const Color(
-                            0xFF5BA43A,
-                          ),
+                             Colors.grey.shade600,
                           fontSize:
                               16.sp,
                           fontWeight:
@@ -418,7 +369,7 @@ class _OtpVerificationScreenState
                       ),
                     ),
 
-              const Spacer(),
+             
 
               /// VERIFY BUTTON
               Padding(
@@ -436,9 +387,7 @@ class _OtpVerificationScreenState
                     style:
                         ElevatedButton.styleFrom(
                       backgroundColor:
-                          const Color(
-                        0xFF5BA43A,
-                      ),
+                          const Color(0xFF569937),
                       shape:
                           RoundedRectangleBorder(
                         borderRadius:
@@ -447,39 +396,89 @@ class _OtpVerificationScreenState
                         ),
                       ),
                     ),
-                    onPressed:
-                        authCtrl
-                                .isLoading
-                            ? null
-                            : () async {
-                                String otp =
-                                    otpControllers
-                                        .map(
-                                          (
-                                            e,
-                                          ) =>
-                                              e
-                                                  .text,
-                                        )
-                                        .join();
+                     onPressed: authCtrl.isLoading
+    ? null
+    : () async {
+        String otp = otpControllers.map((e) => e.text).join();
 
-                                if (otp
-                                        .length !=
-                                    6) {
-                                  Get.snackbar(
-                                    "Error",
-                                    "Please enter valid OTP",
-                                  );
-                                  return;
-                                }
+        print("OTP: $otp");
+        print("Signup Flow: ${widget.isSignup}");
 
-                                await authCtrl
-                                    .verifyOtp(
-                                  widget
-                                      .phoneNumber,
-                                  otp,
-                                );
-                              },
+        if (otp.length != 6) {
+          Get.snackbar(
+            "Error",
+            "Please enter valid OTP",
+          );
+          return;
+        }
+
+        try {
+          if (widget.isSignup) {
+            final signupCtrl =
+                Get.find<SignupController>();
+
+            print("Name: ${signupCtrl.name}");
+            print("Owner: ${signupCtrl.ownerName}");
+            print("Phone: ${widget.phoneNumber}");
+            print("Email: ${signupCtrl.email}");
+            print("Address: ${signupCtrl.address}");
+            print("Mess: ${signupCtrl.messName}");
+            print(
+              "District: ${signupCtrl.selectedDistrict?.id}",
+            );
+
+            final success =
+                await signupCtrl.signup(
+              name: signupCtrl.name,
+              ownerName:
+                  signupCtrl.ownerName,
+              phone:
+                  widget.phoneNumber,
+              email:
+                  signupCtrl.email,
+              address:
+                  signupCtrl.address,
+              messName:
+                  signupCtrl.messName,
+            district: signupCtrl.selectedDistrict?.name ?? "",
+              otp: otp,
+            );
+
+            print(
+                "Signup Success: $success");
+
+            if (success) {
+              Get.offAll(
+                () =>
+                    const DashboardScreen(),
+              );
+            }
+          } else {
+            final success =
+                await authCtrl.verifyOtp(
+              widget.phoneNumber,
+              otp,
+            );
+
+            print(
+                "Login Success: $success");
+
+            if (success) {
+              Get.offAll(
+                () =>
+                    const DashboardScreen(),
+              );
+            }
+          }
+        } catch (e) {
+          print("ERROR: $e");
+
+          Get.snackbar(
+            "Error",
+            e.toString(),
+          );
+        }
+      },
                     child: authCtrl
                             .isLoading
                         ? const CircularProgressIndicator(

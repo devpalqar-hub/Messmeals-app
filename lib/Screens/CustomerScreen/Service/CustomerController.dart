@@ -13,8 +13,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomerController extends GetxController {
   final AuthController authController = Get.put(AuthController());
-  final DashboardController dashboardController = Get.find<
-      DashboardController>();
+  final HomeScreenController dashboardController = Get.find<
+      HomeScreenController>();
 
   var customers = <CustomerModel>[];
   var isLoading = false;

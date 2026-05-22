@@ -14,7 +14,7 @@ class MealChartCard extends StatefulWidget {
 
 class _MealChartCardState extends State<MealChartCard> {
 
-  final DashboardController controller = Get.find<DashboardController>();
+  final HomeScreenController controller = Get.find<HomeScreenController>();
 
   Future<void> _pickDate(BuildContext context) async {
     final DateTime now = DateTime.now();
@@ -46,7 +46,7 @@ class _MealChartCardState extends State<MealChartCard> {
   @override
   Widget build(BuildContext context) {
     // 1. Replaced Obx with GetBuilder
-    return GetBuilder<DashboardController>(
+    return GetBuilder<HomeScreenController>(
       builder: (controller) {
         // Accessing standard variables (no .value)
         final variation = controller.variationData;

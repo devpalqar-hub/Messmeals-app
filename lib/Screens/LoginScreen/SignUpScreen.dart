@@ -1,442 +1,647 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mess/Screens/LoginScreen/Model/DistrictModel.dart';
+import 'package:mess/Screens/LoginScreen/OtScreen.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:country_pickers/utils/utils.dart';
+import 'package:mess/Screens/LoginScreen/Service/SignUpController.dart';
 
-class CreateAccountScreen extends StatelessWidget {
-  CreateAccountScreen({super.key});
+class SignUpScreen extends StatelessWidget {
+  SignUpScreen({super.key});
 
-  final AuthController authCtrl = Get.find<AuthController>();
+  final AuthController authCtrl =
+      Get.find<AuthController>();
 
-  final TextEditingController emailController =
+  final TextEditingController
+  nameController =
       TextEditingController();
 
-  final TextEditingController messNameController =
+  final TextEditingController
+  emailController =
       TextEditingController();
 
-  final List<String> districts = [
-    "Kozhikode",
-    "Malappuram",
-    "Thrissur",
-    "Ernakulam",
-    "Kannur",
-    "Palakkad",
-  ];
+  final TextEditingController
+  messNameController =
+      TextEditingController();
+
+  final TextEditingController
+  addressController =
+      TextEditingController();
+  final SignupController signupCtrl = Get.put(SignupController());
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F4),
+      backgroundColor:
+          const Color(0xFFF9F9F4),
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: SingleChildScrollView(
+     body: SafeArea(
+  child: LayoutBuilder(
+    builder: (context, constraints) {
+      return SingleChildScrollView(
+        keyboardDismissBehavior:
+            ScrollViewKeyboardDismissBehavior.onDrag,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: constraints.maxHeight,
+          ),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
-            child: Column(
-              children: [
-                SizedBox(height: 12.h),
-
-                /// BACK BUTTON
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Get.back(),
+            padding: EdgeInsets.symmetric(
+              horizontal: 24.w,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  Align(
+                    alignment:
+                        Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: () =>
+                          Get.back(),
                       icon: const Icon(
                         Icons.arrow_back,
-                        color: Color(0xFF111827),
                       ),
                     ),
-                  ],
-                ),
-
-                SizedBox(height: 20.h),
-
-                /// LOGO
-                Container(
-                  width: 85.w,
-                  height: 85.h,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF5AA63A),
                   ),
-                  child: const Icon(
-                    Icons.restaurant,
-                    color: Colors.white,
-                    size: 42,
+
+              
+                  /// LOGO
+                  Container(
+                    width: 60.w,
+                    height: 60.h,
+                    decoration:
+                        const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color:
+                          Color(0xFF569937),
+                    ),
+                    child: const Icon(
+                      Icons.restaurant,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
-                ),
 
-                SizedBox(height: 20.h),
+                  SizedBox(height: 10.h),
 
-                /// TITLE
-                Text(
-                  "Create Account",
-                  style: GoogleFonts.inter(
-                    fontSize: 34.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF111827),
+                  Text(
+                    "Create Account",
+                    style:
+                        GoogleFonts.inter(
+                      fontSize: 22.sp,
+                      fontWeight:
+                          FontWeight.w700,
+                    ),
                   ),
-                ),
 
-                SizedBox(height: 8.h),
+                  SizedBox(height: 2.h),
 
-                Text(
-                  "Fill in your details to get started",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    color: Colors.grey.shade500,
+                  Text(
+                    "Fill your details",
+                    style:
+                        GoogleFonts.inter(
+                      fontSize: 13.sp,
+                      color: Colors.grey,
+                    ),
                   ),
-                ),
 
-                SizedBox(height: 35.h),
+                  SizedBox(height: 18.h),
 
-                /// CARD
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(22.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.circular(28.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12
-                            .withOpacity(.03),
-                        blurRadius: 18,
-                        spreadRadius: 2,
+                  /// FORM CONTAINER
+                  Container(
+                    padding:
+                        EdgeInsets.all(
+                      16.w,
+                    ),
+                    decoration:
+                        BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(
+                        12.r,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      /// PHONE
-                      _title("Phone Number"),
-
-                      SizedBox(height: 10.h),
-
-                      _phoneField(),
-
-                      SizedBox(height: 26.h),
-
-                      /// EMAIL
-                      _title("Email ID"),
-
-                      SizedBox(height: 10.h),
-
-                      _textField(
-                        controller: emailController,
-                        hint: "Enter your email address",
-                        icon: Icons.email_outlined,
+                      border: Border.all(
+                        color: Colors
+                            .grey.shade200,
                       ),
-
-                      SizedBox(height: 26.h),
-
-                      /// MESS NAME
-                      _title("Mess Name"),
-
-                      SizedBox(height: 10.h),
-
-                      _textField(
-                        controller: messNameController,
-                        hint: "Enter mess name",
-                        icon: Icons.home_work_outlined,
-                      ),
-
-                      SizedBox(height: 26.h),
-
-                      /// DISTRICT
-                      _title("District"),
-
-                      SizedBox(height: 10.h),
-
-                      GetBuilder<AuthController>(
-                        builder: (_) {
-                          return Container(
-                            height: 58.h,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 18.w),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey
-                                    .shade300,
-                              ),
-                              borderRadius:
-                                  BorderRadius.circular(
-                                      16.r),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                isExpanded: true,
-                                value: null,
-                                hint: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.location_on_outlined,
-                                      color: Colors
-                                          .grey.shade600,
-                                    ),
-                                    SizedBox(width: 12.w),
-                                    Text(
-                                      "Select your district",
-                                      style:
-                                          GoogleFonts.inter(
-                                        color: Colors
-                                            .grey.shade500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                icon: const Icon(
-                                  Icons.keyboard_arrow_down,
-                                ),
-                                items: districts
-                                    .map(
-                                      (e) =>
-                                          DropdownMenuItem(
-                                        value: e,
-                                        child: Text(e),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (v) {},
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      SizedBox(height: 35.h),
-
-                      /// SEND OTP BUTTON
-                      InkWell(
-                        onTap: () async {
-                          if (authCtrl
-                              .phoneController
-                              .text
-                              .trim()
-                              .isEmpty) {
-                            Get.snackbar(
-                              "Error",
-                              "Enter phone number",
-                            );
-                            return;
-                          }
-
-                          await authCtrl.sendOtp(
-                            authCtrl
-                                .phoneController.text
-                                .trim(),
-                          );
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          height: 58.h,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius:
-                                BorderRadius.circular(
-                                    16.r),
-                            gradient:
-                                const LinearGradient(
-                              colors: [
-                                Color(0xFF5FAE3F),
-                                Color(0xFF004B26),
-                              ],
-                            ),
-                          ),
-                          child: Text(
-                            "Send OTP",
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 18.sp,
-                              fontWeight:
-                                  FontWeight.w600,
-                            ),
-                          ),
+                    ),
+                    child: Column(
+                      children: [
+                        _textField(
+                          label: "Name",
+                          controller:
+                              nameController,
+                          icon: Icons
+                              .person_outline,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
 
-                SizedBox(height: 30.h),
+                        SizedBox(
+                            height: 8.h),
 
-                /// LOGIN
-                Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Already have an account? ",
-                      style: GoogleFonts.inter(
-                        fontSize: 15.sp,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => Get.back(),
-                      child: Text(
-                        "Login",
-                        style: GoogleFonts.inter(
-                          color:
-                              const Color(0xFF5AA63A),
-                          fontWeight:
-                              FontWeight.w600,
-                          fontSize: 15.sp,
+                        _phoneField(),
+
+                        SizedBox(
+                            height: 8.h),
+
+                        _textField(
+                          label:
+                              "Email ID",
+                          controller:
+                              emailController,
+                          icon: Icons
+                              .email_outlined,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
 
-                SizedBox(height: 25.h),
-              ],
-            ),
-          ),
-        ),
+                        SizedBox(
+                            height: 8.h),
+
+                        _textField(
+                          label:
+                              "Mess Name",
+                          controller:
+                              messNameController,
+                          icon: Icons
+                              .restaurant_menu,
+                        ),
+
+                        SizedBox(
+                            height: 8.h),
+                            _districtDropdown(),
+
+SizedBox(height: 8.h),
+
+                        _textField(
+                          label:
+                              "Address",
+                          controller:
+                              addressController,
+                          icon: Icons
+                              .location_on_outlined,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 20.h),
+
+               InkWell(
+  onTap: () async {
+  final phone = authCtrl.phoneController.text.trim();
+
+  if (nameController.text.isEmpty ||
+      emailController.text.isEmpty ||
+      messNameController.text.isEmpty ||
+      addressController.text.isEmpty ||
+      phone.isEmpty ||
+      signupCtrl.selectedDistrict == null) {
+    Get.snackbar(
+      "Error",
+      "Please fill all fields",
+    );
+    return;
+  }
+
+  // SAVE VALUES IN CONTROLLER
+  signupCtrl.name = nameController.text.trim();
+  signupCtrl.ownerName = nameController.text.trim();
+  signupCtrl.email = emailController.text.trim();
+  signupCtrl.address = addressController.text.trim();
+  signupCtrl.messName = messNameController.text.trim();
+
+  final success = await signupCtrl.sendOtp(
+    name: signupCtrl.name,
+    ownerName: signupCtrl.ownerName,
+    phone: phone,
+    email: signupCtrl.email,
+    address: signupCtrl.address,
+    messName: signupCtrl.messName,
+    district: signupCtrl.selectedDistrict!.name ?? "",
+  );
+
+  if (success) {
+    Get.to(
+      () => OtpVerificationScreen(
+        phoneNumber: phone,
+        isSignup: true,
       ),
     );
   }
-
-  Widget _title(String title) {
-    return Text(
-      title,
+},
+  child: Container(
+    height: 50.h,
+    width: double.infinity,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(14.r),
+      color: const Color.fromARGB(255, 37, 55, 29),
+    ),
+    child: Text(
+      "Send Otp",
       style: GoogleFonts.inter(
+        color: Colors.white,
         fontSize: 16.sp,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFF111827),
       ),
+    ),
+  ),
+),
+
+                  SizedBox(height: 18.h),
+
+                  /// LOGIN
+                  Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .center,
+                    children: [
+                      Text(
+                        "Already have an account? ",
+                        style:
+                            GoogleFonts.inter(
+                          fontSize:
+                              14.sp,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () =>
+                            Get.back(),
+                        child: Text(
+                          "Login",
+                          style:
+                              GoogleFonts.inter(
+                            color:
+                                const Color(
+                              0xFF5AA63A,
+                            ),
+                            fontWeight:
+                                FontWeight
+                                    .w600,
+                            fontSize:
+                                14.sp,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 18.h),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  ),
+),
+
+
     );
   }
 
   Widget _phoneField() {
-    return Container(
-      height: 58.h,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.shade300,
+  return Column(
+    crossAxisAlignment:
+        CrossAxisAlignment.start,
+    children: [
+      Text(
+        "Phone Number",
+        style: GoogleFonts.inter(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF111827),
         ),
-        borderRadius:
-            BorderRadius.circular(16.r),
       ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100.w,
-            child: DropdownButton(
-              value: "IN",
-              underline: const SizedBox(),
-              icon: const SizedBox(),
-              items: [
-                DropdownMenuItem(
-                  value: "IN",
-                  child: Row(
-                    children: [
-                      SizedBox(width: 14.w),
-                      SizedBox(
-                        width: 22.w,
-                        child:
-                           CountryPickerUtils.getDefaultFlagImage(
-  CountryPickerUtils.getCountryByIsoCode("IN"),
-)
-                      ),
-                      SizedBox(width: 10.w),
-                      Text(
-                        "+91",
-                        style:
-                            GoogleFonts.inter(
-                          fontSize: 16.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              onChanged: (_) {},
-            ),
-          ),
 
-          Container(
-            width: 1,
-            height: 28.h,
+      SizedBox(height: 5.h),
+
+      Container(
+        height: 45.h,
+        decoration: BoxDecoration(
+          border: Border.all(
             color: Colors.grey.shade300,
           ),
-
-          SizedBox(width: 12.w),
-
-          const Icon(
-            Icons.phone_outlined,
-            color: Colors.grey,
+          borderRadius:
+              BorderRadius.circular(
+            14.r,
           ),
-
-          SizedBox(width: 10.w),
-
-          Expanded(
-            child: TextField(
-              controller:
-                  authCtrl.phoneController,
-              keyboardType:
-                  TextInputType.phone,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText:
-                    "Enter your phone number",
-                hintStyle:
-                    GoogleFonts.inter(
-                  color: Colors.grey.shade500,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _textField({
-    required TextEditingController
-        controller,
-    required String hint,
-    required IconData icon,
-  }) {
-    return Container(
-      height: 58.h,
-      padding:
-          EdgeInsets.symmetric(horizontal: 18.w),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.shade300,
         ),
-        borderRadius:
-            BorderRadius.circular(16.r),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: Colors.grey.shade600,
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: hint,
-                hintStyle:
-                    GoogleFonts.inter(
-                  color: Colors.grey.shade500,
+        child: Row(
+          children: [
+            /// COUNTRY PICKER
+            SizedBox(
+              width: 110.w,
+              child:
+                  DropdownButtonHideUnderline(
+                child:
+                    DropdownButton<String>(
+                  value: authCtrl
+                      .selectedCountry,
+                  icon: const Icon(
+                    Icons
+                        .keyboard_arrow_down,
+                  ),
+                  items: [
+                    "IN",
+                    "US",
+                    "AE"
+                  ]
+                      .map(
+                        (item) =>
+                            DropdownMenuItem(
+                          value: item,
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                  width:
+                                      8.w),
+
+                              SizedBox(
+                                width:
+                                    22.w,
+                                height:
+                                    16.h,
+                                child:
+                                    CountryPickerUtils.getDefaultFlagImage(
+                                  CountryPickerUtils
+                                      .getCountryByIsoCode(
+                                    item,
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(
+                                  width:
+                                      6.w),
+
+                              Text(
+                                "+${CountryPickerUtils.getCountryByIsoCode(item).phoneCode}",
+                                style:
+                                    TextStyle(
+                                  fontSize:
+                                      14.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+
+                  onChanged: (
+                    value,
+                  ) {
+                    if (value !=
+                        null) {
+                      authCtrl
+                              .selectedCountry =
+                          value;
+                      authCtrl
+                          .update();
+                    }
+                  },
                 ),
+              ),
+            ),
+
+            Container(
+              height: 30.h,
+              width: 1,
+              color:
+                  Colors.grey.shade300,
+            ),
+
+            SizedBox(width: 10.w),
+
+            Expanded(
+              child: TextField(
+                controller: authCtrl
+                    .phoneController,
+                keyboardType:
+                    TextInputType
+                        .phone,
+                decoration:
+                    InputDecoration(
+                  border:
+                      InputBorder.none,
+                  prefixIcon:
+                      Icon(
+                    Icons
+                        .phone_outlined,
+                    color:
+                        Colors.grey,
+                    size: 20.sp,
+                  ),
+                  contentPadding:
+                      EdgeInsets.only(
+                    top: 14.h,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+Widget _textField({
+  required String label,
+  required TextEditingController controller,
+  required IconData icon,
+}) {
+  return Column(
+    crossAxisAlignment:
+        CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF111827),
+        ),
+      ),
+
+      SizedBox(height: 5.h),
+
+      Container(
+        height: 45.h,
+        padding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+        ),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.grey.shade300,
+          ),
+          borderRadius:
+              BorderRadius.circular(
+            14.r,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: Colors.grey.shade600,
+              size: 22,
+            ),
+
+            SizedBox(width: 10.w),
+
+            Expanded(
+              child: TextField(
+                controller: controller,
+                decoration:
+                    const InputDecoration(
+                  border:
+                      InputBorder.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+Widget _districtDropdown() {
+  return GetBuilder<SignupController>(
+    builder: (ctrl) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "District",
+            style: GoogleFonts.inter(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          SizedBox(height: 5.h),
+
+          InkWell(
+            onTap: () {
+              _showDistrictBottomSheet(ctrl);
+            },
+            child: Container(
+              height: 45.h,
+              padding: EdgeInsets.symmetric(
+                horizontal: 14.w,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                ),
+                borderRadius:
+                    BorderRadius.circular(14.r),
+              ),
+              child: Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    ctrl.selectedDistrict?.name ??
+                        "Select District",
+                    style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      color:
+                          ctrl.selectedDistrict ==
+                                  null
+                              ? Colors.grey
+                              : Colors.black,
+                    ),
+                  ),
+
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                  ),
+                ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
+      );
+    },
+  );
 }
+
+void _showDistrictBottomSheet(
+    SignupController ctrl) {
+    
+  ScrollController scrollController =
+      ScrollController();
+
+  scrollController.addListener(() {
+    if (scrollController.position.pixels ==
+            scrollController
+                .position.maxScrollExtent &&
+        ctrl.hasMore) {
+      ctrl.fetchDistricts(
+        loadMore: true,
+      );
+    }
+  });
+
+  Get.bottomSheet(
+    Container(
+      height: 450.h,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.vertical(
+          top: Radius.circular(20.r),
+        ),
+      ),
+
+      child: GetBuilder<SignupController>(
+        builder: (controller) {
+          return ListView.builder(
+            controller: scrollController,
+
+            itemCount:
+                controller.districtList.length +
+                    (controller.hasMore
+                        ? 1
+                        : 0),
+
+            itemBuilder:
+                (context, index) {
+              if (index ==
+                  controller
+                      .districtList.length) {
+                return const Center(
+                  child:
+                      CircularProgressIndicator(),
+                );
+              }
+
+              DistrictModel district =
+                  controller
+                          .districtList[
+                      index];
+
+              return ListTile(
+                title: Text(
+                  district.name ?? "",
+                ),
+                onTap: () {
+                  controller
+                      .selectDistrict(
+                          district);
+
+                  Get.back();
+                },
+              );
+            },
+          );
+        },
+      ),
+    ),
+  );
+}}
