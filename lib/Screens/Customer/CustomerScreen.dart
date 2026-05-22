@@ -58,11 +58,11 @@ class CustomersScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding:  EdgeInsets.symmetric(horizontal: 20.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 18),
+               SizedBox(height: 18.h),
 
               /// Header
               Row(
@@ -74,7 +74,7 @@ class CustomersScreen extends StatelessWidget {
                       Text(
                         "Customers",
                         style: TextStyle(
-                          fontSize: 22.sp,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
                           color: Colors.black,
                         ),

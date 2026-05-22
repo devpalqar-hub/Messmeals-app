@@ -95,121 +95,146 @@ class CustomerController extends GetxController {
   Future<void> refreshCustomers() async {
     await fetchCustomers(refresh: true);
   }
+Future<void> addCustomer({
+  required String name,
+  required String phone,
+  required String email,
+  required String address,
+  required String latitudeLongitude,
+  required String currentLocation,
+  required bool isActive,
+  required String walletAmount,
+  required String discount,
+  required String planId,
+  required String deliveryPartnerId,
+  required String startDate,
+  required String endDate,
+  required String scheduleType,
+  required List<String> selectedDays,
+}) async {
+  try {
+    isLoading = true;
+    update();
 
-  Future<void> addCustomer({
-    required String name,
-    required String phone,
-    required String email,
-    required String address,
-    required String latitudeLongitude,
-    required String currentLocation,
-    required bool isActive,
-    required String walletAmount,
-    required String discount,
-    required String planId,
-    required String deliveryPartnerId,
-    required String startDate,
-    required String endDate,
-    required String scheduleType,
-    required List<String> selectedDays,
-  }) async {
-    try {
-      isLoading = true;
-      update();
+    final url = Uri.parse(
+      '$baseUrl/customer/register-user',
+    );
 
-      final url = Uri.parse('$baseUrl/customer/register-user');
+    final requestBody = {
+      "name": name,
+      "phone": phone,
+      "email": email,
+      "address": address,
+      "latitude_logitude": latitudeLongitude,
+      "currentLocation": currentLocation,
+      "is_active": isActive,
+      "walletAmount": walletAmount,
+      "discount": discount,
+      "planId": planId,
+      "deliveryPartnerId": deliveryPartnerId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "scheduleType": scheduleType.toUpperCase(),
 
-      final requestBody = {
-        "name": name,
-        "phone": phone,
-        "email": email,
-        "address": address,
-        "latitude_logitude": latitudeLongitude,
-        "currentLocation": currentLocation,
-        "is_active": isActive,
-        "walletAmount": walletAmount,
-        "discount": discount,
-        "planId": planId,
-        "deliveryPartnerId": deliveryPartnerId,
-        "start_date": DateFormat('yyyy-MM-dd').format(DateTime.parse(startDate)),
-        "end_date": DateFormat('yyyy-MM-dd').format(DateTime.parse(endDate)),
-        "scheduleType": scheduleType.toUpperCase(),
-        "selectedDays": scheduleType.toUpperCase() == "CUSTOM"
-            ? selectedDays.map((d) => d.toUpperCase()).toList()
-            : [],
-
+      // Send only for CUSTOM
+      "selectedDays":
+          scheduleType.toUpperCase() ==
+                  "CUSTOM"
+              ? selectedDays
+                  .map(
+                    (e) => e.toUpperCase(),
+                  )
+                  .toList()
+              : null,
     };
 
-      final response = await http.post(
-        url,
-        body: jsonEncode(requestBody),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': bearerToken,
-        },
+    /// Remove null values
+    requestBody.removeWhere(
+      (key, value) => value == null,
+    );
+
+    final response = await http.post(
+      url,
+      body: jsonEncode(requestBody),
+      headers: {
+        'Content-Type':
+            'application/json',
+        'Authorization':
+            bearerToken,
+      },
+    );
+
+    debugPrint(
+        "========== ADD CUSTOMER ==========");
+    debugPrint(
+        "REQUEST => ${const JsonEncoder.withIndent('  ').convert(requestBody)}");
+    debugPrint(
+        "STATUS => ${response.statusCode}");
+    debugPrint(
+        "BODY => ${response.body}");
+    debugPrint(
+        "===================================");
+
+    if (response.statusCode == 200 ||
+        response.statusCode == 201) {
+      final data =
+          jsonDecode(response.body);
+
+      await dashboardController
+          .fetchDashboardStats();
+
+      await refreshCustomers();
+
+      Get.snackbar(
+        "Success",
+        data["message"] ??
+            "Customer added successfully",
+        snackPosition:
+            SnackPosition.BOTTOM,
       );
 
-      print("========== ADD CUSTOMER DEBUG ==========");
-      print("REQUEST => $requestBody");
-      print("STATUS  => ${response.statusCode}");
-      print("BODY    => ${response.body}");
-      print("=======================================");
+      await Future.delayed(
+        const Duration(
+            milliseconds: 500),
+      );
 
-
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        
-
-        final newCustomer = CustomerModel.fromJson(data['data']);
-
-        customers.insert(0, newCustomer);
-
-        update();
-
-        await dashboardController.fetchDashboardStats();
-        await refreshCustomers();
-
-        Get.snackbar(
-          "Success",
-          "Customer added successfully",
-          snackPosition: SnackPosition.BOTTOM,
-        );
-
-        Get.back();
-
-
-
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        if (Get.isOverlaysOpen) {
-          Get.back(closeOverlays: true);
-        } else if (Get.key.currentState?.canPop() ?? false) {
-          Get.back();
-        }
+      if (Get.isOverlaysOpen) {
+        Get.back(
+            closeOverlays: true);
       } else {
-        final error = jsonDecode(response.body);
-        Get.snackbar(
-          "Error",
-          error['message'] ?? "Failed to add customer",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.9),
-          colorText: Colors.white,
-        );
+        Get.back();
       }
-    } catch (e) {
+    } else {
+      final error =
+          jsonDecode(response.body);
+
       Get.snackbar(
         "Error",
-        "Something went wrong: $e",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.9),
-        colorText: Colors.white,
+        error["message"] ??
+            "Failed to add customer",
+        snackPosition:
+            SnackPosition.BOTTOM,
+        backgroundColor:
+            Colors.red,
+        colorText:
+            Colors.white,
       );
-    } finally {
-      isLoading = false;
-      update();
     }
+  } catch (e) {
+    debugPrint(
+        "ADD CUSTOMER ERROR: $e");
+
+    Get.snackbar(
+      "Error",
+      e.toString(),
+      snackPosition:
+          SnackPosition.BOTTOM,
+    );
+  } finally {
+    isLoading = false;
+    update();
   }
+}
 
   Future<void> updateCustomer({
   required String id,

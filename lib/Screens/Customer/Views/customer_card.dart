@@ -68,7 +68,7 @@ class CustomerCard extends StatelessWidget {
                 Text(
                   name,
                   style:  TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: Color(0xff111827),
                   ),
@@ -87,7 +87,7 @@ class CustomerCard extends StatelessWidget {
                     Text(
                       phone,
                       style:  TextStyle(
-                        fontSize: 16.sp,
+                        fontSize: 14.sp,
                         color: Color(0xff4b5563),
                         fontWeight: FontWeight.w500,
                       ),
