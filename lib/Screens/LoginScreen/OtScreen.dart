@@ -3,38 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/LoginScreen/Service/SignUpController.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
+  final bool isSignup;
 
   const OtpVerificationScreen({
     super.key,
     required this.phoneNumber,
+    this.isSignup = false,
   });
 
   @override
-  State<OtpVerificationScreen> createState() =>
-      _OtpVerificationScreenState();
+  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
-class _OtpVerificationScreenState
-    extends State<OtpVerificationScreen> {
-  final AuthController authCtrl =
-      Get.find<AuthController>();
+class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
+  final AuthController authCtrl = Get.find<AuthController>();
 
   /// OTP Controllers
-  final List<TextEditingController>
-      otpControllers = List.generate(
+  final List<TextEditingController> otpControllers = List.generate(
     6,
     (index) => TextEditingController(),
   );
 
-  final List<FocusNode> focusNodes =
-      List.generate(
-    6,
-    (index) => FocusNode(),
-  );
+  final List<FocusNode> focusNodes = List.generate(6, (index) => FocusNode());
 
   int secondsRemaining = 45;
   Timer? timer;
@@ -53,18 +49,15 @@ class _OtpVerificationScreenState
       secondsRemaining = 45;
     });
 
-    timer = Timer.periodic(
-      const Duration(seconds: 1),
-      (timer) {
-        if (secondsRemaining == 0) {
-          timer.cancel();
-        } else {
-          setState(() {
-            secondsRemaining--;
-          });
-        }
-      },
-    );
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (secondsRemaining == 0) {
+        timer.cancel();
+      } else {
+        setState(() {
+          secondsRemaining--;
+        });
+      }
+    });
   }
 
   /// TIMER FORMAT
@@ -86,29 +79,19 @@ class _OtpVerificationScreenState
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
         maxLength: 1,
-        style: TextStyle(
-          fontSize: 22.sp,
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700),
         decoration: InputDecoration(
           counterText: "",
           filled: true,
           fillColor: Colors.white,
           contentPadding: EdgeInsets.zero,
           enabledBorder: OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(14.r),
-            borderSide: BorderSide(
-              color: Colors.grey.shade300,
-            ),
+            borderRadius: BorderRadius.circular(14.r),
+            borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(14.r),
-            borderSide: const BorderSide(
-              color: Color(0xFF5BA43A),
-              width: 1.5,
-            ),
+            borderRadius: BorderRadius.circular(14.r),
+            borderSide: const BorderSide(color: Color(0xFF5BA43A), width: 1.5),
           ),
         ),
 
@@ -116,20 +99,13 @@ class _OtpVerificationScreenState
         onChanged: (value) {
           if (value.isNotEmpty) {
             if (index < 5) {
-              FocusScope.of(context)
-                  .requestFocus(
-                focusNodes[index + 1],
-              );
+              FocusScope.of(context).requestFocus(focusNodes[index + 1]);
             } else {
-              FocusScope.of(context)
-                  .unfocus();
+              FocusScope.of(context).unfocus();
             }
           } else {
             if (index > 0) {
-              FocusScope.of(context)
-                  .requestFocus(
-                focusNodes[index - 1],
-              );
+              FocusScope.of(context).requestFocus(focusNodes[index - 1]);
             }
           }
         },
@@ -141,8 +117,7 @@ class _OtpVerificationScreenState
   void dispose() {
     timer?.cancel();
 
-    for (var controller
-        in otpControllers) {
+    for (var controller in otpControllers) {
       controller.dispose();
     }
 
@@ -165,34 +140,11 @@ class _OtpVerificationScreenState
               /// TOP SECTION
               Stack(
                 children: [
-                  Container(
+                  /// BACKGROUND IMAGE ONLY
+                  SizedBox(
                     height: 360.h,
                     width: double.infinity,
-                    decoration:
-                        const BoxDecoration(
-                      gradient:
-                          LinearGradient(
-                        colors: [
-                          Color(0xFF003D32),
-                          Color(0xFF005D4A),
-                        ],
-                        begin:
-                            Alignment.topLeft,
-                        end: Alignment
-                            .bottomRight,
-                      ),
-                    ),
-                  ),
-
-                  /// BACKGROUND IMAGE
-                  Positioned.fill(
-                    child: Opacity(
-                      opacity: .15,
-                      child: Image.asset(
-                        "assets/images/login_bg.png",
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                    child: Image.asset("assets/verify.png", fit: BoxFit.cover),
                   ),
 
                   /// BACK BUTTON
@@ -200,80 +152,41 @@ class _OtpVerificationScreenState
                     top: 55.h,
                     left: 20.w,
                     child: GestureDetector(
-                      onTap: () =>
-                          Get.back(),
+                      onTap: () => Get.back(),
                       child: const Icon(
                         Icons.arrow_back,
-                        color:
-                            Colors.white,
+                        color: Colors.white,
                         size: 28,
-                      ),
-                    ),
-                  ),
-
-                  /// SHIELD IMAGE
-                  Positioned(
-                    top: 120.h,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        width: 130.w,
-                        height: 130.h,
-                        decoration:
-                            BoxDecoration(
-                          borderRadius:
-                              BorderRadius.circular(
-                                  100),
-                        ),
-                        child:
-                            Image.asset(
-                          "assets/images/shield.png",
-                          fit:
-                              BoxFit.contain,
-                        ),
                       ),
                     ),
                   ),
 
                   /// CURVE
                   Positioned(
-                    bottom: -1,
+                    bottom: -30,
                     left: 0,
                     right: 0,
                     child: Container(
                       height: 70.h,
-                      decoration:
-                          const BoxDecoration(
-                        color:
-                            Colors.white,
-                        borderRadius:
-                            BorderRadius.vertical(
-                          top: Radius
-                              .circular(
-                            100,
-                          ),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(24),
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-
               SizedBox(height: 20.h),
 
               /// TITLE
               Text(
                 "Verify OTP",
-                style:
-                    GoogleFonts.inter(
-                  fontSize: 30.sp,
-                  fontWeight:
-                      FontWeight.w700,
-                  color:
-                      const Color(
-                    0xFF111827,
-                  ),
+                style: GoogleFonts.inter(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF111827),
                 ),
               ),
 
@@ -281,11 +194,9 @@ class _OtpVerificationScreenState
 
               Text(
                 "Enter the 6-digit code sent to",
-                style:
-                    GoogleFonts.inter(
+                style: GoogleFonts.inter(
                   fontSize: 15.sp,
-                  color: Colors
-                      .grey.shade600,
+                  color: Colors.grey.shade600,
                 ),
               ),
 
@@ -293,40 +204,27 @@ class _OtpVerificationScreenState
 
               /// PHONE NUMBER
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment
-                        .center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     widget.phoneNumber,
-                    style:
-                        GoogleFonts.inter(
-                      fontWeight:
-                          FontWeight
-                              .w700,
-                      fontSize: 18.sp,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16.sp,
                     ),
                   ),
 
-                  SizedBox(
-                      width: 10.w),
+                  SizedBox(width: 10.w),
 
                   GestureDetector(
-                    onTap: () =>
-                        Get.back(),
+                    onTap: () => Get.back(),
                     child: Text(
                       "Change",
-                      style:
-                          GoogleFonts.inter(
-                        color:
-                            const Color(
-                          0xFF5BA43A,
-                        ),
-                        fontWeight:
-                            FontWeight
-                                .w600,
-                        fontSize:
-                            16.sp,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF5BA43A),
+
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
                       ),
                     ),
                   ),
@@ -337,170 +235,143 @@ class _OtpVerificationScreenState
 
               /// OTP BOXES
               Padding(
-                padding:
-                    EdgeInsets.symmetric(
-                  horizontal: 24.w,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
                 child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment
-                          .spaceBetween,
-                  children:
-                      List.generate(
-                    6,
-                    (index) =>
-                        otpBox(index),
-                  ),
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(6, (index) => otpBox(index)),
                 ),
               ),
 
               SizedBox(height: 45.h),
 
-              /// RESEND OTP
               secondsRemaining == 0
                   ? GestureDetector(
-                      onTap:
-                          () async {
-                        bool success =
-                            await authCtrl
-                                .sendOtp(
-                          widget
-                              .phoneNumber,
-                        );
+                    onTap: () async {
+                      bool success = await authCtrl.sendOtp(widget.phoneNumber);
 
-                        if (success) {
-                          startTimer();
-                        }
-                      },
-                      child: Text(
-                        "Resend OTP",
-                        style:
-                            GoogleFonts.inter(
-                          color:
-                              const Color(
-                            0xFF5BA43A,
-                          ),
-                          fontSize:
-                              16.sp,
-                          fontWeight:
-                              FontWeight
-                                  .w600,
-                        ),
-                      ),
-                    )
-                  : RichText(
-                      text: TextSpan(
-                        text:
-                            "Resend OTP in ",
-                        style:
-                            GoogleFonts.inter(
-                          color:
-                              Colors.grey,
-                          fontSize:
-                              16.sp,
-                        ),
-                        children: [
-                          TextSpan(
-                            text:
-                                timerText,
-                            style:
-                                GoogleFonts.inter(
-                              color:
-                                  const Color(
-                                0xFF5BA43A,
-                              ),
-                              fontWeight:
-                                  FontWeight
-                                      .w700,
-                            ),
-                          ),
-                        ],
+                      if (success) {
+                        startTimer();
+                      }
+                    },
+                    child: Text(
+                      "Resend OTP",
+                      style: GoogleFonts.inter(
+                        color: Colors.grey.shade600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-
-              const Spacer(),
+                  )
+                  : RichText(
+                    text: TextSpan(
+                      text: "Resend OTP in ",
+                      style: GoogleFonts.inter(
+                        color: Colors.grey,
+                        fontSize: 16.sp,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: timerText,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF5BA43A),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
               /// VERIFY BUTTON
               Padding(
-                padding:
-                    EdgeInsets.symmetric(
-                  horizontal: 24.w,
-                  vertical: 30.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 30.h),
                 child: SizedBox(
-                  width:
-                      double.infinity,
+                  width: double.infinity,
                   height: 58.h,
-                  child:
-                      ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(
-                        0xFF5BA43A,
-                      ),
-                      shape:
-                          RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(
-                          18.r,
-                        ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF569937),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.r),
                       ),
                     ),
                     onPressed:
-                        authCtrl
-                                .isLoading
+                        authCtrl.isLoading
                             ? null
                             : () async {
-                                String otp =
-                                    otpControllers
-                                        .map(
-                                          (
-                                            e,
-                                          ) =>
-                                              e
-                                                  .text,
-                                        )
-                                        .join();
+                              String otp =
+                                  otpControllers.map((e) => e.text).join();
 
-                                if (otp
-                                        .length !=
-                                    6) {
-                                  Get.snackbar(
-                                    "Error",
-                                    "Please enter valid OTP",
+                              print("OTP: $otp");
+                              print("Signup Flow: ${widget.isSignup}");
+
+                              if (otp.length != 6) {
+                                Get.snackbar("Error", "Please enter valid OTP");
+                                return;
+                              }
+
+                              try {
+                                if (widget.isSignup) {
+                                  final signupCtrl =
+                                      Get.find<SignupController>();
+
+                                  print("Name: ${signupCtrl.name}");
+                                  print("Owner: ${signupCtrl.ownerName}");
+                                  print("Phone: ${widget.phoneNumber}");
+                                  print("Email: ${signupCtrl.email}");
+                                  print("Address: ${signupCtrl.address}");
+                                  print("Mess: ${signupCtrl.messName}");
+                                  print(
+                                    "District: ${signupCtrl.selectedDistrict?.id}",
                                   );
-                                  return;
-                                }
 
-                                await authCtrl
-                                    .verifyOtp(
-                                  widget
-                                      .phoneNumber,
-                                  otp,
-                                );
-                              },
-                    child: authCtrl
-                            .isLoading
-                        ? const CircularProgressIndicator(
-                            color:
-                                Colors
-                                    .white,
-                          )
-                        : Text(
-                            "Verify & Continue",
-                            style:
-                                GoogleFonts.inter(
-                              fontSize:
-                                  18.sp,
-                              fontWeight:
-                                  FontWeight
-                                      .w600,
-                              color:
-                                  Colors
-                                      .white,
+                                  final success = await signupCtrl.signup(
+                                    name: signupCtrl.name,
+                                    ownerName: signupCtrl.ownerName,
+                                    phone: widget.phoneNumber,
+                                    email: signupCtrl.email,
+                                    address: signupCtrl.address,
+                                    messName: signupCtrl.messName,
+                                    district:
+                                        signupCtrl.selectedDistrict?.name ?? "",
+                                    otp: otp,
+                                  );
+
+                                  print("Signup Success: $success");
+
+                                  if (success) {
+                                    Get.offAll(() => DashboardScreen());
+                                  }
+                                } else {
+                                  final success = await authCtrl.verifyOtp(
+                                    widget.phoneNumber,
+                                    otp,
+                                  );
+
+                                  print("Login Success: $success");
+
+                                  if (success) {
+                                    Get.offAll(() => DashboardScreen());
+                                  }
+                                }
+                              } catch (e) {
+                                print("ERROR: $e");
+
+                                Get.snackbar("Error", e.toString());
+                              }
+                            },
+                    child:
+                        authCtrl.isLoading
+                            ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                            : Text(
+                              "Verify & Continue",
+                              style: GoogleFonts.inter(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
                   ),
                 ),
               ),

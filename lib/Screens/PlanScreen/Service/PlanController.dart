@@ -11,7 +11,7 @@ import 'package:mess/main.dart';
 
 class PlanController extends GetxController {
   final AuthController authController = Get.find<AuthController>();
-  final DashboardController dashboardController = Get.find<DashboardController>();
+  final HomeScreenController dashboardController = Get.find<HomeScreenController>();
 
   
   bool isLoading = false;

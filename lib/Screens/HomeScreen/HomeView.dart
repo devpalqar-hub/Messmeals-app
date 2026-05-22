@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:mess/Screens/CustomerScreen/CustomerScreen.dart';
-import 'package:mess/Screens/DeliveriesScreen/DeliveriesScreen.dart';
+import 'package:get/get.dart';
+
+import 'package:mess/Screens/Customer/CustomerScreen.dart';
+import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
+import 'package:mess/Screens/Utils/Bottombar.dart';
 import 'package:mess/Screens/HomeScreen/HomeScreen.dart';
 import 'package:mess/Screens/PartnerScreen/PartnerScreen.dart';
+import 'package:mess/Screens/DeliveriesScreen/DeliveriesScreen.dart';
 import 'package:mess/Screens/PlanScreen/PlanScreen.dart';
-import 'package:mess/Screens/Utils/Bottombar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -33,6 +35,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(HomeScreenController(), permanent: true);
+
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: SafeArea(

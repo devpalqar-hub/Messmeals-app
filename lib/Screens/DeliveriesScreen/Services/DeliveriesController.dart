@@ -9,7 +9,7 @@ import 'package:mess/main.dart';
 
 class DeliveriesController extends GetxController {
   final AuthController authController = Get.find<AuthController>();
-  final DashboardController dashboardController = Get.find<DashboardController>();
+  final HomeScreenController dashboardController = Get.find<HomeScreenController>();
 
   // Standard variables instead of .obs
   bool isLoading = false;

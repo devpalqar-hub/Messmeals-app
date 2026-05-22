@@ -4,13 +4,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
+import 'package:mess/Screens/HomeScreen/Service/dashbaord_controller.dart';
 import 'package:mess/Screens/HomeScreen/Views/StatItem.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
 
 class Homescreen extends StatelessWidget {
   Homescreen({super.key});
-  DashboardController ctrl = Get.put(DashboardController());
+  HomeScreenController ctrl = Get.put(HomeScreenController());
   @override
   Widget build(BuildContext context) {
     return Scaffold(

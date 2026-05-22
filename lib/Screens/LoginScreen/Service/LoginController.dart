@@ -19,7 +19,7 @@ class AuthController extends GetxController {
   String token = "";
   String sessionId = "";
   UserModel? currentUser;
-  
+
   // List of messes owned by the user
   List<Map<String, dynamic>> ownedMesses = [];
   String selectedMessId = "";
@@ -27,18 +27,12 @@ class AuthController extends GetxController {
   DateTime? tokenExpiry;
   Timer? _logoutTimer;
 
-  TextEditingController phoneController =
-      TextEditingController();
+  TextEditingController phoneController = TextEditingController();
 
+  String selectedCountry = "IN";
 
-String selectedCountry = "IN";
-
-String get countryCode =>
-    "+${CountryPickerUtils
-        .getCountryByIsoCode(
-          selectedCountry,
-        )
-        .phoneCode}";
+  String get countryCode =>
+      "+${CountryPickerUtils.getCountryByIsoCode(selectedCountry).phoneCode}";
 
   void log(String msg) => print("AUTH_LOG → $msg");
 
@@ -50,65 +44,60 @@ String get countryCode =>
   }
 
   // --- Auth Methods ---
-Future<bool> sendOtp(String phone) async {
-  try {
-    isLoading = true;
-    _refreshUI();
+  Future<bool> sendOtp(String phone) async {
+    try {
+      isLoading = true;
+      _refreshUI();
 
-    final url = Uri.parse("$baseUrl/auth/send-login-otp");
+      final url = Uri.parse("$baseUrl/auth/send-login-otp");
 
-    final requestBody = {"phone": phone};
+      final requestBody = {"phone": phone};
 
-    debugPrint("🚀 SEND OTP API");
-    debugPrint("➡️ URL: $url");
-    debugPrint("➡️ BODY: ${jsonEncode(requestBody)}");
+      debugPrint("🚀 SEND OTP API");
+      debugPrint("➡️ URL: $url");
+      debugPrint("➡️ BODY: ${jsonEncode(requestBody)}");
 
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(requestBody),
-    );
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(requestBody),
+      );
 
-    debugPrint("✅ STATUS: ${response.statusCode}");
-    debugPrint("✅ RESPONSE: ${response.body}");
+      debugPrint("✅ STATUS: ${response.statusCode}");
+      debugPrint("✅ RESPONSE: ${response.body}");
 
-    final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-    if ((response.statusCode == 200 || response.statusCode == 201) &&
-        data["sessionId"] != null) {
-      sessionId = data["sessionId"];
-      Fluttertoast.showToast(
-          msg: data["message"] ?? "OTP sent successfully");
-      return true;
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data["sessionId"] != null) {
+        sessionId = data["sessionId"];
+        Fluttertoast.showToast(msg: data["message"] ?? "OTP sent successfully");
+        return true;
+      }
+
+      Fluttertoast.showToast(msg: data["message"] ?? "User not registered");
+      return false;
+    } catch (e) {
+      debugPrint("❌ SEND OTP ERROR: $e");
+      return false;
+    } finally {
+      isLoading = false;
+      _refreshUI();
     }
-
-    Fluttertoast.showToast(
-        msg: data["message"] ?? "User not registered");
-    return false;
-  } catch (e) {
-    debugPrint("❌ SEND OTP ERROR: $e");
-    return false;
-  } finally {
-    isLoading = false;
-    _refreshUI();
   }
-}
-Future<bool> verifyOtp(String phone, String otp) async {
-  try {
-    isLoading = true;
-    _refreshUI();
 
-    final url = Uri.parse("$baseUrl/auth/verify-otp");
+  Future<bool> verifyOtp(String phone, String otp) async {
+    try {
+      isLoading = true;
+      _refreshUI();
 
-    final body = {
-      "phone": phone,
-      "sessionId": sessionId,
-      "otp": otp,
-    };
+      final url = Uri.parse("$baseUrl/auth/verify-otp");
 
-    debugPrint("🚀 VERIFY OTP API");
-    debugPrint("➡️ URL: $url");
-    debugPrint("➡️ BODY: ${jsonEncode(body)}");
+      final body = {"phone": phone, "sessionId": sessionId, "otp": otp};
+
+      debugPrint("🚀 VERIFY OTP API");
+      debugPrint("➡️ URL: $url");
+      debugPrint("➡️ BODY: ${jsonEncode(body)}");
 
       final response = await http.post(
         url,
@@ -116,27 +105,28 @@ Future<bool> verifyOtp(String phone, String otp) async {
         body: jsonEncode(body),
       );
 
-    debugPrint("✅ STATUS: ${response.statusCode}");
-    debugPrint("✅ RESPONSE: ${response.body}");
+      debugPrint("✅ STATUS: ${response.statusCode}");
+      debugPrint("✅ RESPONSE: ${response.body}");
 
-    final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-    if ((response.statusCode == 200 || response.statusCode == 201) &&
-        data["accessToken"] != null) {
-      await _onLoginSuccess(data);
-      return true;
-    } else {
-      safeSnack("Error", data["message"] ?? "Invalid OTP");
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data["accessToken"] != null) {
+        await _onLoginSuccess(data);
+        return true;
+      } else {
+        safeSnack("Error", data["message"] ?? "Invalid OTP");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("❌ VERIFY OTP ERROR: $e");
       return false;
+    } finally {
+      isLoading = false;
+      _refreshUI();
     }
-  } catch (e) {
-    debugPrint("❌ VERIFY OTP ERROR: $e");
-    return false;
-  } finally {
-    isLoading = false;
-    _refreshUI();
   }
-}
+
   Future<void> _onLoginSuccess(dynamic data) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -158,14 +148,14 @@ Future<bool> verifyOtp(String phone, String otp) async {
     await prefs.setString("token", token);
     await prefs.setString("user", jsonEncode(data["user"]));
     await prefs.setString("ownedMesses", jsonEncode(ownedMesses));
-    
+
     if (tokenExpiry != null) {
       await prefs.setString("tokenExpiry", tokenExpiry!.toIso8601String());
     }
 
     _startAutoLogoutTimer();
     _refreshUI();
-    Get.offAll(() => const DashboardScreen());
+    Get.offAll(() => DashboardScreen());
   }
 
   // --- Logic Methods ---
@@ -185,13 +175,14 @@ Future<bool> verifyOtp(String phone, String otp) async {
         bearerToken = "Bearer $token";
         currentUser = UserModel.fromJson(jsonDecode(storedUser));
         selectedMessId = prefs.getString("selectedMessId") ?? "";
-        
+
         final storedMesses = prefs.getString("ownedMesses");
         if (storedMesses != null) {
           try {
             final List<dynamic> decoded = jsonDecode(storedMesses);
             // Robust parsing into List<Map>
-            ownedMesses = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+            ownedMesses =
+                decoded.map((e) => Map<String, dynamic>.from(e)).toList();
           } catch (e) {
             ownedMesses = [];
           }
@@ -217,8 +208,8 @@ Future<bool> verifyOtp(String phone, String otp) async {
       final response = await http.get(
         url,
         headers: {
-          "Content-Type": "application/json", 
-          "Authorization": bearerToken
+          "Content-Type": "application/json",
+          "Authorization": bearerToken,
         },
       );
 
@@ -226,7 +217,8 @@ Future<bool> verifyOtp(String phone, String otp) async {
         final decoded = jsonDecode(response.body);
         if (decoded is List) {
           // Map each item to Map<String, dynamic> safely
-          ownedMesses = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+          ownedMesses =
+              decoded.map((e) => Map<String, dynamic>.from(e)).toList();
         }
       }
     } catch (e) {
@@ -241,9 +233,9 @@ Future<bool> verifyOtp(String phone, String otp) async {
     _refreshUI();
 
     if (Get.context != null) {
-      Get.offAll(() =>  LoginScreen());
+      Get.offAll(() => LoginScreen());
     }
-    
+
     if (showMessage) safeSnack("Session expired", "Please login again.");
   }
 
@@ -277,8 +269,8 @@ Future<bool> verifyOtp(String phone, String otp) async {
       if (parts.length != 3) return null;
       final payload = base64Url.normalize(parts[1]);
       final decoded = jsonDecode(utf8.decode(base64Url.decode(payload)));
-      return decoded.containsKey('exp') 
-          ? DateTime.fromMillisecondsSinceEpoch(decoded['exp'] * 1000) 
+      return decoded.containsKey('exp')
+          ? DateTime.fromMillisecondsSinceEpoch(decoded['exp'] * 1000)
           : null;
     } catch (e) {
       return null;
