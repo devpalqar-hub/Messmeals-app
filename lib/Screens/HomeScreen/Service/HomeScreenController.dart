@@ -83,10 +83,10 @@ class HomeScreenController extends GetxController {
           'Authorization': 'Bearer $token',
         },
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         dashboardData = DashboardModel.fromJson(data);
+        update();
       } else if (response.statusCode == 403 || response.statusCode == 401) {
         _handleLogout();
       } else {
