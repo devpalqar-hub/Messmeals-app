@@ -1,56 +1,51 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+
 import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 import 'package:mess/Screens/Customer/Views/customer_card.dart';
+import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
+import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
-
-class CustomersScreen extends StatelessWidget {
+class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
 
-  final List<Map<String, String>> customers = const [
-    {
-      "name": "test",
-      "phone": "+91 98765 43210",
-      "initials": "T",
-    },
-    {
-      "name": "Ramesh Agarwal",
-      "phone": "+91 91234 56789",
-      "initials": "RA",
-    },
-    {
-      "name": "Priya Sharma",
-      "phone": "+91 99876 54321",
-      "initials": "PS",
-    },
-    {
-      "name": "Amit Kumar",
-      "phone": "+91 95555 12345",
-      "initials": "AK",
-    },
-    {
-      "name": "Sneha Mehta",
-      "phone": "+91 90909 87654",
-      "initials": "SM",
-    },
-    {
-      "name": "Vikram Singh",
-      "phone": "+91 88888 11111",
-      "initials": "VK",
-    },
-    {
-      "name": "Anjali Sharma",
-      "phone": "+91 77777 22222",
-      "initials": "AS",
-    },
-    {
-      "name": "Deepak Patel",
-      "phone": "+91 66666 33333",
-      "initials": "DP",
-    },
-  ];
+  @override
+  State<CustomersScreen> createState() => _CustomersScreenState();
+}
+
+class _CustomersScreenState extends State<CustomersScreen> {
+  final CustomerController customerController = Get.put(CustomerController());
+
+  final PlanController planController = Get.put(PlanController());
+
+  final TextEditingController searchCtrl = TextEditingController();
+
+  String selectedPlanId = "";
+  String searchQuery = "";
+
+  @override
+  void initState() {
+    super.initState();
+
+    planController.fetchPlans();
+    customerController.fetchCustomers(refresh: true);
+  }
+
+  void _loadCustomers({bool reset = true}) {
+    customerController.fetchCustomers(
+      refresh: reset,
+      search: searchQuery.isEmpty ? null : searchQuery,
+      planId: selectedPlanId.isEmpty ? null : selectedPlanId,
+    );
+  }
+
+  @override
+  void dispose() {
+    searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,198 +53,180 @@ class CustomersScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding:  EdgeInsets.symmetric(horizontal: 20.w),
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               SizedBox(height: 18.h),
+              SizedBox(height: 18.h),
 
-              /// Header
+              /// ================= HEADER =================
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children:  [
+                    children: [
                       Text(
                         "Customers",
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
-                          color: Colors.black,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 5.h),
                       Text(
-                        "56 Total Customers",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xff4b5563),
-                        ),
+                        "Customer List",
+                        style: TextStyle(fontSize: 13.sp, color: Colors.grey),
                       ),
                     ],
                   ),
 
-                 GestureDetector(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddCustomerScreen(),
-      ),
-    );
-  },
-  child: Container(
-    height: 50.h,
-    padding: EdgeInsets.symmetric(horizontal: 10.w),
-    decoration: BoxDecoration(
-      color: AppColors.primary,
-      borderRadius: BorderRadius.circular(8.r),
-    ),
-    child: Row(
-      children: [
-        Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 20.sp,
-        ),
-
-        SizedBox(width: 4.w),
-
-        Text(
-          "Add Customer",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 14.sp,
-          ),
-        ),
-      ],
-    ),
-  ),
-)
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AddCustomerScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 10.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.add, color: Colors.white, size: 18.sp),
+                          SizedBox(width: 5.w),
+                          Text(
+                            "Add Customer",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
 
-              const SizedBox(height: 28),
+              SizedBox(height: 20.h),
 
-            Row(
-  children: [
-    Expanded(
-      child: Container(
-        height: 45.h,
-        padding: EdgeInsets.symmetric(horizontal: 10.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(
-            color: const Color(0xffe5e7eb),
-          ),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.search,
-              color: Color(0xff6b7280),
-              size: 20,
-            ),
-
-            SizedBox(width: 5.w),
-
-            Expanded(
-              child: TextField(
-                style: TextStyle(
-                  fontSize: 14.sp,
-                ),
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  contentPadding: EdgeInsets.zero,
-                  border: InputBorder.none,
-                  hintText: "Search by name, phone or email...",
-                  hintStyle: TextStyle(
-                    color: Colors.black,
-                    fontSize: 14.sp,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-
-    SizedBox(width: 10.w),
-
-    /// Filter Button
-    Container(
-      height: 45.h,
-      padding: EdgeInsets.symmetric(horizontal: 14.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(
-          color: const Color(0xffe5e7eb),
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.filter_alt_outlined,
-            size: 18,
-            color: Color(0xff374151),
-          ),
-
-          SizedBox(width: 5.w),
-
-          Text(
-            "All Plans",
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          SizedBox(width: 4.w),
-
-          const Icon(Icons.keyboard_arrow_down),
-        ],
-      ),
-    ),
-  ],
-),
-
-              const SizedBox(height: 22),
-
-              /// Customer List
-              Expanded(
-                child: ListView.separated(
-                  itemCount: customers.length + 1,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    if (index == customers.length) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Center(
-                          child: Text(
-                            "You've reached the end of the list",
-                            style: TextStyle(
-                              color: Color(0xff6b7280),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+              /// ================= SEARCH + FILTER =================
+              Row(
+                children: [
+                  /// SEARCH
+                  Expanded(
+                    child: Container(
+                      height: 45.h,
+                      padding: EdgeInsets.symmetric(horizontal: 10.w),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.search, size: 20.sp),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: TextField(
+                              controller: searchCtrl,
+                              onChanged: (value) {
+                                searchQuery = value;
+                                _loadCustomers(reset: true);
+                              },
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                hintText: "Search by name, phone or email",
+                              ),
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 10.w),
+
+                  /// PLAN DROPDOWN
+                  GetBuilder<PlanController>(
+                    builder: (controller) {
+                      return Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value:
+                                selectedPlanId.isEmpty ? null : selectedPlanId,
+                            hint: const Text("All Plans"),
+
+                            items: [
+                              const DropdownMenuItem(
+                                value: "",
+                                child: Text("All Plans"),
+                              ),
+                              ...controller.plans.map((plan) {
+                                return DropdownMenuItem(
+                                  value: plan.id,
+                                  child: Text(plan.planName),
+                                );
+                              }),
+                            ],
+
+                            onChanged: (value) {
+                              setState(() {
+                                selectedPlanId = value ?? "";
+                              });
+
+                              _loadCustomers(reset: true);
+                            },
                           ),
                         ),
                       );
+                    },
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 20.h),
+
+              /// ================= CUSTOMER LIST =================
+              Expanded(
+                child: GetBuilder<CustomerController>(
+                  builder: (controller) {
+                    if (controller.isLoading && controller.customers.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
                     }
 
-                    final customer = customers[index];
+                    if (controller.customers.isEmpty) {
+                      return const Center(child: Text("No customers found"));
+                    }
 
-                    return CustomerCard(
-                      name: customer['name']!,
-                      phone: customer['phone']!,
-                      initials: customer['initials']!,
+                    return ListView.separated(
+                      itemCount: controller.customers.length,
+                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                      itemBuilder: (context, index) {
+                        final customer = controller.customers[index];
+
+                        return CustomerCard(
+                          name: customer.name,
+                          phone: customer.phone,
+                          initials:
+                              customer.name.isNotEmpty
+                                  ? customer.name[0].toUpperCase()
+                                  : "",
+                          customer: customer,
+                        );
+                      },
                     );
                   },
                 ),

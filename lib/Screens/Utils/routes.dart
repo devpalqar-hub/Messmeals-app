@@ -25,5 +25,7 @@ class AppRoutes {
     GetPage(name: partners, page: () => PartnerScreen()),
     GetPage(name: deliveries, page: () => DeliveriesScreen()),
     GetPage(name: plans, page: () => PlanScreen()),
+    
+
   ];
 }

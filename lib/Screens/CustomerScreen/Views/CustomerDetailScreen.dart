@@ -2,6 +2,7 @@
 // import 'package:flutter_screenutil/flutter_screenutil.dart';
 // import 'package:get/get.dart';
 // import 'package:intl/intl.dart';
+// import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 // import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 // import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 // import 'package:mess/Screens/CustomerScreen/Views/AddCustomerScreen.dart';
@@ -109,7 +110,7 @@
 //                             context,
 //                             MaterialPageRoute(
 //                               builder: (_) =>
-//                                   AddCustomerScreen(customer: current),
+//                                   AddCustomerScreen(),
 //                             ),
 //                           );
 //                           if (changed == true) {
@@ -467,15 +468,15 @@
 //   ),
             
 //             onPressed: () async {
-//               final result =
-//                   await showRenewSubscriptionSheet(
-//                 context,
-//                 customerProfileId: current.customerProfileId,
-//               );
-//               if (result != null) {
-//                 await controller.fetchCustomerDetails(
-//                     current.customerProfileId);
-//               }
+//              // final result =
+//                  // await showRenewSubscriptionSheet(
+//                 //context,
+//                 //customerProfileId: current.customerProfileId,
+//               //);
+//               //if (result != null) {
+//                 //await controller.fetchCustomerDetails(
+//                   //  current.customerProfileId);
+//               //}
 //             },
 //             child: const Text("Add Subscription",style: TextStyle(color: Colors.white),),
 //           ),

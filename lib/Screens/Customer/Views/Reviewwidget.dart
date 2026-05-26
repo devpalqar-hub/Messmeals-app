@@ -3,10 +3,54 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
 class ReviewWidget extends StatelessWidget {
-  const ReviewWidget({super.key});
+
+  // Basic info
+  final String name;
+  final String phone;
+  final String email;
+  final String address;
+  final String location;
+
+  // Plan details
+  final String mealPlan;
+  final String startDate;
+  final String endDate;
+  final String deliveryPartner;
+
+  // Wallet details
+  final String walletAmount;
+  final String discountAmount;
+
+  // Schedule details
+  final String deliveryType;
+  final List<String> deliveryDays;
+  final String preferredTime;
+
+  const ReviewWidget({
+    super.key,
+
+    required this.name,
+    required this.phone,
+    required this.email,
+    required this.address,
+    required this.location,
+
+    required this.mealPlan,
+    required this.startDate,
+    required this.endDate,
+    required this.deliveryPartner,
+
+    required this.walletAmount,
+    required this.discountAmount,
+
+    required this.deliveryType,
+    required this.deliveryDays,
+    required this.preferredTime,
+  });
 
   @override
   Widget build(BuildContext context) {
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -14,6 +58,7 @@ class ReviewWidget extends StatelessWidget {
           /// HEADER
           Row(
             children: [
+
               Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
@@ -35,6 +80,7 @@ class ReviewWidget extends StatelessWidget {
                 crossAxisAlignment:
                     CrossAxisAlignment.start,
                 children: [
+
                   Text(
                     "Review Details",
                     style: TextStyle(
@@ -60,32 +106,39 @@ class ReviewWidget extends StatelessWidget {
 
           SizedBox(height: 25.h),
 
+          /// BASIC INFO
+
           infoCard(
-            icon:
-                Icons.person_outline,
-            iconColor:
-                const Color(
-              0xff00856F,
-            ),
-            title:
-                "Basic Information",
+            icon: Icons.person_outline,
+            iconColor: const Color(0xff00856F),
+            title: "Basic Information",
             children: [
+
+              detailRow("Name", name),
+              detailRow("Phone", phone),
+
               detailRow(
-                  "Name", "test"),
+                "Email",
+                email.isEmpty
+                    ? "-"
+                    : email,
+              ),
+
               detailRow(
-                  "Phone",
-                  "+91 98765 43210"),
+                "Address",
+                address,
+              ),
+
               detailRow(
-                  "Email",
-                  "test@gmail.com"),
-              detailRow(
-                  "Address",
-                  "123, ABC Street"),
-              detailRow(
-                  "Location",
-                  "Using current location"),
+                "Location",
+                location.isEmpty
+                    ? "-"
+                    : location,
+              ),
             ],
           ),
+
+          /// PLAN
 
           infoCard(
             icon: Icons.calendar_month,
@@ -96,20 +149,38 @@ class ReviewWidget extends StatelessWidget {
             title:
                 "Plan & Subscription",
             children: [
+
               detailRow(
-                  "Meal Plan",
-                  "Premium Plan"),
+                "Meal Plan",
+                mealPlan.isEmpty
+                    ? "-"
+                    : mealPlan,
+              ),
+
               detailRow(
-                  "Start Date",
-                  "01 May 2024"),
+                "Start Date",
+                startDate.isEmpty
+                    ? "-"
+                    : startDate,
+              ),
+
               detailRow(
-                  "End Date",
-                  "01 Aug 2024"),
+                "End Date",
+                endDate.isEmpty
+                    ? "-"
+                    : endDate,
+              ),
+
               detailRow(
-                  "Delivery Partner",
-                  "Rishaan Delivery"),
+                "Delivery Partner",
+                deliveryPartner.isEmpty
+                    ? "-"
+                    : deliveryPartner,
+              ),
             ],
           ),
+
+          /// WALLET
 
           infoCard(
             icon:
@@ -119,14 +190,20 @@ class ReviewWidget extends StatelessWidget {
             title:
                 "Wallet & Discount",
             children: [
+
               detailRow(
-                  "Wallet Amount",
-                  "₹1000"),
+                "Wallet Amount",
+                "₹$walletAmount",
+              ),
+
               detailRow(
-                  "Discount Amount",
-                  "₹100"),
+                "Discount Amount",
+                "₹$discountAmount",
+              ),
             ],
           ),
+
+          /// DELIVERY
 
           infoCard(
             icon:
@@ -138,15 +215,22 @@ class ReviewWidget extends StatelessWidget {
             title:
                 "Schedule Delivery",
             children: [
+
               detailRow(
-                  "Delivery Type",
-                  "Custom"),
+                "Delivery Type",
+                deliveryType.isEmpty
+                    ? "-"
+                    : deliveryType,
+              ),
+
               detailRow(
-                  "Delivery Days",
-                  "Mon,Tue,Wed"),
-              detailRow(
-                  "Preferred Time",
-                  "08:00 AM - 10:00 AM"),
+                "Delivery Days",
+                deliveryDays.isEmpty
+                    ? "-"
+                    : deliveryDays.join(", "),
+              ),
+
+              
             ],
           ),
 
@@ -157,14 +241,17 @@ class ReviewWidget extends StatelessWidget {
   }
 
   static Widget detailRow(
-      String title,
-      String value,
-      ) {
+    String title,
+    String value,
+  ) {
+
     return Padding(
       padding: EdgeInsets.only(
-          bottom: 10.h),
+        bottom: 10.h,
+      ),
       child: Row(
         children: [
+
           SizedBox(
             width: 110.w,
             child: Text(
@@ -186,7 +273,7 @@ class ReviewWidget extends StatelessWidget {
                 fontSize: 13.sp,
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -198,40 +285,48 @@ class ReviewWidget extends StatelessWidget {
     required String title,
     required List<Widget> children,
   }) {
+
     return Container(
-      margin:
-          EdgeInsets.only(
-              bottom: 16.h),
+      margin: EdgeInsets.only(
+        bottom: 16.h,
+      ),
       padding:
-          EdgeInsets.all(16.w),
+          EdgeInsets.all(
+        16.w,
+      ),
       decoration:
           BoxDecoration(
         color: Colors.white,
         borderRadius:
             BorderRadius.circular(
-                16.r),
+          16.r,
+        ),
         border: Border.all(
-          color: Colors
-              .grey.shade200,
+          color:
+              Colors.grey.shade200,
         ),
       ),
       child: Column(
         children: [
+
           Row(
             children: [
 
               Container(
                 padding:
                     EdgeInsets.all(
-                        8.w),
+                  8.w,
+                ),
                 decoration:
                     BoxDecoration(
-                  color: iconColor
-                      .withOpacity(
-                          .08),
+                  color:
+                      iconColor.withOpacity(
+                    .08,
+                  ),
                   borderRadius:
                       BorderRadius.circular(
-                          8.r),
+                    8.r,
+                  ),
                 ),
                 child: Icon(
                   icon,
@@ -241,36 +336,34 @@ class ReviewWidget extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(width: 12.w),
+              SizedBox(
+                width: 12.w,
+              ),
 
               Text(
                 title,
-                style:
-                    TextStyle(
+                style: TextStyle(
                   fontWeight:
-                      FontWeight
-                          .w700,
-                  fontSize:
-                      15.sp,
+                      FontWeight.w700,
+                  fontSize: 15.sp,
                 ),
               ),
 
               const Spacer(),
 
               Icon(
-                Icons
-                    .edit_outlined,
+                Icons.edit_outlined,
                 color:
-                    AppColors
-                        .primary,
+                    AppColors.primary,
               )
             ],
           ),
 
           SizedBox(
-              height: 20.h),
+            height: 20.h,
+          ),
 
-          ...children
+          ...children,
         ],
       ),
     );
