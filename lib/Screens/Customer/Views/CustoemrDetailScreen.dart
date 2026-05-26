@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
+import 'package:mess/Screens/CustomerScreen/Views/RenewSubscription.dart';
 
 class CustomerDetailScreen extends StatelessWidget {
   final CustomerModel customer;
@@ -814,69 +815,111 @@ Container(
       ),
 
       SizedBox(width: 12.w),
+   /// ===================== RENEW BUTTON =====================
 
-      /// BUTTON TOP RIGHT
-      Align(
-        alignment: Alignment.topRight,
+Align(
+  alignment: Alignment.topRight,
 
-        child: Container(
-          margin: EdgeInsets.only(top: 2.h),
+  child: GestureDetector(
+    /// ===================== RENEW BUTTON =====================
 
-          padding: EdgeInsets.symmetric(
-            horizontal: 18.w,
-            vertical: 12.h,
-          ),
+onTap: () async {
+  final result = await showRenewSubscriptionSheet(
+    context,
+    customerProfileId: current.id,
+  );
 
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xff00B86B),
-                Color(0xff00A862),
-              ],
-            ),
+  /// USER CLOSED SHEET
+  if (result == null) return;
 
-            borderRadius:
-                BorderRadius.circular(14.r),
+  /// ================= API INTEGRATION =================
 
-            boxShadow: [
-              BoxShadow(
-                color:
-                    Colors.green.withOpacity(.18),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
+  final success =
+      await controller.renewSubscription(
+    planId: result['planId'],
 
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                CrossAxisAlignment.center,
+    startDate: result['start'],
 
-            children: [
+    endDate: result['end'],
 
-              Text(
-                "Renew",
+    deliveryPartnerId:
+        result['partnerId'],
 
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13.sp,
-                  height: 1,
-                ),
-              ),
+    discount:
+        result['discount'],
 
-              SizedBox(width: 7.w),
+    customerProfileId:
+        current.id,
+  );
 
-              Icon(
-                Icons.arrow_forward,
-                color: Colors.white,
-                size: 16.sp,
-              ),
-            ],
-          ),
-        ),
+  /// REFRESH DETAILS
+  if (success) {
+    await controller.fetchCustomerDetails(
+      current.id,
+    );
+  }
+},
+
+    child: Container(
+      margin: EdgeInsets.only(top: 2.h),
+
+      padding: EdgeInsets.symmetric(
+        horizontal: 18.w,
+        vertical: 12.h,
       ),
+
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xff00B86B),
+            Color(0xff00A862),
+          ],
+        ),
+
+        borderRadius:
+            BorderRadius.circular(14.r),
+
+        boxShadow: [
+          BoxShadow(
+            color:
+                Colors.green.withOpacity(.18),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+
+        children: [
+
+          Text(
+            "Renew",
+
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 13.sp,
+              height: 1,
+            ),
+          ),
+
+          SizedBox(width: 7.w),
+
+          Icon(
+            Icons.arrow_forward,
+            color: Colors.white,
+            size: 16.sp,
+          ),
+        ],
+      ),
+    ),
+  ),
+),
+
+/// ===================== LABEL =====================
+
     ],
   ),
 ),
@@ -921,6 +964,20 @@ Container(
       },
     );
   }
+
+Widget _renewLabel(
+  String text,
+) {
+  return Text(
+    text,
+
+    style: TextStyle(
+      fontSize: 15.sp,
+      fontWeight: FontWeight.w700,
+      color: Colors.black,
+    ),
+  );
+}
 
   /// HEADER BUTTON
   Widget _headerButton(

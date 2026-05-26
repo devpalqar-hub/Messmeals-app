@@ -5,8 +5,10 @@ import 'package:get/get.dart';
 import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
-import 'package:mess/Screens/PlanScreen/Views/AddPlanBottomSheet.dart';
+
+import 'package:mess/Screens/PlanScreen/Views/AddPlanScreen.dart';
 import 'package:mess/Screens/PlanScreen/Views/PlanCard.dart';
+import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
 import 'package:mess/main.dart';
 
@@ -38,24 +40,21 @@ class PlanScreen extends StatelessWidget {
                     children: [
                       const TittleText(text: "Plans"),
                       ElevatedButton.icon(
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => const AddPlanBottomSheet(),
-                          ).then((_) {
-                            controller.refreshPlans();
-                          });
-                        },
+                        onPressed: () async {
+  await Get.to(
+    () =>  AddPlanScreen(),
+  );
+
+  controller.refreshPlans();
+},
                         icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
                         label: Text(
-                          "Add",
+                          "Add Plan",
                           style:
-                              TextStyle(color: Colors.white, fontSize: 14.sp),
+                              TextStyle(color: Colors.white, fontSize: 14.sp,fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
+                          backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -192,7 +191,7 @@ class PlanScreen extends StatelessWidget {
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (_) => AddPlanBottomSheet(
+                builder: (_) => AddPlanScreen(
                   isEdit: true,
                   planId: plan.id,
                   planName: plan.planName,

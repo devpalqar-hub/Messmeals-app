@@ -72,22 +72,13 @@ class CustomerController extends GetxController {
           '$baseUrl/customer?page=$page&limit=$limit&messId=$messId '
           '${search != null && search.isNotEmpty ? '&search=$search' : ''}'
           '${planId != null && planId.isNotEmpty ? '&planId=$planId' : ''}';
-
-      /// ================= REQUEST LOG =================
-      debugPrint("========== FETCH CUSTOMERS REQUEST ==========");
-      debugPrint("URL: $url");
-      debugPrint("METHOD: GET");
-      debugPrint("PAGE: $page");
-      debugPrint("LIMIT: $limit");
-      debugPrint("MESS ID: $messId");
-      debugPrint("SEARCH: ${search ?? "none"}");
-      debugPrint("PLAN ID: ${planId ?? "none"}");
-      debugPrint("============================================");
+           debugPrint("--------url: $url");
 
       final startTime = DateTime.now();
 
       final response = await http.get(
         Uri.parse(url),
+        
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/main.dart';
 class PlanCard extends StatelessWidget {
   final String title;
@@ -70,7 +71,7 @@ class PlanCard extends StatelessWidget {
       errorBuilder: (_, __, ___) => Container(
         height: 70.w,
         width: 70.w,
-        color: Colors.grey.shade200,
+        color: AppColors.primary.withOpacity(0.1),
         child: Icon(Icons.image_not_supported, size: 22.sp),
       ),
     ),
@@ -144,14 +145,14 @@ class PlanCard extends StatelessWidget {
                           padding: EdgeInsets.symmetric(
                               horizontal: 8.w, vertical: 3.h),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: AppColors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6.r),
                           ),
                           child: Text(
                             "Min ₹${minPrice.toStringAsFixed(0)}",
                             style: GoogleFonts.inter(
                               fontSize: 12.sp,
-                              color: Colors.grey.shade600,
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
@@ -169,7 +170,7 @@ class PlanCard extends StatelessWidget {
                           padding: EdgeInsets.symmetric(
                               horizontal: 10.w, vertical: 5.h),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: AppColors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                           child: Text(
@@ -177,7 +178,7 @@ class PlanCard extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade700,
+                              color: AppColors.primary,
                             ),
                           ),
                         );

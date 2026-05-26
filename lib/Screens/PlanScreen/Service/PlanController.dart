@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
@@ -70,6 +71,7 @@ class PlanController extends GetxController {
         final meta = data['meta'] ?? {};
 
         plans = list.map((e) => PlanModel.fromJson(e)).toList();
+        print("Fetched data ${data} ");
         currentPage = meta['page'] ?? 1;
         totalPages = meta['totalPages'] ?? 1;
         errorMessage = '';
@@ -91,7 +93,8 @@ class PlanController extends GetxController {
     required String minPrice,
     required String description,
     required List<String> variationIds,
-
+    required bool isMonthlyPlan,
+    required bool isDailyPlan,
     File? imageFile,
     String? existingImage,
   }) async {
@@ -99,78 +102,168 @@ class PlanController extends GetxController {
       _setLoading(true);
 
       final bool isEdit = id != null;
-      final uri = Uri.parse(isEdit ? "$baseUrl/plans/$id" : "$baseUrl/plans");
 
-      final parsedPrice = double.tryParse(price) ?? 0;
-      final parsedMinPrice = double.tryParse(minPrice) ?? 0;
+      /// =========================================
+      /// STEP 1 : UPLOAD IMAGE
+      /// =========================================
 
-      if (imageFile == null) {
-        final body = {
-          "planName": planName,
-          "price": parsedPrice,
-          "minPrice": parsedMinPrice,
-          "description": description,
-          "variationIds": variationIds,
-          "planImages": existingImage != null ? [existingImage] : [],
-          "messId": authController.selectedMessId,
-        };
+      List<Map<String, dynamic>> images = [];
 
-        final response =
-            await (isEdit
-                ? http.patch(
-                  uri,
-                  headers: {
-                    "Authorization": bearerToken,
-                    "Content-Type": "application/json",
-                  },
-                  body: body,
-                )
-                : http.post(
-                  uri,
-                  headers: {
-                    "Authorization": bearerToken,
-                    "Content-Type": "application/json",
-                  },
-                  body: body,
-                ));
+      if (imageFile != null) {
+        final uploadUri = Uri.parse("$baseUrl/plans/images/upload");
 
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          await refreshPlans();
-          if (!isEdit) await dashboardController.fetchDashboardStats();
-          return true;
+        final uploadRequest = http.MultipartRequest("POST", uploadUri);
+
+        uploadRequest.headers.addAll({"Authorization": bearerToken});
+
+        /// DETECT MIME TYPE
+        String filePath = imageFile.path.toLowerCase();
+
+        MediaType mediaType = MediaType("image", "jpeg");
+
+        if (filePath.endsWith(".png")) {
+          mediaType = MediaType("image", "png");
+        } else if (filePath.endsWith(".webp")) {
+          mediaType = MediaType("image", "webp");
+        } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
+          mediaType = MediaType("image", "jpeg");
         }
 
-        return false;
+        uploadRequest.files.add(
+          await http.MultipartFile.fromPath(
+            "files",
+            imageFile.path,
+
+            contentType: mediaType,
+          ),
+        );
+
+        debugPrint("=========== IMAGE UPLOAD REQUEST ===========");
+
+        debugPrint("URL : $uploadUri");
+
+        debugPrint("FILE : ${imageFile.path}");
+
+        final uploadResponse = await uploadRequest.send();
+
+        final uploadBody = await uploadResponse.stream.bytesToString();
+
+        debugPrint("=========== IMAGE UPLOAD RESPONSE ===========");
+
+        debugPrint("STATUS : ${uploadResponse.statusCode}");
+
+        debugPrint("BODY : $uploadBody");
+
+        if (uploadResponse.statusCode == 200 ||
+            uploadResponse.statusCode == 201) {
+          final decoded = jsonDecode(uploadBody);
+
+          final List urls = decoded["urls"] ?? [];
+
+          images = urls.map((e) => {"url": e}).toList();
+        } else {
+          Fluttertoast.showToast(msg: "Image upload failed");
+
+          return false;
+        }
       }
 
-      final request = http.MultipartRequest(isEdit ? 'PATCH' : 'POST', uri);
+      /// =========================================
+      /// EXISTING IMAGE FOR EDIT
+      /// =========================================
 
-      request.headers["Authorization"] = bearerToken;
+      if (imageFile == null && existingImage != null) {
+        images = [
+          {"url": existingImage},
+        ];
+      }
 
-      request.fields.addAll({
-        'planName': planName,
-        'price': parsedPrice.toString(),
-        'minPrice': parsedMinPrice.toString(),
-        'description': description,
-        'variationIds': jsonEncode(variationIds),
-        'messId': authController.selectedMessId,
-      });
+      /// =========================================
+      /// STEP 2 : SAVE PLAN
+      /// =========================================
 
-      request.files.add(
-        await http.MultipartFile.fromPath('planImages', imageFile.path),
-      );
+      final uri = Uri.parse(isEdit ? "$baseUrl/plans/$id" : "$baseUrl/plans");
 
-      final res = await request.send();
-      final responseBody = await res.stream.bytesToString();
+      final body = {
+        "planName": planName,
 
-      if (res.statusCode == 200 || res.statusCode == 201) {
+        "price": double.tryParse(price) ?? 0,
+
+        "minPrice": double.tryParse(minPrice) ?? 0,
+
+        "description": description,
+
+        "messId": authController.selectedMessId,
+
+        "variationIds": variationIds,
+
+        "isMonthlyPlan": isMonthlyPlan,
+
+        "isDailyPlan": isDailyPlan,
+
+        "images": images,
+      };
+      if(isEdit && existingImage != null && images.isNotEmpty) {
+        body.remove("images");
+        body["planImages"] = images.map((e) => e["url"]).toList();  
+      }
+
+      debugPrint("=========== PLAN REQUEST =========== $isEdit");
+
+      debugPrint("URL : $uri");
+
+      debugPrint(jsonEncode(body));
+
+      final response =
+          await (isEdit
+              ? http.patch(
+                uri,
+                headers: {
+                  "Authorization": bearerToken,
+                  "Content-Type": "application/json",
+                },
+                body: jsonEncode(body),
+              )
+              : http.post(
+                uri,
+                headers: {
+                  "Authorization": bearerToken,
+                  "Content-Type": "application/json",
+                },
+                body: jsonEncode(body),
+              ));
+
+      debugPrint("=========== PLAN RESPONSE ===========");
+
+      debugPrint("STATUS : ${response.statusCode}");
+
+      debugPrint("BODY : ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         await refreshPlans();
-        if (!isEdit) await dashboardController.fetchDashboardStats();
+
+        if (!isEdit) {
+          await dashboardController.fetchDashboardStats();
+        }
+
+        Fluttertoast.showToast(
+          msg:
+              isEdit
+                  ? "Plan updated successfully"
+                  : "Plan created successfully",
+        );
+
         return true;
       }
 
+      Fluttertoast.showToast(msg: "Failed to save plan");
+
       return false;
     } catch (e) {
+      debugPrint("SAVE PLAN ERROR : $e");
+
+      Fluttertoast.showToast(msg: "Something went wrong");
+
       return false;
     } finally {
       _setLoading(false);
