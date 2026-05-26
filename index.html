@@ -1,586 +1,724 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ollama Chat</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ollama Chat</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0f1117;
-    color: #e0e0e0;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-  /* SETUP SCREEN */
-  #setup {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    gap: 24px;
-    padding: 24px;
-  }
+    /* SETUP SCREEN */
+    #setup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      gap: 24px;
+      padding: 24px;
+    }
 
-  .logo {
-    font-size: 48px;
-    margin-bottom: 8px;
-  }
+    .logo {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
 
-  #setup h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #fff;
-  }
+    #setup h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+    }
 
-  #setup p {
-    color: #888;
-    font-size: 14px;
-    text-align: center;
-    max-width: 360px;
-  }
+    #setup p {
+      color: #888;
+      font-size: 14px;
+      text-align: center;
+      max-width: 360px;
+    }
 
-  .setup-card {
-    background: #1a1d27;
-    border: 1px solid #2a2d3a;
-    border-radius: 16px;
-    padding: 32px;
-    width: 100%;
-    max-width: 420px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+    .setup-card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
 
-  .field label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-  }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
 
-  .field input, .field select {
-    width: 100%;
-    background: #0f1117;
-    border: 1px solid #2a2d3a;
-    border-radius: 10px;
-    padding: 12px 14px;
-    color: #e0e0e0;
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
+    .field input,
+    .field select {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2a2d3a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #e0e0e0;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
 
-  .field input:focus, .field select:focus {
-    border-color: #6366f1;
-  }
+    .field input:focus,
+    .field select:focus {
+      border-color: #6366f1;
+    }
 
-  .field select option { background: #1a1d27; }
+    .field select option {
+      background: #1a1d27;
+    }
 
-  #connect-btn {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 13px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-    margin-top: 4px;
-  }
+    #connect-btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
 
-  #connect-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-  #connect-btn:active { transform: translateY(0); }
+    #connect-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
 
-  #conn-error {
-    color: #f87171;
-    font-size: 13px;
-    text-align: center;
-    display: none;
-  }
+    #connect-btn:active {
+      transform: translateY(0);
+    }
 
-  /* CHAT SCREEN */
-  #chat { display: none; flex-direction: column; height: 100vh; }
+    #conn-error {
+      color: #f87171;
+      font-size: 13px;
+      text-align: center;
+      display: none;
+    }
 
-  /* Header */
-  .chat-header {
-    background: #1a1d27;
-    border-bottom: 1px solid #2a2d3a;
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
+    /* CHAT SCREEN */
+    #chat {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-  .header-left { display: flex; align-items: center; gap: 10px; }
+    /* Header */
+    .chat-header {
+      background: #1a1d27;
+      border-bottom: 1px solid #2a2d3a;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
 
-  .status-dot {
-    width: 8px; height: 8px;
-    background: #22c55e;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
 
-  .header-info h2 { font-size: 15px; font-weight: 600; color: #fff; }
-  .header-info span { font-size: 12px; color: #888; }
+    @keyframes pulse {
 
-  #disconnect-btn {
-    background: transparent;
-    border: 1px solid #3a3d4a;
-    border-radius: 8px;
-    color: #888;
-    padding: 6px 12px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  #disconnect-btn:hover { border-color: #f87171; color: #f87171; }
+      0%,
+      100% {
+        opacity: 1;
+      }
 
-  /* Messages */
-  #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    scroll-behavior: smooth;
-  }
+      50% {
+        opacity: 0.4;
+      }
+    }
 
-  #messages::-webkit-scrollbar { width: 6px; }
-  #messages::-webkit-scrollbar-track { background: transparent; }
-  #messages::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
+    .header-info h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+    }
 
-  .msg { display: flex; gap: 12px; max-width: 800px; align-self: flex-start; width: 100%; }
-  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+    .header-info span {
+      font-size: 12px;
+      color: #888;
+    }
 
-  .avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
+    #disconnect-btn {
+      background: transparent;
+      border: 1px solid #3a3d4a;
+      border-radius: 8px;
+      color: #888;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-  .msg.assistant .avatar { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-  .msg.user .avatar { background: #2a2d3a; }
+    #disconnect-btn:hover {
+      border-color: #f87171;
+      color: #f87171;
+    }
 
-  .bubble {
-    background: #1a1d27;
-    border: 1px solid #2a2d3a;
-    border-radius: 16px;
-    padding: 12px 16px;
-    font-size: 14px;
-    line-height: 1.65;
-    max-width: calc(100% - 50px);
-    word-break: break-word;
-  }
+    /* Messages */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      scroll-behavior: smooth;
+    }
 
-  .msg.user .bubble {
-    background: #1e1b4b;
-    border-color: #3730a3;
-  }
+    #messages::-webkit-scrollbar {
+      width: 6px;
+    }
 
-  /* Code blocks inside bubbles */
-  .bubble pre {
-    background: #0f1117;
-    border: 1px solid #2a2d3a;
-    border-radius: 8px;
-    padding: 12px;
-    overflow-x: auto;
-    margin: 10px 0;
-    font-size: 13px;
-  }
+    #messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-  .bubble code {
-    font-family: 'Fira Code', 'Courier New', monospace;
-    font-size: 13px;
-  }
+    #messages::-webkit-scrollbar-thumb {
+      background: #2a2d3a;
+      border-radius: 3px;
+    }
 
-  .bubble p { margin-bottom: 8px; }
-  .bubble p:last-child { margin-bottom: 0; }
+    .msg {
+      display: flex;
+      gap: 12px;
+      max-width: 800px;
+      align-self: flex-start;
+      width: 100%;
+    }
 
-  /* Typing indicator */
-  .typing-indicator {
-    display: flex; gap: 5px; padding: 4px 0;
-  }
-  .typing-indicator span {
-    width: 7px; height: 7px;
-    background: #6366f1;
-    border-radius: 50%;
-    animation: bounce 1.2s infinite;
-  }
-  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    .msg.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
 
-  @keyframes bounce {
-    0%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-6px); }
-  }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
 
-  /* Welcome message */
-  .welcome {
-    text-align: center;
-    color: #555;
-    font-size: 14px;
-    margin: auto;
-    padding: 40px;
-  }
-  .welcome .big { font-size: 40px; margin-bottom: 12px; }
-  .welcome h3 { color: #888; font-size: 18px; margin-bottom: 8px; }
+    .msg.assistant .avatar {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    }
 
-  /* Input */
-  .chat-input-area {
-    background: #1a1d27;
-    border-top: 1px solid #2a2d3a;
-    padding: 16px;
-    flex-shrink: 0;
-  }
+    .msg.user .avatar {
+      background: #2a2d3a;
+    }
 
-  .input-row {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    max-width: 800px;
-    margin: 0 auto;
-  }
+    .bubble {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.65;
+      max-width: calc(100% - 50px);
+      word-break: break-word;
+    }
 
-  #user-input {
-    flex: 1;
-    background: #0f1117;
-    border: 1px solid #2a2d3a;
-    border-radius: 12px;
-    padding: 12px 16px;
-    color: #e0e0e0;
-    font-size: 14px;
-    resize: none;
-    outline: none;
-    max-height: 140px;
-    line-height: 1.5;
-    transition: border-color 0.2s;
-    font-family: inherit;
-  }
+    .msg.user .bubble {
+      background: #1e1b4b;
+      border-color: #3730a3;
+    }
 
-  #user-input:focus { border-color: #6366f1; }
-  #user-input::placeholder { color: #555; }
+    /* Code blocks inside bubbles */
+    .bubble pre {
+      background: #0f1117;
+      border: 1px solid #2a2d3a;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 10px 0;
+      font-size: 13px;
+    }
 
-  #send-btn {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border: none;
-    border-radius: 12px;
-    width: 44px; height: 44px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: opacity 0.2s, transform 0.1s;
-  }
+    .bubble code {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+    }
 
-  #send-btn:hover { opacity: 0.9; transform: scale(1.05); }
-  #send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .bubble p {
+      margin-bottom: 8px;
+    }
 
-  #send-btn svg { width: 18px; height: 18px; fill: #fff; }
+    .bubble p:last-child {
+      margin-bottom: 0;
+    }
 
-  .hint { text-align: center; font-size: 11px; color: #444; margin-top: 8px; }
-</style>
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 5px;
+      padding: 4px 0;
+    }
+
+    .typing-indicator span {
+      width: 7px;
+      height: 7px;
+      background: #6366f1;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      80%,
+      100% {
+        transform: translateY(0);
+      }
+
+      40% {
+        transform: translateY(-6px);
+      }
+    }
+
+    /* Welcome message */
+    .welcome {
+      text-align: center;
+      color: #555;
+      font-size: 14px;
+      margin: auto;
+      padding: 40px;
+    }
+
+    .welcome .big {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .welcome h3 {
+      color: #888;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    /* Input */
+    .chat-input-area {
+      background: #1a1d27;
+      border-top: 1px solid #2a2d3a;
+      padding: 16px;
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    #user-input {
+      flex: 1;
+      background: #0f1117;
+      border: 1px solid #2a2d3a;
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #e0e0e0;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      max-height: 140px;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    #user-input:focus {
+      border-color: #6366f1;
+    }
+
+    #user-input::placeholder {
+      color: #555;
+    }
+
+    #send-btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    #send-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+
+    #send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #send-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+    }
+
+    .hint {
+      text-align: center;
+      font-size: 11px;
+      color: #444;
+      margin-top: 8px;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- SETUP SCREEN -->
-<div id="setup">
-  <div class="logo">🦙</div>
-  <h1>Ollama Chat</h1>
-  <p>Connect to your Ollama server and start chatting with your local model.</p>
+  <!-- SETUP SCREEN -->
+  <div id="setup">
+    <div class="logo">🦙</div>
+    <h1>Ollama Chat</h1>
+    <p>Connect to your Ollama server and start chatting with your local model.</p>
 
-  <div class="setup-card">
-    <div class="field">
-      <label>Server IP / URL</label>
-      <input id="server-ip" type="text" placeholder="http://ai.palqar.cloud" value="http://ai.palqar.cloud" />
-      <small style="color:#666;font-size:11px;margin-top:-8px;">⚠️ Must be http:// not https:// unless you have SSL installed</small>
+    <div class="setup-card">
+      <div class="field">
+        <label>Server IP / URL</label>
+        <input id="server-ip" type="text" placeholder="http://ai.palqar.cloud" value="http://ai.palqar.cloud" />
+        <small style="color:#666;font-size:11px;margin-top:-8px;">⚠️ Must be http:// not https:// unless you have SSL
+          installed</small>
+      </div>
+      <div class="field">
+        <label>Model</label>
+        <input id="model-input" type="text" placeholder="e.g. gemma4:e2b" value="gemma4:e2b" />
+      </div>
+      <div class="field">
+        <label>System Prompt (optional)</label>
+        <input id="system-prompt" type="text" placeholder="You are a helpful assistant." />
+      </div>
+      <button id="test-btn" onclick="testConnection()"
+        style="background:transparent;border:1px solid #3a3d4a;color:#aaa;border-radius:10px;padding:10px;font-size:14px;cursor:pointer;transition:all 0.2s;"
+        onmouseover="this.style.borderColor='#6366f1';this.style.color='#6366f1'"
+        onmouseout="this.style.borderColor='#3a3d4a';this.style.color='#aaa'">🔍 Test Connection First</button>
+      <button id="connect-btn" onclick="connect()">Connect & Start Chat</button>
+      <div id="test-result"
+        style="display:none;background:#0f1117;border-radius:10px;padding:14px;font-size:13px;font-family:monospace;line-height:1.8;border:1px solid #2a2d3a;white-space:pre-wrap;">
+      </div>
+      <div id="conn-error"></div>
     </div>
-    <div class="field">
-      <label>Model</label>
-      <input id="model-input" type="text" placeholder="e.g. gemma4:e2b" value="gemma4:e2b" />
-    </div>
-    <div class="field">
-      <label>System Prompt (optional)</label>
-      <input id="system-prompt" type="text" placeholder="You are a helpful assistant." />
-    </div>
-    <button id="test-btn" onclick="testConnection()" style="background:transparent;border:1px solid #3a3d4a;color:#aaa;border-radius:10px;padding:10px;font-size:14px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#6366f1';this.style.color='#6366f1'" onmouseout="this.style.borderColor='#3a3d4a';this.style.color='#aaa'">🔍 Test Connection First</button>
-    <button id="connect-btn" onclick="connect()">Connect & Start Chat</button>
-    <div id="test-result" style="display:none;background:#0f1117;border-radius:10px;padding:14px;font-size:13px;font-family:monospace;line-height:1.8;border:1px solid #2a2d3a;white-space:pre-wrap;"></div>
-    <div id="conn-error"></div>
   </div>
-</div>
 
-<!-- CHAT SCREEN -->
-<div id="chat">
-  <div class="chat-header">
-    <div class="header-left">
-      <div class="status-dot"></div>
-      <div class="header-info">
-        <h2 id="header-model">gemma4:e2b</h2>
-        <span id="header-server">Connected</span>
+  <!-- CHAT SCREEN -->
+  <div id="chat">
+    <div class="chat-header">
+      <div class="header-left">
+        <div class="status-dot"></div>
+        <div class="header-info">
+          <h2 id="header-model">gemma4:e2b</h2>
+          <span id="header-server">Connected</span>
+        </div>
+      </div>
+      <button id="disconnect-btn" onclick="disconnect()">Disconnect</button>
+    </div>
+
+    <div id="messages">
+      <div class="welcome">
+        <div class="big">💬</div>
+        <h3>Ready to chat!</h3>
+        <p>Ask anything — your model is running locally.</p>
       </div>
     </div>
-    <button id="disconnect-btn" onclick="disconnect()">Disconnect</button>
-  </div>
 
-  <div id="messages">
-    <div class="welcome">
-      <div class="big">💬</div>
-      <h3>Ready to chat!</h3>
-      <p>Ask anything — your model is running locally.</p>
+    <div class="chat-input-area">
+      <div class="input-row">
+        <textarea id="user-input" rows="1"
+          placeholder="Type a message... (Enter to send, Shift+Enter for newline)"></textarea>
+        <button id="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24">
+            <path d="M2 21L23 12 2 3v7l15 2-15 2z" />
+          </svg>
+        </button>
+      </div>
+      <div class="hint">Shift+Enter for new line · Running locally · No data leaves your server</div>
     </div>
   </div>
 
-  <div class="chat-input-area">
-    <div class="input-row">
-      <textarea id="user-input" rows="1" placeholder="Type a message... (Enter to send, Shift+Enter for newline)"></textarea>
-      <button id="send-btn" onclick="sendMessage()">
-        <svg viewBox="0 0 24 24"><path d="M2 21L23 12 2 3v7l15 2-15 2z"/></svg>
-      </button>
-    </div>
-    <div class="hint">Shift+Enter for new line · Running locally · No data leaves your server</div>
-  </div>
-</div>
+  <script>
+    let serverUrl = '';
+    let model = '';
+    let systemPrompt = '';
+    let history = [];
+    let isStreaming = false;
 
-<script>
-  let serverUrl = '';
-  let model = '';
-  let systemPrompt = '';
-  let history = [];
-  let isStreaming = false;
+    const setupEl = document.getElementById('setup');
+    const chatEl = document.getElementById('chat');
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const connError = document.getElementById('conn-error');
 
-  const setupEl = document.getElementById('setup');
-  const chatEl = document.getElementById('chat');
-  const messagesEl = document.getElementById('messages');
-  const inputEl = document.getElementById('user-input');
-  const sendBtn = document.getElementById('send-btn');
-  const connError = document.getElementById('conn-error');
+    // Auto-resize textarea
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+    });
 
-  // Auto-resize textarea
-  inputEl.addEventListener('input', () => {
-    inputEl.style.height = 'auto';
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
-  });
+    // Enter to send
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!isStreaming) sendMessage();
+      }
+    });
 
-  // Enter to send
-  inputEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (!isStreaming) sendMessage();
-    }
-  });
+    async function connect() {
+      const ip = document.getElementById('server-ip').value.trim();
+      model = document.getElementById('model-input').value.trim();
+      systemPrompt = document.getElementById('system-prompt').value.trim();
 
-  async function connect() {
-    const ip = document.getElementById('server-ip').value.trim();
-    model = document.getElementById('model-input').value.trim();
-    systemPrompt = document.getElementById('system-prompt').value.trim();
-
-    if (!ip || !model) {
-      showError('Please fill in the server URL and model name.');
-      return;
-    }
-
-    serverUrl = ip.replace(/\/$/, '');
-    const btn = document.getElementById('connect-btn');
-    btn.textContent = 'Connecting...';
-    btn.disabled = true;
-    connError.style.display = 'none';
-
-    try {
-      const res = await fetch(`${serverUrl}/api/tags`, {
-        signal: AbortSignal.timeout(8000),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) throw new Error('Server responded with ' + res.status);
-      const data = await res.json();
-      const models = (data.models || []).map(m => m.name);
-
-      // Check if chosen model exists
-      const found = models.some(m => m === model || m.startsWith(model));
-      if (!found && models.length > 0) {
-        showError(`Model "${model}" not found on server. Available: ${models.slice(0,3).join(', ')}`);
-        btn.textContent = 'Connect & Start Chat';
-        btn.disabled = false;
+      if (!ip || !model) {
+        showError('Please fill in the server URL and model name.');
         return;
       }
 
-      // Connected!
-      document.getElementById('header-model').textContent = model;
-      document.getElementById('header-server').textContent = serverUrl;
-      history = [];
-      setupEl.style.display = 'none';
-      chatEl.style.display = 'flex';
-      inputEl.focus();
+      serverUrl = ip.replace(/\/$/, '');
+      const btn = document.getElementById('connect-btn');
+      btn.textContent = 'Connecting...';
+      btn.disabled = true;
+      connError.style.display = 'none';
 
-    } catch (err) {
-      let msg = err.message;
-      if (msg.includes('Load failed') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-        msg = `CORS or network error. Fix required on your server:\n1. Add OLLAMA_ORIGINS=* to Ollama service\n2. Add CORS headers to Nginx config\nSee instructions above.`;
-      } else if (msg.includes('timeout')) {
-        msg = 'Connection timed out. Is the server running and port 80 open?';
+      try {
+        const res = await fetch(`${serverUrl}/api/tags`, {
+          signal: AbortSignal.timeout(8000),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) throw new Error('Server responded with ' + res.status);
+        const data = await res.json();
+        const models = (data.models || []).map(m => m.name);
+
+        // Check if chosen model exists
+        const found = models.some(m => m === model || m.startsWith(model));
+        if (!found && models.length > 0) {
+          showError(`Model "${model}" not found on server. Available: ${models.slice(0, 3).join(', ')}`);
+          btn.textContent = 'Connect & Start Chat';
+          btn.disabled = false;
+          return;
+        }
+
+        // Connected!
+        document.getElementById('header-model').textContent = model;
+        document.getElementById('header-server').textContent = serverUrl;
+        history = [];
+        setupEl.style.display = 'none';
+        chatEl.style.display = 'flex';
+        inputEl.focus();
+
+      } catch (err) {
+        let msg = err.message;
+        if (msg.includes('Load failed') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+          msg = `CORS or network error. Fix required on your server:\n1. Add OLLAMA_ORIGINS=* to Ollama service\n2. Add CORS headers to Nginx config\nSee instructions above.`;
+        } else if (msg.includes('timeout')) {
+          msg = 'Connection timed out. Is the server running and port 80 open?';
+        }
+        showError(msg);
+        btn.textContent = 'Connect & Start Chat';
+        btn.disabled = false;
       }
-      showError(msg);
-      btn.textContent = 'Connect & Start Chat';
-      btn.disabled = false;
     }
-  }
 
-  function disconnect() {
-    serverUrl = '';
-    history = [];
-    isStreaming = false;
-    chatEl.style.display = 'none';
-    setupEl.style.display = 'flex';
-    document.getElementById('connect-btn').textContent = 'Connect & Start Chat';
-    document.getElementById('connect-btn').disabled = false;
-    messagesEl.innerHTML = `
+    function disconnect() {
+      serverUrl = '';
+      history = [];
+      isStreaming = false;
+      chatEl.style.display = 'none';
+      setupEl.style.display = 'flex';
+      document.getElementById('connect-btn').textContent = 'Connect & Start Chat';
+      document.getElementById('connect-btn').disabled = false;
+      messagesEl.innerHTML = `
       <div class="welcome">
         <div class="big">💬</div>
         <h3>Ready to chat!</h3>
         <p>Ask anything — your model is running locally.</p>
       </div>`;
-  }
-
-  function showError(msg) {
-    connError.textContent = msg;
-    connError.style.display = 'block';
-  }
-
-  function appendMsg(role, content) {
-    // Remove welcome if present
-    const welcome = messagesEl.querySelector('.welcome');
-    if (welcome) welcome.remove();
-
-    const div = document.createElement('div');
-    div.className = `msg ${role}`;
-    div.innerHTML = `
-      <div class="avatar">${role === 'user' ? '👤' : '🤖'}</div>
-      <div class="bubble">${formatContent(content)}</div>`;
-    messagesEl.appendChild(div);
-    scrollToBottom();
-    return div.querySelector('.bubble');
-  }
-
-  function formatContent(text) {
-    // Code blocks
-    text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) =>
-      `<pre><code>${escHtml(code.trim())}</code></pre>`);
-    // Inline code
-    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // Bold
-    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Line breaks
-    text = text.replace(/\n/g, '<br>');
-    return text;
-  }
-
-  function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  function scrollToBottom() {
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
-
-  async function sendMessage() {
-    const text = inputEl.value.trim();
-    if (!text || isStreaming) return;
-
-    inputEl.value = '';
-    inputEl.style.height = 'auto';
-    isStreaming = true;
-    sendBtn.disabled = true;
-
-    // Add to history
-    history.push({ role: 'user', content: text });
-    appendMsg('user', text);
-
-    // Typing indicator
-    const welcome = messagesEl.querySelector('.welcome');
-    if (welcome) welcome.remove();
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'msg assistant';
-    typingDiv.innerHTML = `
-      <div class="avatar">🤖</div>
-      <div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
-    messagesEl.appendChild(typingDiv);
-    scrollToBottom();
-
-    // Build messages array
-    const msgs = systemPrompt
-      ? [{ role: 'system', content: systemPrompt }, ...history]
-      : [...history];
-
-    let fullResponse = '';
-
-    try {
-      const res = await fetch(`${serverUrl}/v1/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages: msgs, stream: true })
-      });
-
-      if (!res.ok) throw new Error('API error: ' + res.status);
-
-      // Replace typing indicator with real bubble
-      typingDiv.remove();
-      const bubble = appendMsg('assistant', '');
-      bubble.textContent = '';
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
-
-        for (const line of lines) {
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') continue;
-          try {
-            const json = JSON.parse(data);
-            const delta = json.choices?.[0]?.delta?.content || '';
-            if (delta) {
-              fullResponse += delta;
-              bubble.innerHTML = formatContent(fullResponse);
-              scrollToBottom();
-            }
-          } catch {}
-        }
-      }
-
-      history.push({ role: 'assistant', content: fullResponse });
-
-    } catch (err) {
-      typingDiv.remove();
-      appendMsg('assistant', `⚠️ Error: ${err.message}`);
     }
 
-    isStreaming = false;
-    sendBtn.disabled = false;
-    inputEl.focus();
-  }
-</script>
+    function showError(msg) {
+      connError.textContent = msg;
+      connError.style.display = 'block';
+    }
+
+    function appendMsg(role, content) {
+      // Remove welcome if present
+      const welcome = messagesEl.querySelector('.welcome');
+      if (welcome) welcome.remove();
+
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.innerHTML = `
+      <div class="avatar">${role === 'user' ? '👤' : '🤖'}</div>
+      <div class="bubble">${formatContent(content)}</div>`;
+      messagesEl.appendChild(div);
+      scrollToBottom();
+      return div.querySelector('.bubble');
+    }
+
+    function formatContent(text) {
+      // Code blocks
+      text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) =>
+        `<pre><code>${escHtml(code.trim())}</code></pre>`);
+      // Inline code
+      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // Bold
+      text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Line breaks
+      text = text.replace(/\n/g, '<br>');
+      return text;
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function scrollToBottom() {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text || isStreaming) return;
+
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      isStreaming = true;
+      sendBtn.disabled = true;
+
+      // Add to history
+      history.push({ role: 'user', content: text });
+      appendMsg('user', text);
+
+      // Typing indicator
+      const welcome = messagesEl.querySelector('.welcome');
+      if (welcome) welcome.remove();
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'msg assistant';
+      typingDiv.innerHTML = `
+      <div class="avatar">🤖</div>
+      <div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+      messagesEl.appendChild(typingDiv);
+      scrollToBottom();
+
+      // Build messages array
+      const msgs = systemPrompt
+        ? [{ role: 'system', content: systemPrompt }, ...history]
+        : [...history];
+
+      let fullResponse = '';
+
+      try {
+        const res = await fetch(`${serverUrl}/v1/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, messages: msgs, stream: true })
+        });
+
+        if (!res.ok) throw new Error('API error: ' + res.status);
+
+        // Replace typing indicator with real bubble
+        typingDiv.remove();
+        const bubble = appendMsg('assistant', '');
+        bubble.textContent = '';
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+          for (const line of lines) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') continue;
+            try {
+              const json = JSON.parse(data);
+              const delta = json.choices?.[0]?.delta?.content || '';
+              if (delta) {
+                fullResponse += delta;
+                bubble.innerHTML = formatContent(fullResponse);
+                scrollToBottom();
+              }
+            } catch { }
+          }
+        }
+
+        history.push({ role: 'assistant', content: fullResponse });
+
+      } catch (err) {
+        typingDiv.remove();
+        appendMsg('assistant', `⚠️ Error: ${err.message}`);
+      }
+
+      isStreaming = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  </script>
 </body>
+
 </html>

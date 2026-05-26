@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/utils.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mess/Screens/SubscriptionScreen/Controller/SubscriptionControllrer.dart';
 import 'package:mess/Screens/SubscriptionScreen/Views/SubscrptionCards.dart';
 
 class SubscriptionScreen extends StatelessWidget {
-  const SubscriptionScreen({super.key});
+  SubscriptionScreen({super.key});
 
   // Theme Colors based on the design
   final Color primaryTeal = const Color(0xFF0F766E);
   final Color textDark = const Color(0xFF1E293B);
   final Color textLight = const Color(0xFF64748B);
   final Color cardBg = Colors.white;
+
+  SubscriptionControllrer ctrl = Get.put(SubscriptionControllrer());
 
   @override
   Widget build(BuildContext context) {
@@ -418,24 +423,19 @@ class SubscriptionScreen extends StatelessWidget {
             ),
           ),
           // Table Rows
-          _buildPricingRow('1 - 50 Customers', '₹ 25', '₹ 1,250'),
-          _buildPricingRow(
-            '51 - 100 Customers',
-            '₹ 22',
-            '₹ 484',
-            isCurrent: true,
-          ),
-          _buildPricingRow('101 - 250 Customers', '₹ 20', '-'),
-          _buildPricingRow('251 - 500 Customers', '₹ 18', '-'),
-          _buildPricingRow('501+ Customers', '₹ 15', '-', isLast: true),
+          _buildPricingRow('1 - 50', '₹ 25', '₹ 1,250'),
+          _buildPricingRow('51 - 100', '₹ 22', '₹ 484', isCurrent: true),
+          _buildPricingRow('101 - 250 ', '₹ 20', '-'),
+          _buildPricingRow('251 - 500', '₹ 18', '-'),
+          _buildPricingRow('501+ ', '₹ 15', '-', isLast: true),
 
-          Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Text(
-              '* Amount calculated for last month usage (72 customers)',
-              style: GoogleFonts.poppins(fontSize: 10.sp, color: textLight),
-            ),
-          ),
+          // Padding(
+          //   padding: EdgeInsets.all(16.w),
+          //   child: Text(
+          //     '* Amount calculated for last month usage (72 customers)',
+          //     style: GoogleFonts.poppins(fontSize: 10.sp, color: textLight),
+          //   ),
+          // ),
         ],
       ),
     );

@@ -13,13 +13,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final authController = Get.put(AuthController());
-  await authController.checkLoginStatus();
+  // await authController.checkLoginStatus();
 
   runApp(
-    DevicePreview(
-      enabled: false,
-      builder: (context) => const MessMeals(),
-    ),
+    DevicePreview(enabled: false, builder: (context) => const MessMeals()),
   );
 }
 
@@ -33,9 +30,11 @@ class MessMeals extends StatelessWidget {
       builder: (context, child) {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
-          initialBinding: AppBindings(), 
+          initialBinding: AppBindings(),
           initialRoute:
-              Get.find<AuthController>().isLoggedIn ? AppRoutes.dashboard : AppRoutes.login,
+              Get.find<AuthController>().isLoggedIn
+                  ? AppRoutes.dashboard
+                  : AppRoutes.login,
           getPages: AppRoutes.routes,
         );
       },

@@ -1,9 +1,17 @@
-import 'package:country_pickers/country.dart';
-import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:mess/Screens/Customer/PlanWallet.dart';
+
+import 'package:mess/Screens/Customer/Views/Basicinfowiget.dart';
+import 'package:mess/Screens/Customer/Views/PlanWalletwidget.dart';
+import 'package:mess/Screens/Customer/Views/Reviewwidget.dart';
+import 'package:mess/Screens/Customer/Views/ScheduleDelivery.dart';
+import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
+import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
+import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
+import 'package:mess/Screens/Utils/AppBar.dart';
+import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/step.dart';
 
 class AddCustomerScreen extends StatefulWidget {
   const AddCustomerScreen({super.key});
@@ -13,339 +21,250 @@ class AddCustomerScreen extends StatefulWidget {
 }
 
 class _AddCustomerScreenState extends State<AddCustomerScreen> {
+  final CustomerController customerController = Get.put(CustomerController());
+
+  final PlanController planController = Get.put(PlanController());
+
+  final PartnerController partnerController = Get.put(PartnerController());
+
+  /// STEP
+  int currentStep = 1;
+
+  /// BASIC INFO
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
 
-  Country selectedCountry =
-      CountryPickerUtils.getCountryByIsoCode("IN");
+  /// PLAN & WALLET
+  String? selectedPlanId;
+  String? selectedDeliveryPartnerId;
 
-  int currentStep = 1;
+  DateTime? startDate;
+  DateTime? endDate;
 
-  final Color primary = const Color(0xff0B8A7B);
+  final TextEditingController walletController = TextEditingController(
+    text: "0",
+  );
+
+  final TextEditingController discountController = TextEditingController(
+    text: "0",
+  );
+
+  /// SCHEDULE
+  String? deliveryType;
+  String? preferredTime;
+
+  List<String> selectedDays = [];
+
+  /// SAFE PLAN NAME (UI ONLY)
+  String get selectedPlanName {
+    try {
+      return planController.plans
+          .firstWhere((e) => e.id == selectedPlanId)
+          .planName;
+    } catch (_) {
+      return "";
+    }
+  }
+
+  String get selectedPartnerName {
+    try {
+      final partner = partnerController.partners.firstWhere(
+        (e) => e.deliveryPartnerProfile?.id == selectedDeliveryPartnerId,
+      );
+
+      return partner.name;
+    } catch (_) {
+      return "-";
+    }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
+    addressController.dispose();
+    locationController.dispose();
+    walletController.dispose();
+    discountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> submitCustomer() async {
+    bool success = await customerController.addCustomer(
+      name: nameController.text.trim(),
+      phone: phoneController.text.trim(),
+      email: emailController.text.trim(),
+      address: addressController.text.trim(),
+      location: locationController.text.trim(),
+
+      planId: selectedPlanId ?? "",
+      deliveryPartnerId: selectedDeliveryPartnerId ?? "",
+
+      startDate: startDate?.toIso8601String() ?? "",
+      endDate: endDate?.toIso8601String() ?? "",
+
+      walletAmount: walletController.text.trim(),
+      discountAmount: discountController.text.trim(),
+
+      deliveryType: deliveryType ?? "",
+      preferredTime: preferredTime ?? "",
+      deliveryDays: selectedDays,
+    );
+
+    if (success) {
+      Get.back();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF7F8FA),
+      //backgroundColor: const Color(0xffF7F8FA),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w),
+
           child: Column(
             children: [
               SizedBox(height: 10.h),
 
-              /// TOP BAR
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: Icon(
-                      Icons.arrow_back,
-                      size: 24.sp,
-                      color: Colors.black,
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        "Add Customer",
-                        style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xff111827),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: 24.w),
-                ],
-              ),
+              const CustomAppBar(title: "Add Customer"),
 
               SizedBox(height: 28.h),
 
               /// STEP INDICATOR
               Row(
                 children: [
-                  buildStep(
+                  StepWidget(
                     number: "1",
                     title: "Basic Info",
-                    active: true,
+                    active: currentStep >= 1,
                   ),
-
-                  buildLine(),
-
-                  buildStep(
+                  StepLine(active: currentStep > 1),
+                  StepWidget(
                     number: "2",
                     title: "Plan & Wallet",
+                    active: currentStep >= 2,
                   ),
-
-                  buildLine(),
-
-                  buildStep(
+                  StepLine(active: currentStep > 2),
+                  StepWidget(
                     number: "3",
                     title: "Schedule",
+                    active: currentStep >= 3,
                   ),
-
-                  buildLine(),
-
-                  buildStep(
+                  StepLine(active: currentStep > 3),
+                  StepWidget(
                     number: "4",
                     title: "Review",
+                    active: currentStep >= 4,
                   ),
                 ],
               ),
 
-              SizedBox(height: 32.h),
+              SizedBox(height: 30.h),
 
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                child: IndexedStack(
+                  index: currentStep - 1,
+                  children: [
+                    BasicInfoWidget(
+                      nameController: nameController,
+                      phoneController: phoneController,
+                      emailController: emailController,
+                      addressController: addressController,
+                      locationController: locationController,
+                    ),
 
-                      /// BASIC INFO CARD
-                      Row(
-                        children: [
-                          Container(
-                            height: 52.h,
-                            width: 52.h,
-                            decoration: BoxDecoration(
-                              color: const Color(0xffE7F4F2),
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
-                            child: Icon(
-                              Icons.person_outline,
-                              color: primary,
-                              size: 24.sp,
-                            ),
-                          ),
+                    PlanWalletWidget(
+                      walletController: walletController,
+                      discountController: discountController,
+                      selectedPlanId: selectedPlanId,
+                      selectedDeliveryPartnerId: selectedDeliveryPartnerId,
+                      startDate: startDate,
+                      endDate: endDate,
 
-                          SizedBox(width: 14.w),
+                      onPlanChanged: (v) => setState(() => selectedPlanId = v),
+                      onPartnerChanged:
+                          (v) => setState(() => selectedDeliveryPartnerId = v),
+                      onStartDateChanged: (d) => setState(() => startDate = d),
+                      onEndDateChanged: (d) => setState(() => endDate = d),
+                    ),
 
-                          Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Basic Information",
-                                style: TextStyle(
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xff111827),
-                                ),
-                              ),
+                    ScheduleDeliveryWidget(
+                      selectedDays: selectedDays,
+                      deliveryType: deliveryType,
+                      preferredTime: preferredTime,
 
-                              SizedBox(height: 4.h),
+                      onTypeChanged: (v) => setState(() => deliveryType = v),
+                      onTimeChanged: (v) => setState(() => preferredTime = v),
+                      onDaysChanged: (d) => setState(() => selectedDays = d),
+                    ),
 
-                              Text(
-                                "Enter customer basic details",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: const Color(0xff6B7280),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    ReviewWidget(
+                      name: nameController.text,
+                      phone: phoneController.text,
+                      email: emailController.text,
+                      address: addressController.text,
+                      location: locationController.text,
 
-                      SizedBox(height: 30.h),
+                      mealPlan: selectedPlanName,
+                      startDate: startDate?.toString() ?? "",
+                      endDate: endDate?.toString() ?? "",
+                      deliveryPartner: selectedPartnerName,
 
-                      /// FULL NAME
-                      title("Full Name *"),
+                      walletAmount: walletController.text,
+                      discountAmount: discountController.text,
 
-                      SizedBox(height: 10.h),
-
-                      textField(
-                        controller: nameController,
-                        hint: "Enter full name",
-                        icon: Icons.person_outline,
-                      ),
-
-                      SizedBox(height: 22.h),
-
-                      /// PHONE
-                      title("Phone Number *"),
-
-                      SizedBox(height: 10.h),
-
-                      phoneField(),
-
-                      SizedBox(height: 22.h),
-
-                      /// EMAIL
-                      title("Email (Optional)"),
-
-                      SizedBox(height: 10.h),
-
-                      textField(
-                        controller: emailController,
-                        hint: "Enter email address",
-                        icon: Icons.email_outlined,
-                      ),
-
-                      SizedBox(height: 22.h),
-
-                      /// ADDRESS
-                      title("Address *"),
-
-                      SizedBox(height: 10.h),
-
-                      textField(
-                        controller: addressController,
-                        hint: "Enter full address",
-                        icon: Icons.location_on_outlined,
-                      ),
-
-                      SizedBox(height: 22.h),
-
-                      /// LOCATION
-                      title("Current Location (Optional)"),
-
-                      SizedBox(height: 10.h),
-
-                      Container(
-                        height: 56.h,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 14.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius:
-                              BorderRadius.circular(14.r),
-                          border: Border.all(
-                            color: const Color(0xffE5E7EB),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.my_location_outlined,
-                              color: const Color(0xff6B7280),
-                              size: 22.sp,
-                            ),
-
-                            SizedBox(width: 12.w),
-
-                            Expanded(
-                              child: Text(
-                                "Use current location",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: const Color(0xff6B7280),
-                                ),
-                              ),
-                            ),
-
-                            Container(
-                              height: 34.h,
-                              width: 34.h,
-                              decoration: BoxDecoration(
-                                color:
-                                    primary.withOpacity(0.15),
-                                borderRadius:
-                                    BorderRadius.circular(10.r),
-                              ),
-                              child: Icon(
-                                Icons.gps_fixed,
-                                color: primary,
-                                size: 18.sp,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: 20.h),
-
-                      /// OR
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Divider(
-                              color: Colors.grey.shade300,
-                            ),
-                          ),
-
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 12.w),
-                            child: Text(
-                              "or",
-                              style: TextStyle(
-                                color: const Color(0xff6B7280),
-                                fontSize: 14.sp,
-                              ),
-                            ),
-                          ),
-
-                          Expanded(
-                            child: Divider(
-                              color: Colors.grey.shade300,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: 20.h),
-
-                      /// LAT LONG
-                      textField(
-                        controller: locationController,
-                        hint: "Enter latitude, longitude",
-                        icon: Icons.map_outlined,
-                      ),
-
-                      SizedBox(height: 30.h),
-                    ],
-                  ),
+                      deliveryType: deliveryType ?? "",
+                      deliveryDays: selectedDays,
+                      preferredTime: preferredTime ?? "",
+                    ),
+                  ],
                 ),
               ),
 
-              /// CONTINUE BUTTON
               Container(
                 width: double.infinity,
-                height: 56.h,
+                height: 50.h,
                 margin: EdgeInsets.only(bottom: 14.h),
+
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     elevation: 0,
-                    backgroundColor: primary,
+                    backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(14.r),
+                      borderRadius: BorderRadius.circular(14.r),
                     ),
                   ),
-                  onPressed: () { Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const Step2PlanWallet(),
-      ),
-    );},
+
+                  onPressed: () async {
+                    if (currentStep < 4) {
+                      setState(() => currentStep++);
+                    } else {
+                      await submitCustomer();
+                    }
+                  },
+
                   child: Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Continue",
+                        currentStep == 4 ? "Add Customer" : "Continue",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 17.sp,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-
                       SizedBox(width: 8.w),
-
                       Icon(
-                        Icons.arrow_forward,
+                        currentStep == 4 ? Icons.check : Icons.arrow_forward,
                         color: Colors.white,
-                        size: 20.sp,
                       ),
                     ],
                   ),
@@ -354,194 +273,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget buildLine() {
-    return Expanded(
-      child: Container(
-        height: 1.5,
-        color: const Color(0xffD1D5DB),
-      ),
-    );
-  }
-
-  Widget buildStep({
-    required String number,
-    required String title,
-    bool active = false,
-  }) {
-    return Column(
-      children: [
-        Container(
-          height: 34.h,
-          width: 34.h,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active
-                ? primary
-                : Colors.white,
-            border: Border.all(
-              color: active
-                  ? primary
-                  : const Color(0xffD1D5DB),
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            number,
-            style: TextStyle(
-              color: active
-                  ? Colors.white
-                  : const Color(0xff374151),
-              fontWeight: FontWeight.w700,
-              fontSize: 14.sp,
-            ),
-          ),
-        ),
-
-        SizedBox(height: 8.h),
-
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight:
-                active ? FontWeight.w700 : FontWeight.w500,
-            color: active
-                ? primary
-                : const Color(0xff6B7280),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget title(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 15.sp,
-        fontWeight: FontWeight.w700,
-        color: const Color(0xff111827),
-      ),
-    );
-  }
-
-  Widget textField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-  }) {
-    return Container(
-      height: 56.h,
-      padding: EdgeInsets.symmetric(horizontal: 14.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: const Color(0xffE5E7EB),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: const Color(0xff6B7280),
-            size: 22.sp,
-          ),
-
-          SizedBox(width: 12.w),
-
-          Expanded(
-            child: TextField(
-              controller: controller,
-              style: TextStyle(fontSize: 14.sp),
-              decoration: InputDecoration(
-                isCollapsed: true,
-                contentPadding: EdgeInsets.zero,
-                border: InputBorder.none,
-                hintText: hint,
-                hintStyle: TextStyle(
-                  color: const Color(0xff6B7280),
-                  fontSize: 14.sp,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget phoneField() {
-    return Container(
-      height: 56.h,
-      padding: EdgeInsets.symmetric(horizontal: 14.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: const Color(0xffE5E7EB),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.call_outlined,
-            color: const Color(0xff6B7280),
-            size: 22.sp,
-          ),
-
-          SizedBox(width: 10.w),
-
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 10.w,
-              vertical: 6.h,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xffF3F4F6),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  "+91",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 18.sp,
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(width: 12.w),
-
-          Expanded(
-            child: TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                isCollapsed: true,
-                contentPadding: EdgeInsets.zero,
-                border: InputBorder.none,
-                hintText: "Enter phone number",
-                hintStyle: TextStyle(
-                  color: const Color(0xff6B7280),
-                  fontSize: 14.sp,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

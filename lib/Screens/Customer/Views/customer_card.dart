@@ -2,9 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get_core/src/get_main.dart' show Get;
+import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:mess/Screens/Customer/Views/CustoemrDetailScreen.dart';
+import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
+
 import 'package:mess/Screens/Utils/AppColors.dart';
 
 class CustomerCard extends StatelessWidget {
+  final CustomerModel customer;
   final String name;
   final String phone;
   final String initials;
@@ -14,6 +20,7 @@ class CustomerCard extends StatelessWidget {
     required this.name,
     required this.phone,
     required this.initials,
+     required this.customer,
   });
 
   @override
@@ -68,7 +75,7 @@ class CustomerCard extends StatelessWidget {
                 Text(
                   name,
                   style:  TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: Color(0xff111827),
                   ),
@@ -87,7 +94,7 @@ class CustomerCard extends StatelessWidget {
                     Text(
                       phone,
                       style:  TextStyle(
-                        fontSize: 16.sp,
+                        fontSize: 14.sp,
                         color: Color(0xff4b5563),
                         fontWeight: FontWeight.w500,
                       ),
@@ -99,11 +106,16 @@ class CustomerCard extends StatelessWidget {
           ),
 
           /// Arrow
-          const Icon(
-            Icons.chevron_right,
-            size: 20,
-            color: Color(0xff111827),
-          ),
+             InkWell(
+  onTap: () {
+    Get.to(() => CustomerDetailScreen(customer: customer));
+  },
+  child: const Icon(
+    Icons.chevron_right,
+    size: 20,
+    color: Color(0xff111827),
+  ),
+),
         ],
       ),
     );
