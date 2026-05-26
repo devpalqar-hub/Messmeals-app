@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -18,7 +17,9 @@ class PlanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final PlanController planController = Get.put(PlanController());
-    final VariationController variationController = Get.put(VariationController()); 
+    final VariationController variationController = Get.put(
+      VariationController(),
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       planController.fetchPlans(page: 1);
@@ -41,17 +42,18 @@ class PlanScreen extends StatelessWidget {
                       const TittleText(text: "Plans"),
                       ElevatedButton.icon(
                         onPressed: () async {
-  await Get.to(
-    () =>  AddPlanScreen(),
-  );
+                          await Get.to(() => AddPlanScreen());
 
-  controller.refreshPlans();
-},
+                          controller.refreshPlans();
+                        },
                         icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
                         label: Text(
                           "Add Plan",
-                          style:
-                              TextStyle(color: Colors.white, fontSize: 14.sp,fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -72,10 +74,7 @@ class PlanScreen extends StatelessWidget {
                   /// ---------- COUNT ----------
                   Text(
                     "${controller.plans.length} Plans added",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
                   ),
 
                   SizedBox(height: 16.h),
@@ -98,18 +97,18 @@ class PlanScreen extends StatelessWidget {
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
-                        borderSide:
-                            BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
-                        borderSide:
-                            BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
-                        borderSide:
-                            BorderSide(color: Colors.grey, width: 1.5.w),
+                        borderSide: BorderSide(
+                          color: Colors.grey,
+                          width: 1.5.w,
+                        ),
                       ),
                     ),
                   ),
@@ -117,9 +116,7 @@ class PlanScreen extends StatelessWidget {
                   SizedBox(height: 16.h),
 
                   /// ---------- LIST ----------
-                  Expanded(
-                    child: _buildPlanList(controller),
-                  ),
+                  Expanded(child: _buildPlanList(controller)),
                 ],
               );
             },
@@ -136,10 +133,7 @@ class PlanScreen extends StatelessWidget {
 
     if (controller.errorMessage.isNotEmpty) {
       return Center(
-        child: Text(
-          controller.errorMessage,
-          style: TextStyle(fontSize: 14.sp),
-        ),
+        child: Text(controller.errorMessage, style: TextStyle(fontSize: 14.sp)),
       );
     }
 
@@ -147,10 +141,7 @@ class PlanScreen extends StatelessWidget {
 
     if (plans.isEmpty) {
       return Center(
-        child: Text(
-          "No matching plans",
-          style: TextStyle(fontSize: 14.sp),
-        ),
+        child: Text("No matching plans", style: TextStyle(fontSize: 14.sp)),
       );
     }
 
@@ -162,15 +153,21 @@ class PlanScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final plan = plans[index];
 
-          final imageUrl = plan.images.isNotEmpty
-              ? (() {
-                  final rawUrl = plan.images.first.url;
-                  final cleanUrl = rawUrl.replaceAll("\\", "/");
-                  if (cleanUrl.startsWith("http")) return cleanUrl;
-                  return "$baseUrl/$cleanUrl"
-                      .replaceAll("//uploads", "/uploads");
-                })()
-              : "https://via.placeholder.com/60";
+          final List<String> imageUrls =
+              plan.images.map((img) {
+                final rawUrl = img.url;
+                final cleanUrl = rawUrl.replaceAll("\\", "/");
+
+                if (cleanUrl.startsWith("http")) return cleanUrl;
+
+                return "$baseUrl/$cleanUrl".replaceAll("//uploads", "/uploads");
+              }).toList();
+
+          final imageUrl =
+              imageUrls.isNotEmpty
+                  ? imageUrls.first
+                  : "https://via.placeholder.com/60";
+          ;
 
           return PlanCard(
             title: plan.planName,
@@ -180,28 +177,25 @@ class PlanScreen extends StatelessWidget {
             meals: plan.variations.map((v) => v.title).toList(),
             imageUrl: imageUrl,
             onDelete: () {
-              _showDeleteDialog(
-                context,
-                controller,
-                plan.id,
-              );
+              _showDeleteDialog(context, controller, plan.id);
             },
             onEdit: () {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (_) => AddPlanScreen(
-                  isEdit: true,
-                  planId: plan.id,
-                  planName: plan.planName,
-                  price: plan.price,
-                  minPrice: plan.minPrice,
-                  description: plan.description,
-                  imageUrl: imageUrl,
-                  selectedVariations:
-                      plan.variations.map((v) => v.id).toList(),
-                ),
+                builder:
+                    (_) => AddPlanScreen(
+                      isEdit: true,
+                      planId: plan.id,
+                      planName: plan.planName,
+                      price: plan.price,
+                      minPrice: plan.minPrice,
+                      description: plan.description,
+                      imageUrl: imageUrls,
+                      selectedVariations:
+                          plan.variations.map((v) => v.id).toList(),
+                    ),
               ).then((_) {
                 controller.refreshPlans();
               });
@@ -221,7 +215,7 @@ void _showDeleteDialog(
   showDialog(
     context: context,
     barrierDismissible: false,
-   
+
     builder: (BuildContext ctx) {
       return Dialog(
         backgroundColor: Colors.white,
@@ -241,19 +235,13 @@ void _showDeleteDialog(
               SizedBox(height: 12.h),
               Text(
                 "Delete Plan?",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18.sp,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18.sp),
               ),
               SizedBox(height: 8.h),
               Text(
                 "Are you sure you want to delete this plan?",
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14.sp,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 14.sp),
               ),
               SizedBox(height: 20.h),
               Row(
@@ -261,10 +249,10 @@ void _showDeleteDialog(
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pop(ctx); 
+                        Navigator.pop(ctx);
                       },
                       style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,   
+                        backgroundColor: Colors.white,
                         side: BorderSide(color: Colors.grey.shade300),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
@@ -273,7 +261,7 @@ void _showDeleteDialog(
                       ),
                       child: Text(
                         "Cancel",
-                        style: TextStyle(fontSize: 14.sp,color: Colors.black),
+                        style: TextStyle(fontSize: 14.sp, color: Colors.black),
                       ),
                     ),
                   ),
@@ -294,10 +282,7 @@ void _showDeleteDialog(
                       ),
                       child: Text(
                         "Delete",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.sp,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 14.sp),
                       ),
                     ),
                   ),

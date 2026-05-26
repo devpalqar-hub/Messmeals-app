@@ -95,8 +95,8 @@ class PlanController extends GetxController {
     required List<String> variationIds,
     required bool isMonthlyPlan,
     required bool isDailyPlan,
-    File? imageFile,
-    String? existingImage,
+    List<File>? imageFiles,
+    List<String>? existingImage,
   }) async {
     try {
       _setLoading(true);
@@ -107,52 +107,39 @@ class PlanController extends GetxController {
       /// STEP 1 : UPLOAD IMAGE
       /// =========================================
 
-      List<Map<String, dynamic>> images = [];
+      List<Map<String, dynamic>> uploadedImages = [];
 
-      if (imageFile != null) {
+      if (imageFiles != null && imageFiles.isNotEmpty) {
         final uploadUri = Uri.parse("$baseUrl/plans/images/upload");
 
         final uploadRequest = http.MultipartRequest("POST", uploadUri);
-
         uploadRequest.headers.addAll({"Authorization": bearerToken});
 
-        /// DETECT MIME TYPE
-        String filePath = imageFile.path.toLowerCase();
+        for (File file in imageFiles) {
+          String filePath = file.path.toLowerCase();
 
-        MediaType mediaType = MediaType("image", "jpeg");
+          MediaType mediaType = MediaType("image", "jpeg");
 
-        if (filePath.endsWith(".png")) {
-          mediaType = MediaType("image", "png");
-        } else if (filePath.endsWith(".webp")) {
-          mediaType = MediaType("image", "webp");
-        } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
-          mediaType = MediaType("image", "jpeg");
+          if (filePath.endsWith(".png")) {
+            mediaType = MediaType("image", "png");
+          } else if (filePath.endsWith(".webp")) {
+            mediaType = MediaType("image", "webp");
+          } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
+            mediaType = MediaType("image", "jpeg");
+          }
+
+          uploadRequest.files.add(
+            await http.MultipartFile.fromPath(
+              "files",
+              file.path,
+              contentType: mediaType,
+            ),
+          );
         }
 
-        uploadRequest.files.add(
-          await http.MultipartFile.fromPath(
-            "files",
-            imageFile.path,
-
-            contentType: mediaType,
-          ),
-        );
-
-        debugPrint("=========== IMAGE UPLOAD REQUEST ===========");
-
-        debugPrint("URL : $uploadUri");
-
-        debugPrint("FILE : ${imageFile.path}");
-
         final uploadResponse = await uploadRequest.send();
-
         final uploadBody = await uploadResponse.stream.bytesToString();
 
-        debugPrint("=========== IMAGE UPLOAD RESPONSE ===========");
-
-        debugPrint("STATUS : ${uploadResponse.statusCode}");
-
-        debugPrint("BODY : $uploadBody");
 
         if (uploadResponse.statusCode == 200 ||
             uploadResponse.statusCode == 201) {
@@ -160,10 +147,9 @@ class PlanController extends GetxController {
 
           final List urls = decoded["urls"] ?? [];
 
-          images = urls.map((e) => {"url": e}).toList();
+          uploadedImages = urls.map((e) => {"url": e}).toList();
         } else {
           Fluttertoast.showToast(msg: "Image upload failed");
-
           return false;
         }
       }
@@ -172,10 +158,16 @@ class PlanController extends GetxController {
       /// EXISTING IMAGE FOR EDIT
       /// =========================================
 
-      if (imageFile == null && existingImage != null) {
-        images = [
-          {"url": existingImage},
-        ];
+      List<String> finalImages = [];
+
+      // old image
+      if (existingImage != null && existingImage.isNotEmpty) {
+        finalImages.addAll(existingImage);
+      }
+
+      // new uploaded images
+      if (uploadedImages.isNotEmpty) {
+        finalImages.addAll(uploadedImages.map((e) => e["url"].toString()));
       }
 
       /// =========================================
@@ -201,11 +193,13 @@ class PlanController extends GetxController {
 
         "isDailyPlan": isDailyPlan,
 
-        "images": images,
+        "images": uploadedImages,
       };
-      if(isEdit && existingImage != null && images.isNotEmpty) {
-        body.remove("images");
-        body["planImages"] = images.map((e) => e["url"]).toList();  
+
+      /// attach images only if available
+      if (isEdit && finalImages.isNotEmpty) {
+        body.remove("images"); // remove old key
+        body["planImages"] = finalImages;
       }
 
       debugPrint("=========== PLAN REQUEST =========== $isEdit");
@@ -237,7 +231,7 @@ class PlanController extends GetxController {
 
       debugPrint("STATUS : ${response.statusCode}");
 
-      debugPrint("BODY : ${response.body}");
+      print("BODY : ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         await refreshPlans();

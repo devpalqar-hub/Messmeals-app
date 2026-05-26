@@ -19,7 +19,7 @@ class AddPlanScreen extends StatefulWidget {
   final String? description;
   final String? price;
   final String? minPrice;
-  final String? imageUrl;
+  final List<String> imageUrl;
   final List<String>? selectedVariations;
 
   const AddPlanScreen({
@@ -30,7 +30,7 @@ class AddPlanScreen extends StatefulWidget {
     this.description,
     this.price,
     this.minPrice,
-    this.imageUrl,
+    this.imageUrl = const [],
     this.selectedVariations,
   });
 
@@ -53,7 +53,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
   final TextEditingController minPriceCtrl = TextEditingController();
 
-  File? selectedImage;
+  List<File> selectedImages = [];
+  List<String> existingImages = []; // for edit mode (network images)
 
   List<String> selectedVariationIds = [];
 
@@ -73,21 +74,55 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
     if (widget.selectedVariations != null) {
       selectedVariationIds = List<String>.from(widget.selectedVariations!);
     }
-  }
 
-  Future<void> pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    existingImages = List<String>.from(widget.imageUrl);
+    }
 
-    if (picked != null) {
+  Future<void> pickImages() async {
+    final picked = await ImagePicker().pickMultiImage();
+
+    if (picked.isNotEmpty) {
       setState(() {
-        selectedImage = File(picked.path);
+        selectedImages.addAll(picked.map((e) => File(e.path)).toList());
       });
     }
+  }
+
+  InputDecoration inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+
+      hintStyle: TextStyle(fontSize: 14.sp, color: Colors.grey.shade500),
+
+      filled: true,
+      fillColor: Colors.white,
+
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14.r),
+
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14.r),
+
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14.r),
+
+        borderSide: BorderSide(color: AppColors.primary, width: 1.2),
+      ),
+    );
   }
 
   Widget title(String text) {
     return Text(
       text,
+
       style: TextStyle(
         fontSize: 14.sp,
         fontWeight: FontWeight.w700,
@@ -99,18 +134,23 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   Widget sectionCard({required Widget child}) {
     return Container(
       width: double.infinity,
+
       padding: EdgeInsets.all(16.w),
+
       decoration: BoxDecoration(
         color: Colors.white,
+
         borderRadius: BorderRadius.circular(10.r),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: const Color.fromARGB(255, 26, 25, 25).withOpacity(0.04),
             blurRadius: 20.r,
             offset: const Offset(0, 3),
           ),
         ],
       ),
+
       child: child,
     );
   }
@@ -124,9 +164,12 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
           bottomNavigationBar: Container(
             padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 20.h),
+
             color: Colors.white,
+
             child: SizedBox(
               height: 56.h,
+
               child: ElevatedButton(
                 onPressed:
                     controller.isLoading
@@ -167,15 +210,24 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
                           final success = await controller.savePlan(
                             id: widget.isEdit ? widget.planId : null,
+
                             planName: nameCtrl.text.trim(),
+
                             price: priceCtrl.text.trim(),
+
                             minPrice: minPriceCtrl.text.trim(),
+
                             description: descCtrl.text.trim(),
+
                             variationIds: selectedVariationIds,
+
                             isMonthlyPlan: planType == "MONTHLY",
+
                             isDailyPlan: planType == "DAILY",
-                            imageFile: selectedImage,
-                            existingImage: widget.imageUrl,
+
+                            imageFiles: selectedImages,
+
+                            existingImage: existingImages,
                           );
 
                           if (success) {
@@ -185,6 +237,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16.r),
                   ),
@@ -195,6 +248,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                         ? SizedBox(
                           height: 22.h,
                           width: 22.w,
+
                           child: const CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2,
@@ -202,6 +256,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                         )
                         : Text(
                           widget.isEdit ? "Update Plan" : "Create Plan",
+
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 17.sp,
@@ -220,40 +275,50 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     horizontal: 20.w,
                     vertical: 18.h,
                   ),
+
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => Get.back(),
-                        child: Icon(
-                          Icons.arrow_back,
-                          size: 24.sp,
-                          color: AppColors.primary,
-                        ),
-                      ),
-
-                      SizedBox(width: 12.w),
-
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+
                         children: [
-                          Text(
-                            widget.isEdit ? "Edit Plan" : "Create Plan",
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xff111827),
-                            ),
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => Get.back(),
+
+                                child: Icon(
+                                  Icons.arrow_back,
+                                  size: 24.sp,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Text(
+                                widget.isEdit ? "Edit Plan" : "Create Plan",
+
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xff111827),
+                                ),
+                              ),
+                            ],
                           ),
 
                           SizedBox(height: 4.h),
 
-                          Text(
-                            widget.isEdit
-                                ? "Update mess plan"
-                                : "Add a new mess plan",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.grey.shade700,
+                          Padding(
+                            padding: EdgeInsets.only(left: 35.w),
+                            child: Text(
+                              widget.isEdit
+                                  ? "Update mess plan"
+                                  : "Add a new mess plan",
+
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.grey.shade800,
+                              ),
                             ),
                           ),
                         ],
@@ -264,133 +329,79 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    padding: EdgeInsets.only(left: 20.w, right: 20.w),
 
                     child: Column(
                       children: [
-                        /// IMAGE
+                        /// IMAGE SECTION
                         sectionCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+
                             children: [
                               title("Plan Image"),
 
-                              SizedBox(height: 10.h),
+                              SizedBox(height: 8.h),
 
-                              Row(
+                              Wrap(
+                                spacing: 14.w,
+                                runSpacing: 14.h,
                                 children: [
-                                  if (selectedImage != null ||
-                                      widget.imageUrl != null)
-                                    Stack(
-                                      children: [
-                                        Container(
-                                          width: 110.w,
-                                          height: 110.w,
+                                  /// EXISTING NETWORK IMAGES
+                                  ...existingImages.map((url) {
+                                    return _imageBox(
+                                      image: NetworkImage(url),
+                                      onRemove: () {
+                                        setState(() {
+                                          existingImages.remove(url);
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
 
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              10.r,
+                                  /// NEWLY PICKED FILE IMAGES
+                                  ...selectedImages.map((file) {
+                                    return _imageBox(
+                                      image: FileImage(file),
+                                      onRemove: () {
+                                        setState(() {
+                                          selectedImages.remove(file);
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+
+                                  /// ADD BUTTON
+                                  GestureDetector(
+                                    onTap: pickImages,
+                                    child: DottedBorder(
+                                      color: Colors.grey.shade300,
+                                      strokeWidth: 1.2,
+                                      dashPattern: const [6, 4],
+                                      borderType: BorderType.RRect,
+                                      radius: Radius.circular(10.r),
+                                      child: Container(
+                                        width: 110.w,
+                                        height: 110.w,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.add_a_photo,
+                                              size: 28.sp,
+                                              color: AppColors.primary,
                                             ),
-
-                                            image: DecorationImage(
-                                              fit: BoxFit.cover,
-
-                                              image:
-                                                  selectedImage != null
-                                                      ? FileImage(
-                                                        selectedImage!,
-                                                      )
-                                                      : NetworkImage(
-                                                            widget.imageUrl!,
-                                                          )
-                                                          as ImageProvider,
-                                            ),
-                                          ),
-                                        ),
-
-                                        Positioned(
-                                          top: 6,
-                                          right: 6,
-
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                selectedImage = null;
-                                              });
-                                            },
-
-                                            child: Container(
-                                              padding: const EdgeInsets.all(4),
-
-                                              decoration: const BoxDecoration(
-                                                color: Colors.white,
-
-                                                shape: BoxShape.circle,
-                                              ),
-
-                                              child: Icon(
-                                                Icons.close,
-                                                size: 16.sp,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-
-                                  if (selectedImage != null ||
-                                      widget.imageUrl != null)
-                                    SizedBox(width: 14.w),
-
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: pickImage,
-
-                                      child: DottedBorder(
-                                        color: Colors.grey.shade300,
-
-                                        strokeWidth: 1.2,
-
-                                        dashPattern: const [6, 4],
-
-                                        borderType: BorderType.RRect,
-
-                                        radius: Radius.circular(10.r),
-
-                                        child: Container(
-                                          height: 110.h,
-                                          width: double.infinity,
-
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              10.r,
-                                            ),
-                                          ),
-
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-
-                                            children: [
-                                              Icon(
-                                                Icons.camera_alt_outlined,
-                                                size: 28.sp,
+                                            SizedBox(height: 5.h),
+                                            Text(
+                                              "Upload",
+                                              style: TextStyle(
                                                 color: AppColors.primary,
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.w700,
                                               ),
-
-                                              SizedBox(height: 6.h),
-
-                                              Text(
-                                                "Upload Image",
-                                                style: TextStyle(
-                                                  color: AppColors.primary,
-                                                  fontSize: 15.sp,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -412,13 +423,12 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               title("Plan Name *"),
 
                               SizedBox(height: 10.h),
-
                               commonTextField(
                                 controller: nameCtrl,
                                 hintText: "Weekly Lunch Plan",
                               ),
 
-                              SizedBox(height: 16.h),
+                              SizedBox(height: 10.h),
 
                               title("Description *"),
 
@@ -430,7 +440,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                 maxLines: 4,
                               ),
 
-                              SizedBox(height: 16.h),
+                              SizedBox(height: 20.h),
 
                               Row(
                                 children: [
@@ -499,6 +509,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                     padding: EdgeInsets.all(16.w),
 
                                     decoration: BoxDecoration(
+                                      color: Colors.white,
+
                                       borderRadius: BorderRadius.circular(10.r),
 
                                       border: Border.all(
@@ -508,6 +520,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
                                     child: Wrap(
                                       spacing: 10.w,
+
                                       runSpacing: 10.h,
 
                                       children:
@@ -591,10 +604,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
                                                       style: TextStyle(
                                                         fontSize: 14.sp,
-
                                                         fontWeight:
                                                             FontWeight.w600,
-
                                                         color:
                                                             isSelected
                                                                 ? Colors.white
@@ -628,7 +639,9 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
                               _planTypeTile(
                                 title: "Monthly Plan",
+
                                 value: "MONTHLY",
+
                                 icon: Icons.calendar_month,
                               ),
 
@@ -636,14 +649,14 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
                               _planTypeTile(
                                 title: "Daily Plan",
+
                                 value: "DAILY",
+
                                 icon: Icons.calendar_today,
                               ),
                             ],
                           ),
                         ),
-
-                        SizedBox(height: 20.h),
                       ],
                     ),
                   ),
@@ -678,6 +691,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
           border: Border.all(
             color: selected ? AppColors.primary : Colors.grey.shade300,
+
             width: 1.3,
           ),
         ),
@@ -695,15 +709,18 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
             Expanded(
               child: Text(
                 title,
+
                 style: TextStyle(
                   fontSize: 14.sp,
+
                   fontWeight: FontWeight.w700,
+
                   color: selected ? AppColors.primary : Colors.black,
                 ),
               ),
             ),
 
-            Icon(icon, color: const Color(0xFF343434)),
+            Icon(icon, color: Color(0xFF343434)),
           ],
         ),
       ),
@@ -763,5 +780,39 @@ Widget commonTextField({
         ),
       ),
     ),
+  );
+}
+
+Widget _imageBox({
+  required ImageProvider image,
+  required VoidCallback onRemove,
+}) {
+  return Stack(
+    children: [
+      Container(
+        width: 110.w,
+        height: 110.w,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10.r),
+          image: DecorationImage(image: image, fit: BoxFit.cover),
+        ),
+      ),
+
+      Positioned(
+        top: 6,
+        right: 6,
+        child: GestureDetector(
+          onTap: onRemove,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.close, size: 16.sp),
+          ),
+        ),
+      ),
+    ],
   );
 }
