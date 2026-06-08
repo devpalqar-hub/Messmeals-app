@@ -13,7 +13,6 @@ class PartnerController extends GetxController {
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 
-  // Standard variables instead of .obs
   List<Partner> partners = [];
   Partner? selectedPartner;
   bool isLoading = false;
@@ -49,7 +48,7 @@ class PartnerController extends GetxController {
   Future<void> fetchPartners() async {
     isLoading = true;
     errorMessage = '';
-    update(); // Notify UI to show loading state
+    update();
 
     final messId = dashboardController.selectedMessId;
     if (messId == null) {
@@ -90,7 +89,7 @@ class PartnerController extends GetxController {
     } finally {
       isLoading = false;
       isReady = true;
-      update(); // Refresh UI with new data
+      update();
     }
   }
 
@@ -112,8 +111,9 @@ class PartnerController extends GetxController {
         final jsonData = json.decode(response.body);
         final partnerData = jsonData['data'] ?? jsonData;
         selectedPartner = Partner.fromJson(partnerData);
-      } else {}
+      }
     } catch (e) {
+      debugPrint("❌ fetchPartnerById error: $e");
     } finally {
       isLoading = false;
       update();
@@ -136,6 +136,16 @@ class PartnerController extends GetxController {
         return false;
       }
 
+      // BUG #2409 — prevent duplicate phone numbers (checked against existing partners)
+      final isDuplicate = partners.any((p) => p.phone.trim() == phone.trim());
+      if (isDuplicate) {
+        _showToast(
+          "A partner with this phone number already exists",
+          isError: true,
+        );
+        return false;
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/delivery-agent'),
         headers: {
@@ -145,7 +155,6 @@ class PartnerController extends GetxController {
         body: json.encode({
           "name": name,
           "phone": phone,
-          //   "email": email,
           "address": address,
           "messId": messId,
         }),
@@ -155,14 +164,14 @@ class PartnerController extends GetxController {
         await refreshPartners();
         await dashboardController.fetchDashboardStats();
         _showToast("Partner added successfully");
-        return true; // ✅ IMPORTANT
+        return true;
       } else {
         final err = json.decode(response.body);
-        _showToast(err['message'] ?? "Failed to add partner");
+        _showToast(err['message'] ?? "Failed to add partner", isError: true);
         return false;
       }
     } catch (e) {
-      _showToast(e.toString());
+      _showToast(e.toString(), isError: true);
       return false;
     } finally {
       isLoading = false;
@@ -170,6 +179,7 @@ class PartnerController extends GetxController {
     }
   }
 
+  // BUG #2412 — Fix: send is_active correctly so partner status is actually saved
   Future<bool> updatePartner({
     required String id,
     String? name,
@@ -182,31 +192,39 @@ class PartnerController extends GetxController {
 
       final messId = dashboardController.selectedMessId;
 
+      final Map<String, dynamic> body = {"messId": messId};
+
+      if (name != null && name.isNotEmpty) body["name"] = name;
+      if (phone != null && phone.isNotEmpty) body["phone"] = phone;
+
+      // BUG #2412 — send is_active (not "status") to match backend field
+      if (status != null) body["is_active"] = status;
+
+      debugPrint("📡 UPDATE PARTNER BODY: ${json.encode(body)}");
+
       final response = await http.patch(
         Uri.parse('$baseUrl/delivery-agent/$id'),
         headers: {
           "Content-Type": "application/json",
           "Authorization": bearerToken,
         },
-        body: json.encode({
-          if (name != null) "name": name,
-          if (phone != null) "phone": phone,
-          if (status != null) "status": status,
-          "messId": messId,
-        }),
+        body: json.encode(body),
       );
+
+      debugPrint("📡 UPDATE PARTNER STATUS: ${response.statusCode}");
+      debugPrint("📡 UPDATE PARTNER BODY RESP: ${response.body}");
 
       if (response.statusCode == 200) {
         await fetchPartners();
-        _showToast("Partner updated");
-        return true; // ✅ IMPORTANT
+        _showToast("Partner updated successfully");
+        return true;
       } else {
         final err = json.decode(response.body);
-        _showToast(err['message'] ?? "Failed to update");
+        _showToast(err['message'] ?? "Failed to update partner", isError: true);
         return false;
       }
     } catch (e) {
-      _showToast(e.toString());
+      _showToast(e.toString(), isError: true);
       return false;
     } finally {
       isLoading = false;
@@ -244,8 +262,10 @@ class PartnerController extends GetxController {
         }
       } else {
         final err = json.decode(response.body);
+        _showToast(err['message'] ?? "Failed to delete partner", isError: true);
       }
     } catch (e) {
+      _showToast(e.toString(), isError: true);
     } finally {
       isLoading = false;
       update();

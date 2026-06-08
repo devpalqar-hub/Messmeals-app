@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
@@ -16,7 +17,6 @@ class AddPartnerScreen extends StatefulWidget {
 
 class _AddPartnerScreenState extends State<AddPartnerScreen> {
   final _formKey = GlobalKey<FormState>();
-  // Use find as the controller is already initialized in PartnerScreen
   final PartnerController controller = Get.find<PartnerController>();
 
   final nameController = TextEditingController();
@@ -42,7 +42,6 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //backgroundColor: const Color(0xffF7F9FB),
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -120,10 +119,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                       }
 
                       if (success) {
-                        Navigator.pop(
-                          context,
-                          true,
-                        ); // or Get.back(result: true);
+                        Navigator.pop(context, true);
                       }
                     }
                   },
@@ -174,37 +170,54 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                               ),
                             ),
                             SizedBox(height: 16.h),
-                            buildTextField(
-                              label: "Name *",
+
+                            // BUG #2413 — Name marked with * as required
+                            _buildTextField(
+                              label: "Full Name",
                               hint: "Enter full name",
                               controller: nameController,
+                              isRequired: true,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Name is required";
+                                }
+                                return null;
+                              },
                             ),
                             SizedBox(height: 14.h),
-                            buildTextField(
-                              label: "Phone *",
+
+                            // BUG #2410 — Phone validation for delivery partners
+                            // BUG #2413 — Phone marked with * as required
+                            _buildTextField(
+                              label: "Phone Number",
                               hint: "+91 98765 43210",
                               controller: phoneController,
+                              isRequired: true,
                               keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Phone number is required";
+                                }
+                                // BUG #2410 — must be exactly 10 digits
+                                if (!RegExp(
+                                  r'^\d{10}$',
+                                ).hasMatch(value.trim())) {
+                                  return "Enter a valid 10-digit phone number";
+                                }
+                                return null;
+                              },
                             ),
-                            if (!widget.isEdit) ...[
-                              // SizedBox(height: 14.h),
-                              // buildTextField(
-                              //   label: "Email",
-                              //   hint: "email@example.com",
-                              //   controller: emailController,
-                              //   keyboardType: TextInputType.emailAddress,
-                              // ),
-                              // SizedBox(height: 14.h),
-                            ],
-                            // buildTextField(
-                            //   label: "Address *",
-                            //   hint: "Enter address",
-                            //   controller: addressController,
-                            // ),
                           ],
                         ),
                       ),
+
                       SizedBox(height: 20.h),
+
+                      // BUG #2412 — Status section shown in edit mode
                       if (widget.isEdit)
                         Container(
                           width: double.infinity,
@@ -226,12 +239,24 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                                 ),
                               ),
                               SizedBox(height: 16.h),
-                              Text(
-                                "Current Status *",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w500,
+                              RichText(
+                                text: TextSpan(
+                                  text: "Current Status",
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: " *",
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               SizedBox(height: 8.h),
@@ -262,6 +287,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                                     child: Text("Inactive"),
                                   ),
                                 ],
+                                // BUG #2412 — status change is properly captured
                                 onChanged: (value) {
                                   setState(() {
                                     status = value!;
@@ -271,9 +297,8 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                             ],
                           ),
                         ),
-                      SizedBox(height: 24.h),
 
-                      /// ---------- ACTION BUTTONS ----------
+                      SizedBox(height: 24.h),
                     ],
                   ),
                 ),
@@ -291,27 +316,47 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
     );
   }
 
-  Widget buildTextField({
+  // BUG #2413 — Required fields show asterisk via isRequired flag
+  Widget _buildTextField({
     required String label,
     required String hint,
     required TextEditingController controller,
+    bool isRequired = false,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
+        RichText(
+          text: TextSpan(
+            text: label,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+            children:
+                isRequired
+                    ? [
+                      TextSpan(
+                        text: " *",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ]
+                    : [],
           ),
         ),
         SizedBox(height: 6.h),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
@@ -325,12 +370,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
               borderRadius: BorderRadius.circular(16.r),
             ),
           ),
-          validator: (value) {
-            if (label.contains('*') && (value == null || value.isEmpty)) {
-              return "Required field";
-            }
-            return null;
-          },
+          validator: validator,
         ),
       ],
     );

@@ -14,21 +14,18 @@ class PartnerScreen extends StatefulWidget {
 }
 
 class _PartnerScreenState extends State<PartnerScreen> {
-  // Use Get.find if initialized in a parent, or keep Get.put if this is the first entry
   final PartnerController controller = Get.put(PartnerController());
   final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Initial fetch
     controller.fetchPartners();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //  backgroundColor: const Color(0xffF7F9FB),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -40,6 +37,16 @@ class _PartnerScreenState extends State<PartnerScreen> {
               }
 
               final partners = controller.partners;
+
+              // BUG #2411 — filter list and detect empty search results
+              final filteredList =
+                  partners
+                      .where(
+                        (p) => p.name.toLowerCase().contains(
+                          searchController.text.toLowerCase(),
+                        ),
+                      )
+                      .toList();
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,11 +125,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                       ),
                     ),
                     onChanged: (query) {
-                      if (query.isEmpty) {
-                        controller.fetchPartners();
-                      } else {
-                        setState(() {});
-                      }
+                      setState(() {}); // Rebuild to reflect filtered results
                     },
                   ),
 
@@ -131,49 +134,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: () async => controller.fetchPartners(),
-                      child:
-                          partners.isEmpty && !controller.isLoading
-                              ? const Center(child: Text("No partners found"))
-                              : ListView.separated(
-                                padding: EdgeInsets.only(bottom: 0.h),
-                                // Filter logic applied during build
-                                itemCount:
-                                    partners
-                                        .where(
-                                          (p) => p.name.toLowerCase().contains(
-                                            searchController.text.toLowerCase(),
-                                          ),
-                                        )
-                                        .length,
-                                separatorBuilder:
-                                    (context, index) => SizedBox(height: 6.h),
-                                itemBuilder: (context, index) {
-                                  final filteredList =
-                                      partners
-                                          .where(
-                                            (p) =>
-                                                p.name.toLowerCase().contains(
-                                                  searchController.text
-                                                      .toLowerCase(),
-                                                ),
-                                          )
-                                          .toList();
-                                  final partner = filteredList[index];
-                                  final stats = partner.stats;
-                                  final profile =
-                                      partner.deliveryPartnerProfile;
-
-                                  return PartnerCard(
-                                    id: partner.id,
-                                    name: partner.name,
-                                    phone: partner.phone,
-                                    email: partner.email,
-                                    totalOrders: stats?.totalDeliveries ?? 0,
-                                    location: profile?.address ?? "N/A",
-                                    isActive: partner.isActive,
-                                  );
-                                },
-                              ),
+                      child: _buildPartnerList(filteredList, controller),
                     ),
                   ),
                 ],
@@ -182,6 +143,61 @@ class _PartnerScreenState extends State<PartnerScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPartnerList(List filteredList, PartnerController controller) {
+    // No partners at all
+    if (controller.partners.isEmpty && !controller.isLoading) {
+      return const Center(child: Text("No partners found"));
+    }
+
+    // BUG #2411 — Search returned no results
+    if (filteredList.isEmpty && searchController.text.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 48.sp, color: Colors.grey.shade400),
+            SizedBox(height: 12.h),
+            Text(
+              "No results found",
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              "No partners match \"${searchController.text}\"",
+              style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: EdgeInsets.only(bottom: 0.h),
+      itemCount: filteredList.length,
+      separatorBuilder: (context, index) => SizedBox(height: 6.h),
+      itemBuilder: (context, index) {
+        final partner = filteredList[index];
+        final stats = partner.stats;
+        final profile = partner.deliveryPartnerProfile;
+
+        return PartnerCard(
+          id: partner.id,
+          name: partner.name,
+          phone: partner.phone,
+          email: partner.email,
+          totalOrders: stats?.totalDeliveries ?? 0,
+          location: profile?.address ?? "N/A",
+          isActive: partner.isActive,
+        );
+      },
     );
   }
 }

@@ -9,15 +9,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 String baseUrl = "https://staging-api.messmeals.com";
 String? login;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final authController = Get.put(AuthController());
-  // await authController.checkLoginStatus();
   SharedPreferences pref = await SharedPreferences.getInstance();
   bearerToken = "Bearer " + (pref.getString("token") ?? "");
   login = pref.getString("LOGIN");
-  runApp(MessMeals());
+  runApp(const MessMeals());
 }
 
 class MessMeals extends StatelessWidget {
@@ -33,6 +33,15 @@ class MessMeals extends StatelessWidget {
           initialBinding: AppBindings(),
           initialRoute: login == "IN" ? AppRoutes.dashboard : AppRoutes.login,
           getPages: AppRoutes.routes,
+          // BUG #2414 — stops keyboard from causing layout overflow on iPhone
+          builder: (context, widget) {
+            return MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.noScaling),
+              child: widget!,
+            );
+          },
         );
       },
     );
