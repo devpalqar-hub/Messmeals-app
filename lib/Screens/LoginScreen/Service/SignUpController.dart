@@ -2,7 +2,10 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:mess/Screens/LoginScreen/Model/DistrictModel.dart';
+import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupController extends GetxController {
   // ================== DISTRICTS ==================
@@ -12,7 +15,6 @@ class SignupController extends GetxController {
   bool isLoading = false;
   bool hasMore = true;
   final int limit = 50;
-
 
   bool otpLoading = false;
   bool signupLoading = false;
@@ -25,6 +27,7 @@ class SignupController extends GetxController {
   String address = "";
   String messName = "";
   String otp = "";
+  String zipcode = "";
 
   // ================== FETCH DISTRICTS ==================
   Future<void> fetchDistricts({bool loadMore = false}) async {
@@ -41,9 +44,7 @@ class SignupController extends GetxController {
       }
 
       final response = await http.get(
-        Uri.parse(
-          "$baseUrl/districts?page=$currentPage&limit=$limit",
-        ),
+        Uri.parse("$baseUrl/districts?page=$currentPage&limit=$limit"),
       );
 
       if (response.statusCode == 200) {
@@ -76,76 +77,70 @@ class SignupController extends GetxController {
     update();
   }
 
-
   // ================== SEND OTP ==================
- Future<bool> sendOtp({
-  required String name,
-  required String ownerName,
-  required String phone,
-  required String email,
-  required String address,
-  required String messName,
-  required String district,
-}) async {
-  try {
-    otpLoading = true;
-    update();
+  Future<bool> sendOtp({
+    required String name,
+    required String ownerName,
+    required String phone,
+    required String email,
+    required String address,
+    required String messName,
+    required String zipcode,
+  }) async {
+    try {
+      otpLoading = true;
+      update();
 
-    final url = Uri.parse("$baseUrl/auth/mess-owner/send-otp");
+      final url = Uri.parse("$baseUrl/auth/mess-owner/send-otp");
 
-    final requestBody = {
-      "name": name,
-      "ownerName": ownerName,
-      "phone": phone,
-      "email": email,
-      "address": address,
-      "district": district,
-      "messName": messName,
-    };
+      final requestBody = {
+        "name": name,
+        "ownerName": ownerName,
+        "phone": phone,
+        "email": email,
+        "address": address,
+        //"district": district,
+        "postcode": zipcode,
+        "messName": messName,
+      };
 
-    // ================= DEBUG REQUEST =================
-    print("🚀 ===== SEND OTP REQUEST =====");
-    print("➡️ URL: $url");
-    print("➡️ BODY: ${jsonEncode(requestBody)}");
+      // ================= DEBUG REQUEST =================
+      print("🚀 ===== SEND OTP REQUEST =====");
+      print("➡️ URL: $url");
+      print("➡️ BODY: ${jsonEncode(requestBody)}");
 
-    final response = await http.post(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode(requestBody),
-    );
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(requestBody),
+      );
 
-    // ================= DEBUG RESPONSE =================
-    print("✅ ===== SEND OTP RESPONSE =====");
-    print("➡️ STATUS CODE: ${response.statusCode}");
-    print("➡️ BODY: ${response.body}");
+      // ================= DEBUG RESPONSE =================
 
-    final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-    if (response.statusCode == 200|| response.statusCode == 201) {
-      Get.snackbar("Success", data["message"] ?? "OTP sent");
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppToast.success(data["message"] ?? "OTP sent");
 
-      print("🎉 OTP SENT SUCCESSFULLY");
-      print("📦 Parsed Response: $data");
+        print("🎉 OTP SENT SUCCESSFULLY");
+        print("📦 Parsed Response: $data");
 
-      return true;
-    } else {
-      
+        return true;
+      } else {
+        AppToast.success(data["message"] ?? "OTP sent");
 
+        return false;
+      }
+    } catch (e) {
+      print("🔥 ===== SEND OTP EXCEPTION =====");
+      AppToast.error(e.toString());
       return false;
+    } finally {
+      otpLoading = false;
+      update();
     }
-  } catch (e) {
-    print("🔥 ===== SEND OTP EXCEPTION =====");
-    print("❌ ERROR: $e");
-
-    Get.snackbar("Error", e.toString());
-    return false;
-  } finally {
-    otpLoading = false;
-    update();
   }
-}
+
   // ================== SIGNUP ==================
   Future<bool> signup({
     required String name,
@@ -163,16 +158,15 @@ class SignupController extends GetxController {
 
       final response = await http.post(
         Uri.parse("$baseUrl/auth/mess-owner/signup"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "name": name,
           "ownerName": ownerName,
           "phone": phone,
           "email": email,
           "address": address,
-          "district": district,
+          //  "district": district,
+          "postcode": zipcode,
           "messName": messName,
           "otp": otp,
         }),
@@ -181,18 +175,20 @@ class SignupController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Success", data["message"]);
+        AppToast.success(data["message"] ?? "Success");
 
         // You can store token here later
-        // String token = data["accessToken"];
-
+        bearerToken = "Bearer " + data["accessToken"];
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString("token", data["accessToken"]);
+        await prefs.setString("LOGIN", "IN");
         return true;
       } else {
-        Get.snackbar("Error", data["message"] ?? "Signup failed");
+        AppToast.error(data["message"] ?? "Signup failed");
         return false;
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppToast.error(e.toString());
       return false;
     } finally {
       signupLoading = false;

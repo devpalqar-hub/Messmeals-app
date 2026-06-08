@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerDetailScreen.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-
+import 'package:mess/Screens/Utils/AppToast.dart';
 
 class PartnerCard extends StatelessWidget {
   final String id;
   final String name;
-  final String phone;
-  final String email;
-  final String location;
+  final String phone; // Kept in constructor so parent doesn't break
+  final String email; // Kept in constructor
+  final String location; // Kept in constructor
   final int totalOrders;
   final bool isActive;
 
@@ -29,181 +29,136 @@ class PartnerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final controller = Get.find<PartnerController>();
 
     return Container(
+      // margin: EdgeInsets.symmetric(vertical: 4.h), // Tight vertical spacing
+      padding: EdgeInsets.symmetric(
+        horizontal: 12.w,
+        vertical: 10.h,
+      ), // Slim padding
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(10.r), // Matched theme radius
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03), // Subtle shadow
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      padding: EdgeInsets.all(16.r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-         
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
+          /// DETAILS COLUMN
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: "Inter",
-                        color: const Color(0xff0A0A0A),
+                    Flexible(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF111827),
+                        ),
                       ),
                     ),
+                    SizedBox(width: 8.w),
                     if (isActive)
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 4.h,
+                          horizontal: 6.w,
+                          vertical: 2.h,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(8.r),
+                          color: const Color(
+                            0xFFE4F3E8,
+                          ), // Light green matching Home screen
+                          borderRadius: BorderRadius.circular(4.r),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.check_circle,
-                                size: 14.sp, color: Colors.white),
-                            SizedBox(width: 4.w),
-                            Text(
-                              "active",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: "Inter",
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          "Active",
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF4CB051), // Dark green
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                   ],
                 ),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () async {
-                     
-                      await controller.fetchPartnerById(id);
-
-                     
-                      final partner = controller.selectedPartner;
-                      if (partner == null) {
-                        Get.snackbar("Error", "Failed to load partner details");
-                        return;
-                      }
-
-                      final result = await Get.to(() => AddPartnerScreen(
-                            isEdit: true,
-                            partner: partner,
-                          ));
-
-                      if (result == true) {
-                        await controller.fetchPartners();
-                      }
-                    },
-                    icon: Icon(Icons.edit_outlined, size: 22.sp),
+                SizedBox(height: 2.h),
+                Text(
+                  "Total Orders: $totalOrders",
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade600,
                   ),
-                  IconButton(
-                    onPressed: () => _confirmDelete(context, id, controller),
-                    icon: Icon(Icons.delete_outline, size: 20.sp),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      Get.to(() => PartnerDetailsScreen(partnerId: id));
-                    },
-                    icon: Icon(Icons.chevron_right, size: 22.sp),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Text(
-            phone,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontFamily: "Inter",
-              fontWeight: FontWeight.w400,
-              color: const Color(0xff717182),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 2.h),
-          Text(
-            email,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontFamily: "Inter",
-              fontWeight: FontWeight.w400,
-              color: const Color(0xff717182),
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Divider(color: Colors.grey[300]),
-          SizedBox(height: 8.h),
+
+          /// ACTIONS
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "TOTAL ORDERS",
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontFamily: "Inter",
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xff717182),
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      "$totalOrders",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: "Inter",
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
+              GestureDetector(
+                onTap: () async {
+                  await controller.fetchPartnerById(id);
+                  final partner = controller.selectedPartner;
+                  if (partner == null) {
+                    AppToast.error("Failed to load partner details");
+                    return;
+                  }
+                  final result = await Get.to(
+                    () => AddPartnerScreen(isEdit: true, partner: partner),
+                  );
+                  if (result == true) {
+                    await controller.fetchPartners();
+                  }
+                },
+                child: Padding(
+                  padding: EdgeInsets.all(6.w),
+                  child: Icon(
+                    Icons.edit_outlined,
+                    size: 16.sp,
+                    color: Colors.grey.shade700,
+                  ),
                 ),
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "LOCATION",
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontFamily: "Inter",
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xff717182),
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      location,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                        fontFamily: "Inter",
-                      ),
-                    ),
-                  ],
+              GestureDetector(
+                onTap: () => _confirmDelete(context, id, controller),
+                child: Padding(
+                  padding: EdgeInsets.all(6.w),
+                  child: Icon(
+                    Icons.delete_outline,
+                    size: 16.sp,
+                    color: Colors.red.shade400,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Get.to(() => PartnerDetailsScreen(partnerId: id));
+                },
+                child: Padding(
+                  padding: EdgeInsets.only(left: 6.w, top: 6.w, bottom: 6.w),
+                  child: Icon(
+                    Icons.chevron_right,
+                    size: 20.sp,
+                    color: Colors.grey.shade800,
+                  ),
                 ),
               ),
             ],
@@ -212,114 +167,115 @@ class PartnerCard extends StatelessWidget {
       ),
     );
   }
-void _confirmDelete(
-  BuildContext context,
-  String partnerId,
-  PartnerController controller,
-) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext ctx) {
-      return Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(20.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              /// ICON
-              Icon(
-                Icons.warning_amber_rounded,
-                color: const Color(0xffF28B82),
-                size: 45.sp,
-              ),
 
-              SizedBox(height: 12.h),
-
-              /// TITLE
-              Text(
-                "Delete Partner?",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18.sp,
-                ),
-              ),
-
-              SizedBox(height: 8.h),
-
-              /// MESSAGE
-              Text(
-                "Are you sure you want to delete this partner?",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14.sp,
-                ),
-              ),
-
-              SizedBox(height: 20.h),
-
-              /// BUTTONS
-              Row(
-                children: [
-                  /// CANCEL
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                      ),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: 10.w),
-
-                  /// DELETE
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(ctx); // close dialog first
-                        await controller.deletePartner(partnerId);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                      ),
-                      child: Text(
-                        "Delete",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+  void _confirmDelete(
+    BuildContext context,
+    String partnerId,
+    PartnerController controller,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext ctx) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
           ),
-        ),
-      );
-    },
-  );
-}
+          child: Padding(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                /// ICON
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.red.shade400,
+                  size: 40.sp,
+                ),
+                SizedBox(height: 12.h),
+
+                /// TITLE
+                Text(
+                  "Delete Partner?",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16.sp,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+
+                /// MESSAGE
+                Text(
+                  "Are you sure you want to delete this partner?",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey.shade600,
+                    fontSize: 12.sp,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+
+                /// BUTTONS
+                Row(
+                  children: [
+                    /// CANCEL
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                        ),
+                        child: Text(
+                          "Cancel",
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+
+                    /// DELETE
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await controller.deletePartner(partnerId);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Colors.red.shade500, // Explicitly red for delete
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                        ),
+                        child: Text(
+                          "Delete",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

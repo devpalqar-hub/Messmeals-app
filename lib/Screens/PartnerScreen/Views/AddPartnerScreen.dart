@@ -42,7 +42,8 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF7F9FB),
+      //backgroundColor: const Color(0xffF7F9FB),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -57,10 +58,90 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () =>Navigator.pop(context),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
-      
+
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: EdgeInsets.only(bottom: 20.w, left: 16.w, right: 16.w),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                  child: Text(
+                    "Cancel",
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      bool success = false;
+
+                      if (widget.isEdit && widget.partner != null) {
+                        success = await controller.updatePartner(
+                          id: widget.partner!.id,
+                          name: nameController.text.trim(),
+                          phone: phoneController.text.trim(),
+                          status: status == "Active",
+                        );
+                      } else {
+                        success = await controller.addPartner(
+                          name: nameController.text.trim(),
+                          phone: phoneController.text.trim(),
+                          email: emailController.text.trim(),
+                          address: addressController.text.trim(),
+                        );
+                      }
+
+                      if (success) {
+                        Navigator.pop(
+                          context,
+                          true,
+                        ); // or Get.back(result: true);
+                      }
+                    }
+                  },
+                  child: Text(
+                    widget.isEdit ? "Update Partner" : "Add Partner",
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+
       body: GetBuilder<PartnerController>(
         builder: (controller) {
           return Stack(
@@ -99,32 +180,32 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                               controller: nameController,
                             ),
                             SizedBox(height: 14.h),
-                            if (!widget.isEdit) ...[
-                              buildTextField(
-                                label: "Phone *",
-                                hint: "+91 98765 43210",
-                                controller: phoneController,
-                                keyboardType: TextInputType.phone,
-                              ),
-                              SizedBox(height: 14.h),
-                              buildTextField(
-                                label: "Email",
-                                hint: "email@example.com",
-                                controller: emailController,
-                                keyboardType: TextInputType.emailAddress,
-                              ),
-                              SizedBox(height: 14.h),
-                            ],
                             buildTextField(
-                              label: "Address *",
-                              hint: "Enter address",
-                              controller: addressController,
+                              label: "Phone *",
+                              hint: "+91 98765 43210",
+                              controller: phoneController,
+                              keyboardType: TextInputType.phone,
                             ),
+                            if (!widget.isEdit) ...[
+                              // SizedBox(height: 14.h),
+                              // buildTextField(
+                              //   label: "Email",
+                              //   hint: "email@example.com",
+                              //   controller: emailController,
+                              //   keyboardType: TextInputType.emailAddress,
+                              // ),
+                              // SizedBox(height: 14.h),
+                            ],
+                            // buildTextField(
+                            //   label: "Address *",
+                            //   hint: "Enter address",
+                            //   controller: addressController,
+                            // ),
                           ],
                         ),
                       ),
                       SizedBox(height: 20.h),
-                      if (!widget.isEdit)
+                      if (widget.isEdit)
                         Container(
                           width: double.infinity,
                           padding: EdgeInsets.all(18.w),
@@ -156,12 +237,16 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                               SizedBox(height: 8.h),
                               DropdownButtonFormField<String>(
                                 value: status,
-                                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                ),
                                 decoration: InputDecoration(
                                   filled: true,
                                   fillColor: const Color(0xffF0F2F5),
                                   contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12.w, vertical: 12.h),
+                                    horizontal: 12.w,
+                                    vertical: 12.h,
+                                  ),
                                   border: OutlineInputBorder(
                                     borderSide: BorderSide.none,
                                     borderRadius: BorderRadius.circular(16.r),
@@ -189,83 +274,11 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                       SizedBox(height: 24.h),
 
                       /// ---------- ACTION BUTTONS ----------
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                 backgroundColor: Colors.white,   
-                                side: BorderSide(color: Colors.grey.shade300),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: 14.h),
-                              ),
-                              child: Text(
-                                "Cancel",
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black, 
-                foregroundColor: Colors.white, 
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: 14.h),
-                              ),
-                             onPressed: () async {
-  if (_formKey.currentState!.validate()) {
-    bool success = false;
-
-    if (widget.isEdit && widget.partner != null) {
-      success = await controller.updatePartner(
-        id: widget.partner!.id,
-        name: nameController.text.trim(),
-        address: addressController.text.trim(),
-      );
-    } else {
-      success = await controller.addPartner(
-        name: nameController.text.trim(),
-        phone: phoneController.text.trim(),
-        email: emailController.text.trim(),
-        address: addressController.text.trim(),
-      );
-    }
-
-    
-    if (success) {
-      Navigator.pop(context, true); // or Get.back(result: true);
-    }
-  }
-},
-                              child: Text(
-                                widget.isEdit ? "Update Partner" : "Add Partner",
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
               ),
 
-              
               if (controller.isLoading)
                 Container(
                   color: Colors.white70,
@@ -303,8 +316,10 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
             hintText: hint,
             filled: true,
             fillColor: const Color(0xffF0F2F5),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 14.h,
+            ),
             border: OutlineInputBorder(
               borderSide: BorderSide.none,
               borderRadius: BorderRadius.circular(16.r),

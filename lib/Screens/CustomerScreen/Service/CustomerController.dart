@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -8,11 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart' show baseUrl;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomerController extends GetxController {
-  final AuthController authController = Get.put(AuthController());
+  // final AuthController authController = Get.put(AuthController());
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 
@@ -29,14 +29,13 @@ class CustomerController extends GetxController {
     String? search,
     String? planId,
   }) async {
-    final messId = authController.selectedMessId;
+    final messId = dashboardController.selectedMessId;
 
-    if (messId.isEmpty) {
-      Get.snackbar("Error", "Please select a mess first");
+    if (messId == null) {
+      AppToast.error("Please select a mess first");
       return;
     }
 
-    /// RESET pagination on refresh / filter change
     if (refresh) {
       page = 1;
       hasMore = true;
@@ -59,40 +58,20 @@ class CustomerController extends GetxController {
         return;
       }
 
-      /// ================= BUILD URL =================
-      final queryParams = [
-        'messId=$messId',
-        'page=$page',
-        'limit=$limit',
-        if (search != null && search.isNotEmpty) 'search=$search',
-        if (planId != null && planId.isNotEmpty) 'planId=$planId',
-      ];
-
       final url =
           '$baseUrl/customer?page=$page&limit=$limit&messId=$messId '
           '${search != null && search.isNotEmpty ? '&search=$search' : ''}'
           '${planId != null && planId.isNotEmpty ? '&planId=$planId' : ''}';
-           debugPrint("--------url: $url");
-
-      final startTime = DateTime.now();
+      debugPrint("--------url: $url");
 
       final response = await http.get(
         Uri.parse(url),
-        
+
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
       );
-
-      final endTime = DateTime.now();
-
-      /// ================= RESPONSE LOG =================
-      debugPrint("========== FETCH CUSTOMERS RESPONSE ==========");
-      debugPrint("STATUS CODE: ${response.statusCode}");
-      debugPrint("TIME: ${endTime.difference(startTime).inMilliseconds} ms");
-      debugPrint("BODY: ${_prettyJsonString(response.body)}");
-      debugPrint("============================================");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -113,12 +92,10 @@ class CustomerController extends GetxController {
         debugPrint("📊 TOTAL CUSTOMERS: ${customers.length}");
       } else {
         debugPrint("❌ API ERROR: ${response.statusCode}");
-        Get.snackbar("Error", "Failed to fetch customers");
+        AppToast.error("Failed to fetch customers");
       }
-    } catch (e, stack) {
-      debugPrint("❌ FETCH CUSTOMERS ERROR: $e");
-      debugPrint("📍 STACK TRACE: $stack");
-      Get.snackbar("Error", e.toString());
+    } catch (e) {
+      AppToast.error(e.toString());
     } finally {
       isLoading = false;
       isMoreLoading = false;
@@ -148,19 +125,18 @@ class CustomerController extends GetxController {
   }) async {
     try {
       final url = Uri.parse("$baseUrl/customer/register-user");
-
       final requestBody = {
         "name": name,
         "phone": phone,
-        "email": email,
+        if (email.isNotEmpty) "email": email,
         "address": address,
         "location": location,
-
         "planId": planId,
         "deliveryPartnerId": deliveryPartnerId,
-
-        "startDate": startDate,
-        "endDate": endDate,
+        "start_date": DateFormat(
+          "yyyy-MM-dd",
+        ).format(DateTime.parse(startDate)),
+        "end_date": DateFormat("yyyy-MM-dd").format(DateTime.parse(endDate)),
 
         "walletAmount": double.tryParse(walletAmount) ?? 0,
 
@@ -198,7 +174,7 @@ class CustomerController extends GetxController {
       Fluttertoast.showToast(msg: "Failed: ${response.statusCode}");
 
       return false;
-    } catch (e, stack) {
+    } catch (e) {
       return false;
     }
   }
@@ -235,19 +211,6 @@ class CustomerController extends GetxController {
 
       final startTime = DateTime.now();
 
-      /// 🔥 REQUEST LOG
-      if (kDebugMode) {
-        debugPrint("=========== UPDATE CUSTOMER REQUEST ===========");
-        debugPrint("URL      : $url");
-        debugPrint("METHOD   : PATCH");
-        debugPrint("HEADERS  : {");
-        debugPrint("  Content-Type: application/json");
-        debugPrint("  Authorization: Bearer ***"); // hide token
-        debugPrint("}");
-        debugPrint("BODY     : ${_prettyJson(bodyMap)}");
-        debugPrint("===============================================");
-      }
-
       final response = await http.patch(
         url,
         body: body,
@@ -271,11 +234,11 @@ class CustomerController extends GetxController {
       }
 
       /// 🔥 401 AUTO LOGOUT (IMPORTANT)
-      if (response.statusCode == 401) {
-        Get.snackbar("Session Expired", "Please login again");
-        await authController.logout(); // make sure you have this
-        return;
-      }
+      // if (response.statusCode == 401) {
+      //   Get.snackbar("Session Expired", "Please login again");
+      //   await authController.logout(); // make sure you have this
+      //   return;
+      // }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -283,13 +246,7 @@ class CustomerController extends GetxController {
         await dashboardController.fetchDashboardStats();
         await refreshCustomers();
 
-        Get.snackbar(
-          "Success",
-          data['message'] ?? "Customer updated successfully",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.withOpacity(0.9),
-          colorText: Colors.white,
-        );
+        AppToast.success(data['message'] ?? "Customer updated successfully");
 
         await Future.delayed(const Duration(milliseconds: 500));
 
@@ -301,25 +258,13 @@ class CustomerController extends GetxController {
       } else {
         final error = jsonDecode(response.body);
 
-        Get.snackbar(
-          "Error",
-          error['message'] ?? "Failed to update customer",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.9),
-          colorText: Colors.white,
-        );
+        AppToast.error(error['message'] ?? "Failed to update customer");
       }
     } catch (e, stack) {
       debugPrint("❌ UPDATE CUSTOMER ERROR: $e");
       debugPrint("📍 STACK TRACE: $stack");
 
-      Get.snackbar(
-        "Error",
-        "Something went wrong: $e",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.9),
-        colorText: Colors.white,
-      );
+      AppToast.error("Something went wrong: $e");
     } finally {
       isLoading = false;
       update();
@@ -350,16 +295,12 @@ class CustomerController extends GetxController {
         await refreshCustomers();
         await dashboardController.fetchDashboardStats();
 
-        Get.snackbar(
-          "Success",
-          "Customer deleted successfully",
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        AppToast.success("Customer deleted successfully");
       } else {
-        Get.snackbar("Error", "Failed to delete customer");
+        AppToast.error("Failed to delete customer");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppToast.error(e.toString());
     } finally {
       isLoading = false;
       update();
@@ -392,7 +333,6 @@ class CustomerController extends GetxController {
       final body = jsonEncode(bodyMap);
 
       // ⏱️ Start time
-      final startTime = DateTime.now();
 
       final response = await http.post(
         url,
@@ -404,35 +344,13 @@ class CustomerController extends GetxController {
       );
 
       // ⏱️ End time
-      final endTime = DateTime.now();
-
-      // 🔥 DEBUG LOGS (only in debug mode)
-      if (kDebugMode) {
-        debugPrint("=========== API CALL ===========");
-        debugPrint("URL      : $url");
-        debugPrint("METHOD   : POST");
-        debugPrint(
-          "HEADERS  : ${{
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ***', // hide token
-          }}",
-        );
-        debugPrint("REQUEST  : ${_prettyJson(bodyMap)}");
-        debugPrint("----------- RESPONSE -----------");
-        debugPrint("STATUS   : ${response.statusCode}");
-        debugPrint(
-          "TIME     : ${endTime.difference(startTime).inMilliseconds} ms",
-        );
-        debugPrint("BODY     : ${_prettyJsonString(response.body)}");
-        debugPrint("================================");
-      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // ✅ Refresh dashboard
         await dashboardController.fetchDashboardStats();
         await refreshCustomers();
 
-        Get.snackbar("Success", "Subscription renewed successfully");
+        AppToast.success("Subscription renewed successfully");
 
         // ✅ Refresh single customer
         final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
@@ -455,23 +373,16 @@ class CustomerController extends GetxController {
         return true;
       } else {
         final error = jsonDecode(response.body);
-        Get.snackbar(
-          "Error",
-          error['message'] ?? "Failed to renew subscription",
-        );
+        AppToast.error(error['message'] ?? "Failed to renew subscription");
         return false;
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppToast.error(e.toString());
       return false;
     } finally {
       isLoading = false;
       update();
     }
-  }
-
-  String _prettyJson(Map<String, dynamic> json) {
-    return const JsonEncoder.withIndent('  ').convert(json);
   }
 
   String _prettyJsonString(String input) {
@@ -494,7 +405,7 @@ class CustomerController extends GetxController {
       final token = prefs.getString('token');
 
       if (token == null || token.isEmpty) {
-        Get.snackbar("Error", "Please login again.");
+        AppToast.error("Please login again.");
         return;
       }
 
@@ -538,11 +449,10 @@ class CustomerController extends GetxController {
       if (response.statusCode == 200) {
         await refreshCustomers();
 
-        Get.snackbar(
-          "Paused Successfully",
-          "Order paused from ${DateFormat('dd MMM').format(startDate)} to ${DateFormat('dd MMM').format(endDate)}",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade100,
+        AppToast.show(
+          title: "Paused Successfully",
+          message:
+              "Order paused from ${DateFormat('dd MMM').format(startDate)} to ${DateFormat('dd MMM').format(endDate)}",
         );
 
         // Refresh data
@@ -551,11 +461,11 @@ class CustomerController extends GetxController {
         await fetchCustomerDetails(customerProfileId);
       } else {
         final error = jsonDecode(response.body);
-        Get.snackbar("Error", error['message'] ?? "Failed to pause order");
+        AppToast.error(error['message'] ?? "Failed to pause order");
       }
     } catch (e) {
       debugPrint("❌ EXCEPTION: $e");
-      Get.snackbar("Error", e.toString());
+      AppToast.error(e.toString());
     }
   }
 
@@ -596,7 +506,7 @@ class CustomerController extends GetxController {
       debugPrint("==================================================");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Success", "Subscription cancelled successfully");
+        AppToast.success("Subscription cancelled successfully");
 
         /// 🔥 FETCH UPDATED CUSTOMER
         final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
@@ -637,12 +547,12 @@ class CustomerController extends GetxController {
         return true;
       } else {
         final error = jsonDecode(response.body);
-        Get.snackbar("Error", error['message'] ?? "Cancel subscription failed");
+        AppToast.error(error['message'] ?? "Cancel subscription failed");
         return false;
       }
     } catch (e) {
       debugPrint("❌ EXCEPTION: $e");
-      Get.snackbar("Error", e.toString());
+      AppToast.error(e.toString());
       return false;
     } finally {
       isLoading = false;
@@ -691,7 +601,7 @@ class CustomerController extends GetxController {
       debugPrint("============================================");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Success", "Wallet updated successfully");
+        AppToast.success("Wallet updated successfully");
 
         await dashboardController.fetchDashboardStats();
 
@@ -732,11 +642,11 @@ class CustomerController extends GetxController {
         }
       } else {
         final error = jsonDecode(response.body);
-        Get.snackbar("Error", error['message'] ?? "Failed to update wallet");
+        AppToast.error(error['message'] ?? "Failed to update wallet");
       }
     } catch (e) {
       debugPrint("❌ EXCEPTION: $e");
-      Get.snackbar("Error", e.toString());
+      AppToast.error(e.toString());
     } finally {
       isLoading = false;
       update();

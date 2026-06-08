@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart' show Fluttertoast, Toast;
+import 'package:fluttertoast/fluttertoast.dart' show Fluttertoast;
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mess/main.dart';
 import 'package:mess/Screens/HomeScreen/HomeView.dart';
@@ -21,8 +22,8 @@ class AuthController extends GetxController {
   UserModel? currentUser;
 
   // List of messes owned by the user
-  List<Map<String, dynamic>> ownedMesses = [];
-  String selectedMessId = "";
+  // List<Map<String, dynamic>> ownedMesses = [];
+  // String selectedMessId = "";
 
   DateTime? tokenExpiry;
   Timer? _logoutTimer;
@@ -39,8 +40,7 @@ class AuthController extends GetxController {
   void _refreshUI() => update();
 
   void safeSnack(String title, String message) {
-    if (Get.context == null) return;
-    Get.snackbar(title, message, snackPosition: SnackPosition.BOTTOM);
+    AppToast.show(title: title, message: message);
   }
 
   // --- Auth Methods ---
@@ -95,23 +95,18 @@ class AuthController extends GetxController {
 
       final body = {"phone": phone, "sessionId": sessionId, "otp": otp};
 
-      debugPrint("🚀 VERIFY OTP API");
-      debugPrint("➡️ URL: $url");
-      debugPrint("➡️ BODY: ${jsonEncode(body)}");
-
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(body),
       );
 
-      debugPrint("✅ STATUS: ${response.statusCode}");
-      debugPrint("✅ RESPONSE: ${response.body}");
-
       final data = jsonDecode(response.body);
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           data["accessToken"] != null) {
+        bearerToken = "Bearer " + data["accessToken"];
+
         await _onLoginSuccess(data);
         return true;
       } else {
@@ -136,19 +131,8 @@ class AuthController extends GetxController {
     isLoggedIn = true;
     tokenExpiry = _decodeTokenExpiry(token);
 
-    // Fetch messes from API
-    await fetchOwnedMesses();
-
-    // Default to first mess if available
-    if (ownedMesses.isNotEmpty) {
-      selectedMessId = ownedMesses.first["id"]?.toString() ?? "";
-      await prefs.setString("selectedMessId", selectedMessId);
-    }
-
     await prefs.setString("token", token);
-    await prefs.setString("user", jsonEncode(data["user"]));
-    await prefs.setString("ownedMesses", jsonEncode(ownedMesses));
-
+    await prefs.setString("LOGIN", "IN");
     if (tokenExpiry != null) {
       await prefs.setString("tokenExpiry", tokenExpiry!.toIso8601String());
     }
@@ -174,19 +158,6 @@ class AuthController extends GetxController {
         token = storedToken;
         bearerToken = "Bearer $token";
         currentUser = UserModel.fromJson(jsonDecode(storedUser));
-        selectedMessId = prefs.getString("selectedMessId") ?? "";
-
-        final storedMesses = prefs.getString("ownedMesses");
-        if (storedMesses != null) {
-          try {
-            final List<dynamic> decoded = jsonDecode(storedMesses);
-            // Robust parsing into List<Map>
-            ownedMesses =
-                decoded.map((e) => Map<String, dynamic>.from(e)).toList();
-          } catch (e) {
-            ownedMesses = [];
-          }
-        }
 
         tokenExpiry = expiry;
         isLoggedIn = true;
@@ -200,32 +171,6 @@ class AuthController extends GetxController {
     await _clearSessionData();
     isLoading = false;
     _refreshUI();
-  }
-
-  Future<void> fetchOwnedMesses() async {
-    try {
-      final url = Uri.parse("$baseUrl/customer/owners/messes");
-      final response = await http.get(
-        url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": bearerToken,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        if (decoded is List) {
-          // Map each item to Map<String, dynamic> safely
-          ownedMesses =
-              decoded.map((e) => Map<String, dynamic>.from(e)).toList();
-        }
-      }
-    } catch (e) {
-      log("Fetch Messes Error → $e");
-    } finally {
-      _refreshUI(); // Ensure UI knows messes are loaded
-    }
   }
 
   Future<void> logout({bool showMessage = true}) async {
@@ -245,8 +190,6 @@ class AuthController extends GetxController {
     token = "";
     bearerToken = "";
     sessionId = "";
-    selectedMessId = "";
-    ownedMesses = [];
     currentUser = null;
     isLoggedIn = false;
     _logoutTimer?.cancel();

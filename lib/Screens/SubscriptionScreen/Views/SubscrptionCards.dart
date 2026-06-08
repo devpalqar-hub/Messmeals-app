@@ -1,10 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:mess/Screens/SubscriptionScreen/Controller/SubscriptionControllrer.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
 
 Widget NextBillCard() {
+  SubscriptionControllrer sctrl = Get.find();
   return _BaseCard(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -22,7 +27,7 @@ Widget NextBillCard() {
               ),
               child: Icon(
                 Icons.calendar_today,
-                color: primaryTeal,
+                color: PrimaryColor,
                 size: 20.sp,
               ),
             ),
@@ -60,16 +65,25 @@ Widget NextBillCard() {
             Expanded(
               child: _buildBillStat(
                 'Billing Date\n(Next Cycle)',
-                '06 May 2024',
+                DateFormat("dd MMM y").format(
+                  DateTime.parse(
+                    sctrl.billingModel!.currentPeriod!.dueDate!,
+                  ).toLocal(),
+                ),
               ),
             ),
             _buildDividerVertical(),
-            Expanded(child: _buildBillStat('Customers\n(Last Month)', '72')),
+            Expanded(
+              child: _buildBillStat(
+                'Customers\n(Last Month)',
+                (sctrl.billingModel!.customerCount ?? "0").toString(),
+              ),
+            ),
             _buildDividerVertical(),
             Expanded(
               child: _buildBillStat(
                 'Amount\n(To Be Paid)',
-                '₹ 2,249',
+                ((sctrl.billingModel!.amount ?? 0)).toStringAsFixed(2),
                 isAmount: true,
               ),
             ),
@@ -85,11 +99,11 @@ Widget NextBillCard() {
           ),
           child: Row(
             children: [
-              Icon(Icons.info, color: primaryTeal, size: 16.sp),
+              Icon(Icons.info, color: PrimaryColor, size: 16.sp),
               SizedBox(width: 8.w),
               Expanded(
                 child: Text(
-                  'Pay the bill within 5 days after bill date to avoid interruption.',
+                  'Bill generated on ${DateFormat('dd MMM yyyy').format(DateTime.parse(sctrl.billingModel!.nextBillingDate!).toLocal())}. Please pay before ${DateFormat('dd MMM yyyy').format(DateTime.parse(sctrl.billingModel!.nextDueDate!).toLocal())} to avoid service interruption.',
                   style: GoogleFonts.poppins(fontSize: 10.sp, color: textLight),
                 ),
               ),
@@ -98,28 +112,30 @@ Widget NextBillCard() {
         ),
         SizedBox(height: 16.h),
         // Pay Button
-        SizedBox(
-          width: double.infinity,
-          height: 48.h,
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryTeal,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
+        if (sctrl.billingModel!.messStatus != "ACTIVE") ...[
+          SizedBox(
+            width: double.infinity,
+            height: 48.h,
+            child: ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PrimaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                elevation: 0,
               ),
-              elevation: 0,
-            ),
-            child: Text(
-              'Pay Bill',
-              style: GoogleFonts.poppins(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+              child: Text(
+                'Pay Bill',
+                style: GoogleFonts.poppins(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ],
     ),
   );

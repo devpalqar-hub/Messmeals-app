@@ -1,4 +1,3 @@
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -6,18 +5,19 @@ import 'package:get/get.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/Utils/routes.dart';
 import 'package:mess/dashbaord_binding.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 String baseUrl = "https://staging-api.messmeals.com";
-
+String? login;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final authController = Get.put(AuthController());
   // await authController.checkLoginStatus();
-
-  runApp(
-    DevicePreview(enabled: false, builder: (context) => const MessMeals()),
-  );
+  SharedPreferences pref = await SharedPreferences.getInstance();
+  bearerToken = "Bearer " + (pref.getString("token") ?? "");
+  login = pref.getString("LOGIN");
+  runApp(MessMeals());
 }
 
 class MessMeals extends StatelessWidget {
@@ -31,10 +31,7 @@ class MessMeals extends StatelessWidget {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
           initialBinding: AppBindings(),
-          initialRoute:
-              Get.find<AuthController>().isLoggedIn
-                  ? AppRoutes.dashboard
-                  : AppRoutes.login,
+          initialRoute: login == "IN" ? AppRoutes.dashboard : AppRoutes.login,
           getPages: AppRoutes.routes,
         );
       },

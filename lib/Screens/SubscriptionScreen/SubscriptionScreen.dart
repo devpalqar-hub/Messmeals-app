@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:get/utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/SubscriptionScreen/Controller/SubscriptionControllrer.dart';
 import 'package:mess/Screens/SubscriptionScreen/Views/SubscrptionCards.dart';
+import 'package:mess/Screens/Utils/Colors.dart';
 
 class SubscriptionScreen extends StatelessWidget {
   SubscriptionScreen({super.key});
@@ -19,37 +21,48 @@ class SubscriptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: const Icon(Icons.arrow_back),
-        backgroundColor: Colors.white,
-        title: Text(
-          'Subscription',
+    return GetBuilder<SubscriptionControllrer>(
+      builder: (context) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            title: Text(
+              'Subscription',
 
-          style: GoogleFonts.poppins(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: textDark,
+              style: GoogleFonts.poppins(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: textDark,
+              ),
+            ),
           ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 16.h,
-          children: [
-            //_buildHeaderSection(),
-            // SizedBox(height: 20.h),
-            // _buildUsageOverviewCard(),
-            NextBillCard(),
-            _buildPricingChartCard(),
-            _buildFooterInfo(),
-            SizedBox(height: 20.h),
-          ],
-        ),
-      ),
+          body:
+              (ctrl.billingModel == null)
+                  ? Center(
+                    child: CircularProgressIndicator(color: PrimaryColor),
+                  )
+                  : SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 10.h,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 16.h,
+                      children: [
+                        //_buildHeaderSection(),
+                        // SizedBox(height: 20.h),
+                        // _buildUsageOverviewCard(),
+                        NextBillCard(),
+                        _buildPricingChartCard(),
+                        //_buildFooterInfo(),
+                        SizedBox(height: 20.h),
+                      ],
+                    ),
+                  ),
+        );
+      },
     );
   }
 
@@ -243,113 +256,6 @@ class SubscriptionScreen extends StatelessWidget {
   }
 
   // --- 3. Next Bill Card ---
-  Widget _buildNextBillCard() {
-    return _BaseCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9), // Very light gray/blue
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Icon(
-                  Icons.calendar_today,
-                  color: primaryTeal,
-                  size: 20.sp,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Next Bill',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: textDark,
-                    ),
-                  ),
-                  Text(
-                    'Bill will be generated based on last month usage',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.sp,
-                      color: textLight,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          const Divider(color: Color(0xFFF1F5F9), thickness: 1.5),
-          SizedBox(height: 16.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildBillStat('Billing Date', '06 May 2024'),
-              _buildDividerVertical(),
-              _buildBillStat('Customers (Last Month)', '72'),
-              _buildDividerVertical(),
-              _buildBillStat('Amount to be Paid', '₹ 2,249', isAmount: true),
-            ],
-          ),
-          SizedBox(height: 20.h),
-          // Info Banner
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(6.r),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info, color: primaryTeal, size: 16.sp),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    'Pay the bill within 5 days after bill date to avoid interruption.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10.sp,
-                      color: textLight,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 16.h),
-          // Pay Button
-          SizedBox(
-            width: double.infinity,
-            height: 48.h,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryTeal,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Pay Bill',
-                style: GoogleFonts.poppins(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildBillStat(String label, String value, {bool isAmount = false}) {
     return Column(
@@ -423,11 +329,21 @@ class SubscriptionScreen extends StatelessWidget {
             ),
           ),
           // Table Rows
-          _buildPricingRow('1 - 50', '₹ 25', '₹ 1,250'),
-          _buildPricingRow('51 - 100', '₹ 22', '₹ 484', isCurrent: true),
-          _buildPricingRow('101 - 250 ', '₹ 20', '-'),
-          _buildPricingRow('251 - 500', '₹ 18', '-'),
-          _buildPricingRow('501+ ', '₹ 15', '-', isLast: true),
+          for (var data in ctrl.billingTier)
+            _buildPricingRow(
+              '${data.minCustomers} - ${data.minCustomers}',
+              '₹ ${data.perCustomerRate}',
+              '₹ ${(double.parse(data.perCustomerRate!) * ctrl.billingModel!.customerCount!).toString()}',
+              isCurrent:
+                  data.perCustomerRate ==
+                  ctrl.billingModel!.perCustomerRate.toString(),
+              isLast:
+                  ctrl.billingTier.indexOf(data) == ctrl.billingTier.length - 1,
+            ),
+          // _buildPricingRow('51 - 100', '₹ 22', '₹ 484', isCurrent: true),
+          // _buildPricingRow('101 - 250 ', '₹ 20', '-'),
+          // _buildPricingRow('251 - 500', '₹ 18', '-'),
+          // _buildPricingRow('501+ ', '₹ 15', '-', isLast: true),
 
           // Padding(
           //   padding: EdgeInsets.all(16.w),

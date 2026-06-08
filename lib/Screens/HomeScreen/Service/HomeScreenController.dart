@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 import 'package:mess/Screens/HomeScreen/Model/DashboardModel.dart';
 import 'package:mess/Screens/HomeScreen/Model/MessModel.dart';
 import 'package:mess/Screens/HomeScreen/Model/VariationCountModel.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
+import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,23 +16,37 @@ class HomeScreenController extends GetxController {
   // Standard variables instead of Rx
   DashboardModel? dashboardData;
   VariationCountModel? variationData;
+
+  UserModel? user;
   bool isLoading = false;
   bool isVariationLoading = false;
   DateTime selectedDate = DateTime.now();
   String authToken = "";
-  final AuthController authController = Get.find<AuthController>();
+  final AuthController authController = Get.put(AuthController());
   List<MessModel> messes =[ ];
-
+  String? selectedMessId;
   @override
   void onInit() {
     super.onInit();
 
     // Initial fetch if messId exists
 
-    fetchMyMesses();
+    // fetchMyMesses();
+    fetchProfile();
+  }
 
-    if (authController.selectedMessId.isNotEmpty) {
-      refreshAllData();
+  fetchProfile() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': '$bearerToken',
+      },
+    );
+    print(response.body);
+    if (response.statusCode == 200) {
+      user = UserModel.fromJson(json.decode(response.body));
+      fetchMyMesses();
     }
   }
 
@@ -49,7 +66,17 @@ class HomeScreenController extends GetxController {
         messes.add(MessModel.fromJson(data));
       }
 
+      if (messes.isNotEmpty) {
+        selectedMessId = messes.first.id;
+        refreshAllData();
+      }
+
       update();
+    } else {
+      Get.deleteAll();
+      SharedPreferences pref = await SharedPreferences.getInstance();
+      pref.clear();
+      Get.offAll(() => LoginScreen());
     }
   }
 
@@ -70,9 +97,7 @@ class HomeScreenController extends GetxController {
       update(); // Notify UI to show loader
 
       final token = await _getToken();
-      final messId = authController.selectedMessId;
-
-      if (messId.isEmpty) return;
+      final messId = selectedMessId;
 
       final url = Uri.parse('$baseUrl/auth/stats?messId=$messId');
 
@@ -90,10 +115,10 @@ class HomeScreenController extends GetxController {
       } else if (response.statusCode == 403 || response.statusCode == 401) {
         _handleLogout();
       } else {
-        Get.snackbar("Error", "Failed to fetch dashboard stats");
+        AppToast.error("Failed to fetch dashboard stats");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppToast.error(e.toString());
     } finally {
       isLoading = false;
       update(); // Notify UI that loading is finished
@@ -104,9 +129,9 @@ class HomeScreenController extends GetxController {
     try {
       isVariationLoading = true;
       final token = await _getToken();
-      final messId = authController.selectedMessId;
+      final messId = selectedMessId;
 
-      if (messId.isEmpty) return;
+      if (messId != null) return;
 
       final formattedDate =
           "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
@@ -127,10 +152,10 @@ class HomeScreenController extends GetxController {
         final data = jsonDecode(response.body);
         variationData = VariationCountModel.fromJson(data);
       } else {
-        Get.snackbar("Error", "Failed to fetch variation count");
+        AppToast.error("Failed to fetch variation count");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppToast.error(e.toString());
     } finally {
       isVariationLoading = false;
       update();
@@ -144,7 +169,6 @@ class HomeScreenController extends GetxController {
   }
 
   Future<void> _handleLogout() async {
-    Get.snackbar("Session Expired", "Please log in again.");
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     Get.deleteAll();

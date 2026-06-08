@@ -10,7 +10,8 @@ import 'package:mess/main.dart';
 
 class PartnerController extends GetxController {
   final AuthController authController = Get.find<AuthController>();
-  final HomeScreenController dashboardController = Get.find<HomeScreenController>();
+  final HomeScreenController dashboardController =
+      Get.find<HomeScreenController>();
 
   // Standard variables instead of .obs
   List<Partner> partners = [];
@@ -26,15 +27,15 @@ class PartnerController extends GetxController {
   String errorMessage = '';
 
   void _showToast(String message, {bool isError = false}) {
-  Fluttertoast.showToast(
-    msg: message,
-    toastLength: Toast.LENGTH_SHORT,
-    gravity: ToastGravity.BOTTOM,
-    backgroundColor: isError ? Colors.red : Colors.green,
-    textColor: Colors.white,
-    fontSize: 14.0,
-  );
-}
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: isError ? Colors.red : Colors.green,
+      textColor: Colors.white,
+      fontSize: 14.0,
+    );
+  }
 
   Future<void> ensureLoaded() async {
     if (isReady) return;
@@ -50,9 +51,9 @@ class PartnerController extends GetxController {
     errorMessage = '';
     update(); // Notify UI to show loading state
 
-    final messId = authController.selectedMessId;
-    if (messId.isEmpty) {
-    _showToast("Please select a mess first", isError: true);
+    final messId = dashboardController.selectedMessId;
+    if (messId == null) {
+      _showToast("Please select a mess first", isError: true);
       isLoading = false;
       update();
       return;
@@ -81,7 +82,8 @@ class PartnerController extends GetxController {
         final List<dynamic> list = data['data'] ?? [];
         partners = list.map((e) => Partner.fromJson(e)).toList();
       } else {
-        errorMessage = "Failed to fetch partners (Status: ${response.statusCode})";
+        errorMessage =
+            "Failed to fetch partners (Status: ${response.statusCode})";
       }
     } catch (e) {
       errorMessage = e.toString();
@@ -96,7 +98,7 @@ class PartnerController extends GetxController {
     try {
       isLoading = true;
       update();
-      
+
       final url = Uri.parse('$baseUrl/delivery-agent/$id');
       final response = await http.get(
         url,
@@ -110,114 +112,115 @@ class PartnerController extends GetxController {
         final jsonData = json.decode(response.body);
         final partnerData = jsonData['data'] ?? jsonData;
         selectedPartner = Partner.fromJson(partnerData);
-      } else {
-     
-      }
+      } else {}
     } catch (e) {
-    
     } finally {
       isLoading = false;
       update();
     }
   }
 
- Future<bool> addPartner({
-  required String name,
-  required String phone,
-  required String email,
-  required String address,
-}) async {
-  try {
-    isLoading = true;
-    update();
+  Future<bool> addPartner({
+    required String name,
+    required String phone,
+    required String email,
+    required String address,
+  }) async {
+    try {
+      isLoading = true;
+      update();
 
-    final messId = authController.selectedMessId;
-    if (messId.isEmpty) {
-      _showToast("Please select a mess first",);
+      final messId = dashboardController.selectedMessId;
+      if (messId == null) {
+        _showToast("Please select a mess first");
+        return false;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/delivery-agent'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": bearerToken,
+        },
+        body: json.encode({
+          "name": name,
+          "phone": phone,
+          //   "email": email,
+          "address": address,
+          "messId": messId,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        await refreshPartners();
+        await dashboardController.fetchDashboardStats();
+        _showToast("Partner added successfully");
+        return true; // ✅ IMPORTANT
+      } else {
+        final err = json.decode(response.body);
+        _showToast(err['message'] ?? "Failed to add partner");
+        return false;
+      }
+    } catch (e) {
+      _showToast(e.toString());
       return false;
+    } finally {
+      isLoading = false;
+      update();
     }
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/delivery-agent'),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": bearerToken,
-      },
-      body: json.encode({
-        "name": name,
-        "phone": phone,
-        "email": email,
-        "address": address,
-        "messId": messId,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      await refreshPartners();
-      await dashboardController.fetchDashboardStats();
-      _showToast("Partner added successfully", );
-      return true; // ✅ IMPORTANT
-    } else {
-      final err = json.decode(response.body);
-      _showToast(err['message'] ?? "Failed to add partner",);
-      return false;
-    }
-  } catch (e) {
-    _showToast(e.toString(),);
-    return false;
-  } finally {
-    isLoading = false;
-    update();
   }
-}
- Future<bool> updatePartner({
-  required String id,
-  String? name,
-  String? address,
-}) async {
-  try {
-    isLoading = true;
-    update();
 
-    final messId = authController.selectedMessId;
+  Future<bool> updatePartner({
+    required String id,
+    String? name,
+    String? phone,
+    bool? status,
+  }) async {
+    try {
+      isLoading = true;
+      update();
 
-    final response = await http.patch(
-      Uri.parse('$baseUrl/delivery-agent/$id'),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": bearerToken,
-      },
-      body: json.encode({
-        if (name != null) "name": name,
-        if (address != null) "address": address,
-        "messId": messId,
-      }),
-    );
+      final messId = dashboardController.selectedMessId;
 
-    if (response.statusCode == 200) {
-      await fetchPartners();
-      _showToast("Partner updated", );
-      return true; // ✅ IMPORTANT
-    } else {
-      final err = json.decode(response.body);
-      _showToast(err['message'] ?? "Failed to update",);
+      final response = await http.patch(
+        Uri.parse('$baseUrl/delivery-agent/$id'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": bearerToken,
+        },
+        body: json.encode({
+          if (name != null) "name": name,
+          if (phone != null) "phone": phone,
+          if (status != null) "status": status,
+          "messId": messId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        await fetchPartners();
+        _showToast("Partner updated");
+        return true; // ✅ IMPORTANT
+      } else {
+        final err = json.decode(response.body);
+        _showToast(err['message'] ?? "Failed to update");
+        return false;
+      }
+    } catch (e) {
+      _showToast(e.toString());
       return false;
+    } finally {
+      isLoading = false;
+      update();
     }
-  } catch (e) {
-    _showToast(e.toString(),);
-    return false;
-  } finally {
-    isLoading = false;
-    update();
   }
-}
+
   Future<void> deletePartner(String id) async {
     try {
       isLoading = true;
       update();
 
-      final messId = authController.selectedMessId;
-      if (messId.isEmpty) {
+      final messId = dashboardController.selectedMessId;
+      if (messId == null) {
         _showToast("Please select a mess first", isError: true);
         return;
       }
@@ -233,18 +236,16 @@ class PartnerController extends GetxController {
 
       if (response.statusCode == 200) {
         await refreshPartners();
-      _showToast("Partner deleted successfully");
-        await dashboardController.fetchDashboardStats(); 
+        _showToast("Partner deleted successfully");
+        await dashboardController.fetchDashboardStats();
         await Future.delayed(const Duration(milliseconds: 600));
         if (Get.previousRoute.isNotEmpty) {
           Get.back();
         }
       } else {
         final err = json.decode(response.body);
-      
       }
     } catch (e) {
-    
     } finally {
       isLoading = false;
       update();
@@ -268,6 +269,4 @@ class PartnerController extends GetxController {
     currentPage = 1;
     fetchPartners();
   }
-
-  
 }

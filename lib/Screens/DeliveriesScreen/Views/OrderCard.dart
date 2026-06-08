@@ -16,8 +16,7 @@ class OrderCard extends StatefulWidget {
   State<OrderCard> createState() => _OrderCardState();
 }
 
-class _OrderCardState extends State<OrderCard>
-    with TickerProviderStateMixin {
+class _OrderCardState extends State<OrderCard> with TickerProviderStateMixin {
   bool _expanded = false;
   int _selectedStatus = 0;
 
@@ -33,8 +32,9 @@ class _OrderCardState extends State<OrderCard>
 
   String get formattedDate {
     try {
-      return DateFormat('dd MMM yyyy')
-          .format(DateTime.parse(widget.delivery.date));
+      return DateFormat(
+        'dd MMM yyyy',
+      ).format(DateTime.parse(widget.delivery.date));
     } catch (_) {
       return widget.delivery.date;
     }
@@ -43,8 +43,9 @@ class _OrderCardState extends State<OrderCard>
   @override
   void initState() {
     super.initState();
-    _selectedStatus =
-        _statusValues.indexOf(widget.delivery.status.toUpperCase());
+    _selectedStatus = _statusValues.indexOf(
+      widget.delivery.status.toUpperCase(),
+    );
     if (_selectedStatus == -1) _selectedStatus = 0;
   }
 
@@ -71,18 +72,18 @@ class _OrderCardState extends State<OrderCard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _Capsule(label: _statusValues[_selectedStatus]),
-                     SizedBox(height: 8.h),
+                    SizedBox(height: 8.h),
 
                     if (_has(user?.name))
                       Text(
                         user!.name,
-                        style:  TextStyle(
+                        style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
 
-                     SizedBox(height: 4.h),
+                    SizedBox(height: 4.h),
 
                     if (_has(user?.phone))
                       _rowInfo(Icons.call_outlined, user!.phone),
@@ -93,21 +94,17 @@ class _OrderCardState extends State<OrderCard>
                 ),
               ),
 
-               SizedBox(width: 10.w),
+              SizedBox(width: 10.w),
 
-            
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     formattedDate,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
                   ),
 
-                   SizedBox(height: 6),
+                  SizedBox(height: 6),
 
                   Text(
                     "₹${plan?.price ?? 0}",
@@ -117,7 +114,7 @@ class _OrderCardState extends State<OrderCard>
                     ),
                   ),
 
-                   SizedBox(height: 4.h),
+                  SizedBox(height: 4.h),
 
                   SizedBox(
                     width: 110,
@@ -137,7 +134,6 @@ class _OrderCardState extends State<OrderCard>
             ],
           ),
 
-       
           Align(
             alignment: Alignment.centerRight,
             child: Padding(
@@ -146,54 +142,52 @@ class _OrderCardState extends State<OrderCard>
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  _expanded ? Icons.expand_less : Icons.expand_more,
-                ),
+                icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
                 onPressed: () => setState(() => _expanded = !_expanded),
               ),
             ),
           ),
 
-         
           AnimatedSize(
             duration: const Duration(milliseconds: 250),
-            child: !_expanded
-                ? const SizedBox()
-                : Column(
-                    children: [
-                      const SizedBox(height: 6),
-                      const Divider(height: 1),
-                      const SizedBox(height: 10),
+            child:
+                !_expanded
+                    ? const SizedBox()
+                    : Column(
+                      children: [
+                        const SizedBox(height: 6),
+                        const Divider(height: 1),
+                        const SizedBox(height: 10),
 
-                      _statusPillsContainer(),
+                        _statusPillsContainer(),
 
-                      const SizedBox(height: 10),
+                        const SizedBox(height: 10),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _actionButton(
-                              Icons.place_outlined,
-                              "Open Map",
-                              Colors.blue,
-                              _openInMap,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _actionButton(
+                                Icons.place_outlined,
+                                "Open Map",
+                                Colors.blue,
+                                _openInMap,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _actionButton(
-                              Icons.call_outlined,
-                              "Call",
-                              Colors.green,
-                              _callNow,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _actionButton(
+                                Icons.call_outlined,
+                                "Call",
+                                Colors.green,
+                                _callNow,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
 
-                      const SizedBox(height: 6),
-                    ],
-                  ),
+                        const SizedBox(height: 6),
+                      ],
+                    ),
           ),
         ],
       ),
@@ -204,11 +198,11 @@ class _OrderCardState extends State<OrderCard>
 
   Widget _rowInfo(IconData icon, String text) {
     return Padding(
-      padding:  EdgeInsets.only(top: 3.h),
+      padding: EdgeInsets.only(top: 3.h),
       child: Row(
         children: [
           Icon(icon, size: 14.sp, color: Colors.grey[600]),
-           SizedBox(width: 6),
+          SizedBox(width: 6),
           Expanded(
             child: Text(
               text,
@@ -256,8 +250,7 @@ class _OrderCardState extends State<OrderCard>
                   text,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
                 ),
               ),
@@ -332,8 +325,7 @@ class _Capsule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.black87,
         borderRadius: BorderRadius.circular(16),

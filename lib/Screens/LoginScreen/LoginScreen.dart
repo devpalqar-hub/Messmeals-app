@@ -1,18 +1,17 @@
-//import 'package:country_pickers/utils/utils.dart';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:mess/Screens/LoginScreen/OtScreen.dart';
-
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/LoginScreen/SignUpScreen.dart';
+import 'package:mess/Screens/Utils/AppToast.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
 
   final AuthController authCtrl = Get.put(AuthController());
-  final TextEditingController phoneController = TextEditingController();
+  final Color primaryGreen = const Color(0xFF5BA43A);
 
   @override
   Widget build(BuildContext context) {
@@ -21,373 +20,418 @@ class LoginScreen extends StatelessWidget {
       resizeToAvoidBottomInset: true,
       body: GetBuilder<AuthController>(
         builder: (_) {
-          return Stack(
-            children: [
-              /// TOP BACKGROUND IMAGE
-              Container(
-                height: 470.h,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage("assets/Firefly.png"),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        // Colors.black.withOpacity(.75),
-                        // const Color(0xFF003B2F).withOpacity(.85),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                ),
-              ),
-
-              /// MAIN CONTENT
-              SafeArea(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      SizedBox(height: 120.h),
-
-                      /// HEADER SECTION
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 28.w),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            /// LOGO + TITLE
-                            Row(
-                              children: [
-                                Container(
-                                  height: 60.h,
-                                  width: 60.w,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white,
-                                  ),
-                                  child: const Icon(
-                                    Icons.restaurant,
-                                    size: 30,
-                                    color: Color(0xFF5BA13A),
-                                  ),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        /// TOP HEADER SECTION (IMAGE + GRADIENT)
+                        Container(
+                          width: double.infinity,
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage("assets/Firefly.png"),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          child: Container(
+                            /// Gradient overlay for text readability
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black.withOpacity(0.6),
+                                  Colors.black.withOpacity(0.2),
+                                  Colors.transparent,
+                                ],
+                                stops: const [0.0, 0.5, 1.0],
+                              ),
+                            ),
+                            child: SafeArea(
+                              bottom: false,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 24.w,
+                                  vertical: 40.h,
                                 ),
-
-                                SizedBox(width: 14.w),
-
-                                Column(
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: "Super",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 24.sp,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                    /// LOGO + BRAND NAME
+                                    Row(
+                                      children: [
+                                        Container(
+                                          height: 54.h,
+                                          width: 54.w,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.white,
                                           ),
-                                          TextSpan(
-                                            text: "Meals",
-                                            style: TextStyle(
-                                              color: const Color(0xFF69B34C),
-                                              fontSize: 24.sp,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                          child: Icon(
+                                            Icons.restaurant,
+                                            size: 28.sp,
+                                            color: primaryGreen,
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        SizedBox(width: 14.w),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            RichText(
+                                              text: TextSpan(
+                                                children: [
+                                                  TextSpan(
+                                                    text: "Super",
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 24.sp,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      letterSpacing: -0.5,
+                                                    ),
+                                                  ),
+                                                  TextSpan(
+                                                    text: "Meals",
+                                                    style: TextStyle(
+                                                      color: primaryGreen,
+                                                      fontSize: 24.sp,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      letterSpacing: -0.5,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Text(
+                                              "ADMIN",
+                                              style: TextStyle(
+                                                color: Colors.white.withOpacity(
+                                                  0.9,
+                                                ),
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 4,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
 
+                                    SizedBox(height: 50.h),
+
+                                    /// WELCOME TEXT
                                     Text(
-                                      "ADMIN",
+                                      "Welcome Back",
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 13.sp,
-                                        letterSpacing: 4,
+                                        fontSize: 28.sp,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    SizedBox(height: 6.h),
+                                    Text(
+                                      "Sign in to continue to your account",
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 40.h,
+                                    ), // Space before white card
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        /// BOTTOM WHITE CARD (Expands to fill remaining screen)
+                        Expanded(
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 24.w,
+                              vertical: 32.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(30.r),
+                                topRight: Radius.circular(30.r),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, -5),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Phone Number",
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF374151),
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+
+                                /// STYLED PHONE INPUT FIELD
+                                _buildPhoneInputField(),
+
+                                SizedBox(height: 32.h),
+
+                                /// SEND OTP BUTTON
+                                _buildSendOtpButton(),
+
+                                SizedBox(height: 32.h),
+
+                                /// DIVIDER
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Divider(
+                                        color: Colors.grey.shade200,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                      ),
+                                      child: Text(
+                                        "or",
+                                        style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Divider(
+                                        color: Colors.grey.shade200,
                                       ),
                                     ),
                                   ],
                                 ),
+
+                                SizedBox(height: 32.h),
+
+                                /// SIGN UP REDIRECT
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Don't have an account? ",
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => Get.to(() => SignUpScreen()),
+                                      child: Text(
+                                        "Sign Up",
+                                        style: TextStyle(
+                                          color: primaryGreen,
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                /// Extra padding at the bottom for completely safe scrolling
+                                SizedBox(
+                                  height:
+                                      MediaQuery.of(context).padding.bottom +
+                                      20.h,
+                                ),
                               ],
                             ),
-
-                            SizedBox(height: 40.h),
-
-                            /// WELCOME TEXT
-                            Text(
-                              "Welcome Back",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 28.sp,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-
-                            SizedBox(height: 8.h),
-
-                            Text(
-                              "Sign in to continue to your account",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16.sp,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: 70.h),
-
-                      /// WHITE CARD
-                      Container(
-                        width: double.infinity,
-                        constraints: BoxConstraints(minHeight: 420.h),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 24.w,
-                          vertical: 30.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(24.r),
-                            topRight: Radius.circular(24.r),
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Phone Number",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-
-                            SizedBox(height: 18.h),
-
-                            /// PHONE FIELD
-                            Container(
-                              height: 60.h,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(14.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  /// COUNTRY PICKER
-                                  SizedBox(
-                                    width: 110.w,
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: authCtrl.selectedCountry,
-                                        icon: const Icon(
-                                          Icons.keyboard_arrow_down,
-                                        ),
-                                        items:
-                                            ["IN", "US", "AE"]
-                                                .map(
-                                                  (item) => DropdownMenuItem(
-                                                    value: item,
-                                                    child: Row(
-                                                      children: [
-                                                        SizedBox(width: 8.w),
-
-                                                        SizedBox(
-                                                          width: 22.w,
-                                                          height: 16.h,
-                                                          child: CountryPickerUtils.getDefaultFlagImage(
-                                                            CountryPickerUtils.getCountryByIsoCode(
-                                                              item,
-                                                            ),
-                                                          ),
-                                                        ),
-
-                                                        SizedBox(width: 6.w),
-
-                                                        Text(
-                                                          "+${CountryPickerUtils.getCountryByIsoCode(item).phoneCode}",
-                                                          style: TextStyle(
-                                                            fontSize: 14.sp,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList(),
-                                        onChanged: (value) {
-                                          if (value != null) {
-                                            authCtrl.selectedCountry = value;
-                                            authCtrl.update();
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    height: 30.h,
-                                    width: 1,
-                                    color: Colors.grey.shade300,
-                                  ),
-
-                                  SizedBox(width: 10.w),
-
-                                  Expanded(
-                                    child: TextField(
-                                      controller: authCtrl.phoneController,
-
-                                      keyboardType: TextInputType.phone,
-                                      decoration: InputDecoration(
-                                        border: InputBorder.none,
-                                        hintText: "Enter your phone number",
-                                        hintStyle: TextStyle(fontSize: 12.sp),
-                                        prefixIcon: Icon(
-                                          Icons.phone_outlined,
-                                          color: Colors.grey,
-                                          size: 20.sp,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            SizedBox(height: 28.h),
-
-                            /// SEND OTP BUTTON
-                            InkWell(
-                              onTap:
-                                  authCtrl.isLoading
-                                      ? null
-                                      : () async {
-                                        String phone =
-                                            authCtrl.phoneController.text
-                                                .trim();
-                                        // "${authCtrl.countryCode}${authCtrl.phoneController.text.trim()}";
-
-                                        if (phone.isEmpty) {
-                                          return;
-                                        }
-
-                                        bool success = await authCtrl.sendOtp(
-                                          phone,
-                                        );
-
-                                        if (success) {
-                                          Get.to(
-                                            () => OtpVerificationScreen(
-                                              phoneNumber:
-                                                  authCtrl.phoneController.text
-                                                      .trim(),
-                                            ),
-                                          );
-                                        }
-                                      },
-                              child: Container(
-                                height: 58.h,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16.r),
-                                  color: const Color(0xFF569937),
-                                ),
-                                child: Center(
-                                  child:
-                                      authCtrl.isLoading
-                                          ? const CircularProgressIndicator(
-                                            color: Colors.white,
-                                          )
-                                          : Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                "Send OTP",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 17.sp,
-                                                ),
-                                              ),
-                                              SizedBox(width: 12.w),
-                                              const Icon(
-                                                Icons.arrow_forward,
-                                                color: Colors.white,
-                                              ),
-                                            ],
-                                          ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 40.h),
-
-                            /// OR
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Divider(color: Colors.grey.shade300),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 12.w,
-                                  ),
-                                  child: Text(
-                                    "or",
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 15.sp,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(color: Colors.grey.shade300),
-                                ),
-                              ],
-                            ),
-
-                            SizedBox(height: 35.h),
-
-                            /// SIGNUP
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Don't have an account? ",
-                                  style: TextStyle(fontSize: 15.sp),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Get.to(() => SignUpScreen());
-                                  },
-                                  child: Text(
-                                    "Sign Up",
-                                    style: TextStyle(
-                                      color: const Color(0xFF569937),
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              );
+            },
           );
         },
+      ),
+    );
+  }
+
+  /// Extracted Phone Input Field Widget
+  Widget _buildPhoneInputField() {
+    return Container(
+      height: 56.h,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Row(
+        children: [
+          /// COUNTRY PICKER
+          Container(
+            width: 100.w,
+            alignment: Alignment.center,
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: authCtrl.selectedCountry,
+                icon: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.grey.shade600,
+                ),
+                isDense: true,
+                items:
+                    ["IN", "US", "AE"]
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 20.w,
+                                  height: 14.h,
+                                  child: CountryPickerUtils.getDefaultFlagImage(
+                                    CountryPickerUtils.getCountryByIsoCode(
+                                      item,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  "+${CountryPickerUtils.getCountryByIsoCode(item).phoneCode}",
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    authCtrl.selectedCountry = value;
+                    authCtrl.update();
+                  }
+                },
+              ),
+            ),
+          ),
+
+          /// VERTICAL DIVIDER
+          Container(height: 24.h, width: 1, color: Colors.grey.shade300),
+
+          /// TEXT FIELD
+          Expanded(
+            child: TextField(
+              controller: authCtrl.phoneController,
+              keyboardType: TextInputType.phone,
+              style: TextStyle(fontSize: 15.sp, color: Colors.black87),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+                hintText: "Enter phone number",
+                hintStyle: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.grey.shade400,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Extracted Button Widget
+  Widget _buildSendOtpButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56.h,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryGreen,
+          elevation: 2,
+          shadowColor: primaryGreen.withOpacity(0.4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+        ),
+        onPressed:
+            authCtrl.isLoading
+                ? null
+                : () async {
+                  String phone = authCtrl.phoneController.text.trim();
+
+                  if (phone.isEmpty) {
+                    AppToast.show(
+                      title: "Required",
+                      message: "Please enter your phone number",
+                    );
+                    return;
+                  }
+
+                  bool success = await authCtrl.sendOtp(phone);
+                  if (success) {
+                    Get.to(() => OtpVerificationScreen(phoneNumber: phone));
+                  }
+                },
+        child:
+            authCtrl.isLoading
+                ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                )
+                : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Send OTP",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 20.sp,
+                    ),
+                  ],
+                ),
       ),
     );
   }

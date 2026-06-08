@@ -22,14 +22,12 @@ class BasicInfoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Country selectedCountry =
-        CountryPickerUtils.getCountryByIsoCode("IN");
+    Country selectedCountry = CountryPickerUtils.getCountryByIsoCode("IN");
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           /// BASIC INFO HEADER
           Row(
             children: [
@@ -50,8 +48,7 @@ class BasicInfoWidget extends StatelessWidget {
               SizedBox(width: 14.w),
 
               Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "Basic Information",
@@ -97,10 +94,7 @@ class BasicInfoWidget extends StatelessWidget {
 
           SizedBox(height: 5.h),
 
-          phoneField(
-            phoneController,
-            selectedCountry,
-          ),
+          phoneField(phoneController, selectedCountry),
 
           SizedBox(height: 15.h),
 
@@ -131,105 +125,90 @@ class BasicInfoWidget extends StatelessWidget {
           SizedBox(height: 15.h),
 
           /// CURRENT LOCATION
-          title("Current Location (Optional)"),
+          //  title("Current Location (Optional)"),
 
-          SizedBox(height: 5.h),
+          // SizedBox(height: 5.h),
 
-          Container(
-            height: 45.h,
-            padding:
-                EdgeInsets.symmetric(horizontal: 14.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius:
-                  BorderRadius.circular(14.r),
-              border: Border.all(
-                color: const Color(0xffE5E7EB),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.my_location_outlined,
-                  color: const Color(0xff6B7280),
-                  size: 22.sp,
-                ),
+          // Container(
+          //   height: 45.h,
+          //   padding: EdgeInsets.symmetric(horizontal: 14.w),
+          //   decoration: BoxDecoration(
+          //     color: Colors.white,
+          //     borderRadius: BorderRadius.circular(14.r),
+          //     border: Border.all(color: const Color(0xffE5E7EB)),
+          //   ),
+          //   child: Row(
+          //     children: [
+          //       Icon(
+          //         Icons.my_location_outlined,
+          //         color: const Color(0xff6B7280),
+          //         size: 22.sp,
+          //       ),
 
-                SizedBox(width: 12.w),
+          //       SizedBox(width: 12.w),
 
-                Expanded(
-                  child: Text(
-                    "Use current location",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: const Color(0xff6B7280),
-                    ),
-                  ),
-                ),
+          //       Expanded(
+          //         child: Text(
+          //           "Use current location",
+          //           style: TextStyle(
+          //             fontSize: 14.sp,
+          //             color: const Color(0xff6B7280),
+          //           ),
+          //         ),
+          //       ),
 
-                Container(
-                  height: 34.h,
-                  width: 34.h,
-                  decoration: BoxDecoration(
-                    color:
-                        AppColors.primary.withOpacity(
-                      0.15,
-                    ),
-                    borderRadius:
-                        BorderRadius.circular(10.r),
-                  ),
-                  child: Icon(
-                    Icons.gps_fixed,
-                    color: AppColors.primary,
-                    size: 18.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          //       InkWell(
+          //         onTap: () {},
+          //         child: Container(
+          //           height: 34.h,
+          //           width: 34.h,
+          //           decoration: BoxDecoration(
+          //             color: AppColors.primary.withOpacity(0.15),
+          //             borderRadius: BorderRadius.circular(10.r),
+          //           ),
+          //           child: Icon(
+          //             Icons.gps_fixed,
+          //             color: AppColors.primary,
+          //             size: 18.sp,
+          //           ),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
 
-          SizedBox(height: 20.h),
+          // SizedBox(height: 20.h),
 
-          /// OR DIVIDER
-          Row(
-            children: [
-              Expanded(
-                child: Divider(
-                  color: Colors.grey.shade300,
-                ),
-              ),
+          // /// OR DIVIDER
+          // Row(
+          //   children: [
+          //     Expanded(child: Divider(color: Colors.grey.shade300)),
 
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                ),
-                child: Text(
-                  "or",
-                  style: TextStyle(
-                    color: const Color(0xff6B7280),
-                    fontSize: 14.sp,
-                  ),
-                ),
-              ),
+          //     Padding(
+          //       padding: EdgeInsets.symmetric(horizontal: 12.w),
+          //       child: Text(
+          //         "or",
+          //         style: TextStyle(
+          //           color: const Color(0xff6B7280),
+          //           fontSize: 14.sp,
+          //         ),
+          //       ),
+          //     ),
 
-              Expanded(
-                child: Divider(
-                  color: Colors.grey.shade300,
-                ),
-              ),
-            ],
-          ),
+          //     Expanded(child: Divider(color: Colors.grey.shade300)),
+          //   ],
+          // ),
 
-          SizedBox(height: 20.h),
+          // SizedBox(height: 20.h),
 
-          /// LAT LONG
-          textField(
-            controller: locationController,
-            hint: "Enter latitude, longitude",
-            icon: Icons.map_outlined,
-          ),
+          // /// LAT LONG
+          // textField(
+          //   controller: locationController,
+          //   hint: "Enter latitude, longitude",
+          //   icon: Icons.map_outlined,
+          // ),
 
-          SizedBox(height: 30.h),
+          // SizedBox(height: 30.h),
         ],
       ),
     );
@@ -253,33 +232,22 @@ class BasicInfoWidget extends StatelessWidget {
   }) {
     return Container(
       height: 50.h,
-      padding: EdgeInsets.symmetric(
-        horizontal: 14.w,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(10.r),
-        border: Border.all(
-          color: const Color(0xffE5E7EB),
-        ),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: const Color(0xffE5E7EB)),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: const Color(0xff6B7280),
-            size: 18.sp,
-          ),
+          Icon(icon, color: const Color(0xff6B7280), size: 18.sp),
 
           SizedBox(width: 12.w),
 
           Expanded(
             child: TextField(
               controller: controller,
-              style: TextStyle(
-                fontSize: 14.sp,
-              ),
+              style: TextStyle(fontSize: 14.sp),
               decoration: InputDecoration(
                 isCollapsed: true,
                 contentPadding: EdgeInsets.zero,
@@ -297,22 +265,14 @@ class BasicInfoWidget extends StatelessWidget {
     );
   }
 
-  Widget phoneField(
-    TextEditingController controller,
-    Country country,
-  ) {
+  Widget phoneField(TextEditingController controller, Country country) {
     return Container(
       height: 50.h,
-      padding: EdgeInsets.symmetric(
-        horizontal: 14.w,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(10.r),
-        border: Border.all(
-          color: const Color(0xffE5E7EB),
-        ),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: const Color(0xffE5E7EB)),
       ),
       child: Row(
         children: [
@@ -325,14 +285,10 @@ class BasicInfoWidget extends StatelessWidget {
           SizedBox(width: 10.w),
 
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 10.w,
-              vertical: 6.h,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
             decoration: BoxDecoration(
               color: const Color(0xffF3F4F6),
-              borderRadius:
-                  BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(8.r),
             ),
             child: Row(
               children: [
@@ -344,10 +300,7 @@ class BasicInfoWidget extends StatelessWidget {
                   ),
                 ),
 
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 18.sp,
-                ),
+                Icon(Icons.keyboard_arrow_down, size: 18.sp),
               ],
             ),
           ),
@@ -357,16 +310,12 @@ class BasicInfoWidget extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              keyboardType:
-                  TextInputType.phone,
-              decoration:
-                  const InputDecoration(
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
                 isCollapsed: true,
-                contentPadding:
-                    EdgeInsets.zero,
+                contentPadding: EdgeInsets.zero,
                 border: InputBorder.none,
-                hintText:
-                    "Enter phone number",
+                hintText: "Enter phone number",
               ),
             ),
           ),

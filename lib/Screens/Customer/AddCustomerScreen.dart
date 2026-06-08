@@ -3,9 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import 'package:mess/Screens/Customer/Views/Basicinfowiget.dart';
-import 'package:mess/Screens/Customer/Views/PlanWalletwidget.dart';
+import 'package:mess/Screens/Customer/Views/PlanSchedule.dart';
 import 'package:mess/Screens/Customer/Views/Reviewwidget.dart';
-import 'package:mess/Screens/Customer/Views/ScheduleDelivery.dart';
+import 'package:mess/Screens/Customer/Views/WalletWidget.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
@@ -116,6 +116,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     );
 
     if (success) {
+      CustomerController ctrl = Get.find();
+      ctrl.fetchCustomers(refresh: true);
       Get.back();
     }
   }
@@ -180,9 +182,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                       locationController: locationController,
                     ),
 
-                    PlanWalletWidget(
-                      walletController: walletController,
-                      discountController: discountController,
+                    PlanScheduleWidget(
                       selectedPlanId: selectedPlanId,
                       selectedDeliveryPartnerId: selectedDeliveryPartnerId,
                       startDate: startDate,
@@ -193,9 +193,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                           (v) => setState(() => selectedDeliveryPartnerId = v),
                       onStartDateChanged: (d) => setState(() => startDate = d),
                       onEndDateChanged: (d) => setState(() => endDate = d),
-                    ),
-
-                    ScheduleDeliveryWidget(
                       selectedDays: selectedDays,
                       deliveryType: deliveryType,
                       preferredTime: preferredTime,
@@ -204,7 +201,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                       onTimeChanged: (v) => setState(() => preferredTime = v),
                       onDaysChanged: (d) => setState(() => selectedDays = d),
                     ),
-
+                    WalletWidget(
+                      walletController: walletController,
+                      discountController: discountController,
+                    ),
                     ReviewWidget(
                       name: nameController.text,
                       phone: phoneController.text,
@@ -223,6 +223,11 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                       deliveryType: deliveryType ?? "",
                       deliveryDays: selectedDays,
                       preferredTime: preferredTime ?? "",
+                      ChangeStep: (editvalue) {
+                        setState(() {
+                          currentStep = editvalue;
+                        });
+                      },
                     ),
                   ],
                 ),

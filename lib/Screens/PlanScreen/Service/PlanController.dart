@@ -50,7 +50,7 @@ class PlanController extends GetxController {
     _setLoading(true);
     final pageNumber = page ?? currentPage;
     final itemsPerPage = perPage ?? limit;
-    final messId = authController.selectedMessId;
+    final messId = dashboardController.selectedMessId;
 
     try {
       final url = Uri.parse(
@@ -107,68 +107,67 @@ class PlanController extends GetxController {
       /// STEP 1 : UPLOAD IMAGE
       /// =========================================
 
-      List<Map<String, dynamic>> uploadedImages = [];
+      // List<Map<String, dynamic>> uploadedImages = [];
 
-      if (imageFiles != null && imageFiles.isNotEmpty) {
-        final uploadUri = Uri.parse("$baseUrl/plans/images/upload");
+      // if (imageFiles != null && imageFiles.isNotEmpty) {
+      //   final uploadUri = Uri.parse("$baseUrl/plans/images/upload");
 
-        final uploadRequest = http.MultipartRequest("POST", uploadUri);
-        uploadRequest.headers.addAll({"Authorization": bearerToken});
+      //   final uploadRequest = http.MultipartRequest("POST", uploadUri);
+      //   uploadRequest.headers.addAll({"Authorization": bearerToken});
 
-        for (File file in imageFiles) {
-          String filePath = file.path.toLowerCase();
+      //   for (File file in imageFiles) {
+      //     String filePath = file.path.toLowerCase();
 
-          MediaType mediaType = MediaType("image", "jpeg");
+      //     MediaType mediaType = MediaType("image", "jpeg");
 
-          if (filePath.endsWith(".png")) {
-            mediaType = MediaType("image", "png");
-          } else if (filePath.endsWith(".webp")) {
-            mediaType = MediaType("image", "webp");
-          } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
-            mediaType = MediaType("image", "jpeg");
-          }
+      //     if (filePath.endsWith(".png")) {
+      //       mediaType = MediaType("image", "png");
+      //     } else if (filePath.endsWith(".webp")) {
+      //       mediaType = MediaType("image", "webp");
+      //     } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
+      //       mediaType = MediaType("image", "jpeg");
+      //     }
 
-          uploadRequest.files.add(
-            await http.MultipartFile.fromPath(
-              "files",
-              file.path,
-              contentType: mediaType,
-            ),
-          );
-        }
+      //     uploadRequest.files.add(
+      //       await http.MultipartFile.fromPath(
+      //         "files",
+      //         file.path,
+      //         contentType: mediaType,
+      //       ),
+      //     );
+      //   }
 
-        final uploadResponse = await uploadRequest.send();
-        final uploadBody = await uploadResponse.stream.bytesToString();
+      //   final uploadResponse = await uploadRequest.send();
+      //   final uploadBody = await uploadResponse.stream.bytesToString();
 
+      //   if (uploadResponse.statusCode == 200 ||
+      //       uploadResponse.statusCode == 201) {
+      //     final decoded = jsonDecode(uploadBody);
 
-        if (uploadResponse.statusCode == 200 ||
-            uploadResponse.statusCode == 201) {
-          final decoded = jsonDecode(uploadBody);
+      //     final List urls = decoded["urls"] ?? [];
 
-          final List urls = decoded["urls"] ?? [];
+      //     uploadedImages = urls.map((e) => {"url": e}).toList();
+      //   } else {
+      //     Fluttertoast.showToast(msg: "Image upload failed");
+      //     return false;
+      //   }
+      // }
 
-          uploadedImages = urls.map((e) => {"url": e}).toList();
-        } else {
-          Fluttertoast.showToast(msg: "Image upload failed");
-          return false;
-        }
-      }
+      // /// =========================================
+      // /// EXISTING IMAGE FOR EDIT
+      // /// =========================================
 
-      /// =========================================
-      /// EXISTING IMAGE FOR EDIT
-      /// =========================================
+      // List<String> finalImages = [];
 
-      List<String> finalImages = [];
+      // // old image
+      // if (existingImage != null && existingImage.isNotEmpty) {
+      //   finalImages.addAll(existingImage);
+      // }
 
-      // old image
-      if (existingImage != null && existingImage.isNotEmpty) {
-        finalImages.addAll(existingImage);
-      }
-
-      // new uploaded images
-      if (uploadedImages.isNotEmpty) {
-        finalImages.addAll(uploadedImages.map((e) => e["url"].toString()));
-      }
+      // // new uploaded images
+      // if (uploadedImages.isNotEmpty) {
+      //   finalImages.addAll(uploadedImages.map((e) => e["url"].toString()));
+      // }
 
       /// =========================================
       /// STEP 2 : SAVE PLAN
@@ -185,7 +184,7 @@ class PlanController extends GetxController {
 
         "description": description,
 
-        "messId": authController.selectedMessId,
+        "messId": dashboardController.selectedMessId,
 
         "variationIds": variationIds,
 
@@ -193,20 +192,14 @@ class PlanController extends GetxController {
 
         "isDailyPlan": isDailyPlan,
 
-        "images": uploadedImages,
+        //  "images": uploadedImages,
       };
 
       /// attach images only if available
-      if (isEdit && finalImages.isNotEmpty) {
-        body.remove("images"); // remove old key
-        body["planImages"] = finalImages;
-      }
-
-      debugPrint("=========== PLAN REQUEST =========== $isEdit");
-
-      debugPrint("URL : $uri");
-
-      debugPrint(jsonEncode(body));
+      // if (isEdit && finalImages.isNotEmpty) {
+      //   body.remove("images"); // remove old key
+      //   body["planImages"] = finalImages;
+      // }
 
       final response =
           await (isEdit
@@ -226,12 +219,6 @@ class PlanController extends GetxController {
                 },
                 body: jsonEncode(body),
               ));
-
-      debugPrint("=========== PLAN RESPONSE ===========");
-
-      debugPrint("STATUS : ${response.statusCode}");
-
-      print("BODY : ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         await refreshPlans();
@@ -273,7 +260,7 @@ class PlanController extends GetxController {
           "Content-Type": "application/json",
           "Authorization": bearerToken,
         },
-        body: jsonEncode({"messId": authController.selectedMessId}),
+        body: jsonEncode({"messId": dashboardController.selectedMessId}),
       );
 
       if (response.statusCode == 200) {

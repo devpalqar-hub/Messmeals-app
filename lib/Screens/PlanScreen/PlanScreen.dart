@@ -26,7 +26,8 @@ class PlanScreen extends StatelessWidget {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xffF7F9FB),
+      //     backgroundColor: const Color(0xffF7F9FB),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16.w),
@@ -149,7 +150,7 @@ class PlanScreen extends StatelessWidget {
       onRefresh: controller.refreshPlans,
       child: ListView.separated(
         itemCount: plans.length,
-        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        separatorBuilder: (_, __) => SizedBox(height: 0.h),
         itemBuilder: (context, index) {
           final plan = plans[index];
 
@@ -171,34 +172,26 @@ class PlanScreen extends StatelessWidget {
 
           return PlanCard(
             title: plan.planName,
-            description: plan.description,
             price: double.tryParse(plan.price) ?? 0,
             minPrice: double.tryParse(plan.minPrice) ?? 0,
             meals: plan.variations.map((v) => v.title).toList(),
-            imageUrl: imageUrl,
             onDelete: () {
               _showDeleteDialog(context, controller, plan.id);
             },
             onEdit: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder:
-                    (_) => AddPlanScreen(
-                      isEdit: true,
-                      planId: plan.id,
-                      planName: plan.planName,
-                      price: plan.price,
-                      minPrice: plan.minPrice,
-                      description: plan.description,
-                      imageUrl: imageUrls,
-                      selectedVariations:
-                          plan.variations.map((v) => v.id).toList(),
-                    ),
-              ).then((_) {
-                controller.refreshPlans();
-              });
+              Get.to(
+                () => AddPlanScreen(
+                  isEdit: true,
+                  planId: plan.id,
+                  planName: plan.planName,
+                  price: plan.price,
+                  minPrice: plan.minPrice,
+                  description: plan.description,
+                  imageUrl: imageUrls,
+                  planType: plan.isMonthlyPlan ? "MONTHLY" : "DAILY",
+                  selectedVariations: plan.variations.map((v) => v.id).toList(),
+                ),
+              );
             },
           );
         },

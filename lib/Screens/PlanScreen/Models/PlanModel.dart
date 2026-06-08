@@ -7,6 +7,7 @@ class PlanModel {
   final String description;
   final List<PlanImage> images;
   final List<Variation> variations;
+  final bool isMonthlyPlan;
 
   PlanModel({
     required this.id,
@@ -16,6 +17,7 @@ class PlanModel {
     required this.description,
     required this.images,
     required this.variations,
+    required this.isMonthlyPlan,
   });
 
   factory PlanModel.fromJson(Map<String, dynamic> json) {
@@ -25,11 +27,14 @@ class PlanModel {
       price: json['price'] ?? '',
       minPrice: json['minPrice'] ?? '',
       description: json['description'] ?? '',
-      images: (json['images'] as List<dynamic>?)
+      isMonthlyPlan: json["isMonthlyPlan"],
+      images:
+          (json['images'] as List<dynamic>?)
               ?.map((img) => PlanImage.fromJson(img))
               .toList() ??
           [],
-      variations: (json['Variation'] as List<dynamic>?)
+      variations:
+          (json['Variation'] as List<dynamic>?)
               ?.map((v) => Variation.fromJson(v))
               .toList() ??
           [],
@@ -42,11 +47,7 @@ class PlanImage {
   final String url;
   final String altText;
 
-  PlanImage({
-    required this.id,
-    required this.url,
-    required this.altText,
-  });
+  PlanImage({required this.id, required this.url, required this.altText});
 
   factory PlanImage.fromJson(Map<String, dynamic> json) {
     return PlanImage(
@@ -62,11 +63,7 @@ class Variation {
   final String title;
   final String description;
 
-  Variation({
-    required this.id,
-    required this.title,
-    required this.description,
-  });
+  Variation({required this.id, required this.title, required this.description});
 
   factory Variation.fromJson(Map<String, dynamic> json) {
     return Variation(

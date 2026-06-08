@@ -1,15 +1,16 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart';
 
 class DeliveriesController extends GetxController {
   final AuthController authController = Get.find<AuthController>();
-  final HomeScreenController dashboardController = Get.find<HomeScreenController>();
+  final HomeScreenController dashboardController =
+      Get.find<HomeScreenController>();
 
   // Standard variables instead of .obs
   bool isLoading = false;
@@ -18,17 +19,14 @@ class DeliveriesController extends GetxController {
   int limit = 10;
 
   /// ✅ Fetch Deliveries
-  Future<void> fetchDeliveries({
-    DateTime? date,
-    String? status,
-  }) async {
+  Future<void> fetchDeliveries({DateTime? date, String? status}) async {
     try {
       isLoading = true;
       update(); // Notify UI to show loader
 
-      final messId = authController.selectedMessId;
-      if (messId.isEmpty) {
-        Get.snackbar("Error", "Please select a mess first");
+      final messId = dashboardController.selectedMessId;
+      if (messId == null) {
+        AppToast.error("Please select a mess first");
         isLoading = false;
         update();
         return;
@@ -48,7 +46,9 @@ class DeliveriesController extends GetxController {
         queryParams['status'] = status.toUpperCase();
       }
 
-      final uri = Uri.parse('$baseUrl/deliveries').replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+        '$baseUrl/deliveries',
+      ).replace(queryParameters: queryParams);
 
       final response = await http.get(
         uri,
@@ -64,10 +64,10 @@ class DeliveriesController extends GetxController {
 
         deliveries = dataList.map((e) => Delivery.fromJson(e)).toList();
       } else {
-        Get.snackbar('Error', 'Failed to fetch deliveries (${response.statusCode})');
+        AppToast.error('Failed to fetch deliveries (${response.statusCode})');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load deliveries');
+      AppToast.error('Failed to load deliveries');
     } finally {
       isLoading = false;
       update(); // Notify UI to refresh data
@@ -87,15 +87,15 @@ class DeliveriesController extends GetxController {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar('Success', 'Deliveries generated successfully');
+        AppToast.success('Deliveries generated successfully');
         await dashboardController.fetchDashboardStats();
         await fetchDeliveries(date: date);
       } else {
         final msg = json.decode(response.body)['message'] ?? 'Unknown error';
-        Get.snackbar('Error', 'Failed to generate deliveries: $msg');
+        AppToast.error('Failed to generate deliveries: $msg');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Error generating deliveries: $e');
+      AppToast.error('Error generating deliveries: $e');
     } finally {
       isLoading = false;
       update();
@@ -121,19 +121,19 @@ class DeliveriesController extends GetxController {
         final data = json.decode(response.body);
         final updatedStatus = data['status'] ?? newStatus;
 
-        Get.snackbar('Success', 'Delivery status updated to $updatedStatus');
+        AppToast.success('Delivery status updated to $updatedStatus');
 
         await dashboardController.fetchDashboardStats();
-        await fetchDeliveries(); 
+        await fetchDeliveries();
 
         return true;
       } else {
         final msg = json.decode(response.body)['message'] ?? 'Unknown error';
-        Get.snackbar('Error', 'Failed to update status: $msg');
+        AppToast.error('Failed to update status: $msg');
         return false;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Error updating delivery status: $e');
+      AppToast.error('Error updating delivery status: $e');
       return false;
     } finally {
       isLoading = false;

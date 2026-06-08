@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,22 +19,17 @@ class CustomerCard extends StatelessWidget {
     required this.name,
     required this.phone,
     required this.initials,
-     required this.customer,
+    required this.customer,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:  EdgeInsets.symmetric(
-        horizontal: 14.w,
-        vertical: 14.h,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(
-          color: const Color(0xffececec),
-        ),
+        border: Border.all(color: const Color(0xffececec)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -58,14 +52,14 @@ class CustomerCard extends StatelessWidget {
             child: Text(
               initials,
               style: TextStyle(
-                color:AppColors.primary,
+                color: AppColors.primary,
                 fontWeight: FontWeight.w700,
                 fontSize: 14.sp,
               ),
             ),
           ),
 
-           SizedBox(width: 16),
+          SizedBox(width: 16),
 
           /// Details
           Expanded(
@@ -74,7 +68,7 @@ class CustomerCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style:  TextStyle(
+                  style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: Color(0xff111827),
@@ -90,10 +84,10 @@ class CustomerCard extends StatelessWidget {
                       size: 16,
                       color: Color(0xff6b7280),
                     ),
-                     SizedBox(width: 5.w),
+                    SizedBox(width: 5.w),
                     Text(
                       phone,
-                      style:  TextStyle(
+                      style: TextStyle(
                         fontSize: 14.sp,
                         color: Color(0xff4b5563),
                         fontWeight: FontWeight.w500,
@@ -106,16 +100,16 @@ class CustomerCard extends StatelessWidget {
           ),
 
           /// Arrow
-             InkWell(
-  onTap: () {
-    Get.to(() => CustomerDetailScreen(customer: customer));
-  },
-  child: const Icon(
-    Icons.chevron_right,
-    size: 20,
-    color: Color(0xff111827),
-  ),
-),
+          InkWell(
+            onTap: () {
+              Get.to(() => CustomerDetailScreen(customerId: customer.id));
+            },
+            child: const Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: Color(0xff111827),
+            ),
+          ),
         ],
       ),
     );
