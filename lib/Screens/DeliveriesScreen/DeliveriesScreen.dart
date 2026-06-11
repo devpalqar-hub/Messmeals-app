@@ -356,33 +356,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TittleText(text: "Deliveries"),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => GenerateDeliveriesDialog(),
-                          );
-                        },
-                        icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
-                        label: Text(
-                          "Generate",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _C.textPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 20.w,
-                            vertical: 12.h,
-                          ),
-                        ),
-                      ),
+                      
                     ],
                   ),
                   SizedBox(height: 14.h),
@@ -459,7 +433,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
               ),
             ),
             SizedBox(width: 8.w),
-            Expanded(
+           Expanded(
               child: InkWell(
                 onTap: () => _selectDate(context),
                 child: Container(
@@ -482,11 +456,24 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                           color: _C.textPrimary,
                         ),
                       ),
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 16.sp,
-                        color: _C.textSecondary,
-                      ),
+                      // ✅ FIX: show X to clear date, calendar icon when no date
+                      selectedDate != null
+                          ? GestureDetector(
+                            onTap: () {
+                              setState(() => selectedDate = null);
+                              _triggerFilterSearch();
+                            },
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 16.sp,
+                              color: _C.red,
+                            ),
+                          )
+                          : Icon(
+                            Icons.calendar_today_rounded,
+                            size: 16.sp,
+                            color: _C.textSecondary,
+                          ),
                     ],
                   ),
                 ),

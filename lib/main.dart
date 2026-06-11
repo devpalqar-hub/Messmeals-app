@@ -16,6 +16,7 @@ Future<void> main() async {
   final authController = Get.put(AuthController());
   SharedPreferences pref = await SharedPreferences.getInstance();
   bearerToken = "Bearer " + (pref.getString("token") ?? "");
+  print('TOKEN: ${pref.getString("token")}');
   login = pref.getString("LOGIN");
   runApp(const MessMeals());
 }

@@ -14,40 +14,28 @@ import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart';
 
-// ─────────────────────────────────────────────
-// Design tokens
-// ─────────────────────────────────────────────
 class _C {
   static const surface = Colors.white;
   static const border = Color(0xFFEEEEF0);
-
   static const primary = Color(0xff07A4A5);
   static const primaryLight = Color.fromARGB(255, 228, 249, 249);
   static const primaryMid = Color.fromARGB(79, 7, 165, 165);
-
   static const amber = Color(0xFF854F0B);
   static const amberLight = Color(0xFFFAEEDA);
   static const amberBorder = Color(0xFFEF9F27);
-
   static const green = Color(0xFF3B6D11);
   static const greenLight = Color(0xFFEAF3DE);
   static const greenMid = Color(0xFF639922);
-
   static const red = Color(0xFFA32D2D);
   static const redLight = Color(0xFFFCEBEB);
   static const redBorder = Color(0xFFF09595);
-
   static const pink = Color(0xFF993556);
   static const pinkLight = Color(0xFFFBEAF0);
-
   static const textPrimary = Color(0xFF111827);
   static const textSecondary = Color(0xFF6B7280);
   static const textTertiary = Color(0xFF9CA3AF);
 }
 
-// ─────────────────────────────────────────────
-// Screen
-// ─────────────────────────────────────────────
 class CustomerDetailScreen extends StatefulWidget {
   final String customerId;
   const CustomerDetailScreen({super.key, required this.customerId});
@@ -122,7 +110,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     String endDate,
   ) async {
     final url = Uri.parse('$baseUrl/customer/pause-subscription/$subId');
-
     try {
       final response = await patch(
         url,
@@ -153,17 +140,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     String? endDate,
   }) async {
     final url = Uri.parse('$baseUrl/customer/cancel-subscription/$subId');
-
     try {
       final Map<String, dynamic> payload = {
         "date": startDate,
         "subscriptionId": subId,
       };
-
-      if (endDate != null) {
-        payload["cancellation_end_date"] = endDate;
-      }
-
+      if (endDate != null) payload["cancellation_end_date"] = endDate;
       final response = await patch(
         url,
         headers: {
@@ -172,7 +154,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         },
         body: json.encode(payload),
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         _fetchCustomer();
         _showSnack('', 'Cancellation applied successfully', _C.green);
@@ -189,9 +170,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // CREATE/ADD SUBSCRIPTION PLAN API
-  // ─────────────────────────────────────────────
   Future<void> _addPlanSubscriptionApi({
     required String planId,
     required String partnerId,
@@ -203,29 +181,25 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     required String address,
   }) async {
     final url = Uri.parse('$baseUrl/customer/subscription/create');
-
     try {
-      final Map<String, dynamic> payload = {
-        "customerProfileId": customer.customerProfileId,
-        "planId": planId,
-        "deliveryPartnerId": partnerId,
-        "start_date": startDate,
-        "end_date": endDate,
-        "scheduleType": scheduleType,
-        "selectedDays": selectedDays,
-        "discount": discount,
-        "address": address,
-      };
-
       final response = await post(
         url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
-        body: json.encode(payload),
+        body: json.encode({
+          "customerProfileId": customer.customerProfileId,
+          "planId": planId,
+          "deliveryPartnerId": partnerId,
+          "start_date": startDate,
+          "end_date": endDate,
+          "scheduleType": scheduleType,
+          "selectedDays": selectedDays,
+          "discount": discount,
+          "address": address,
+        }),
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         _fetchCustomer();
         _showSnack('Success', 'Plan added successfully', _C.green);
@@ -242,9 +216,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // RENEW SUBSCRIPTION API
-  // ─────────────────────────────────────────────
   Future<void> _renewSubscriptionApi({
     required String subId,
     required String planId,
@@ -254,25 +225,22 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     required String discount,
   }) async {
     final url = Uri.parse('$baseUrl/customer/renew-subscription');
-
     try {
-      final Map<String, dynamic> payload = {
-        "subscriptionId": subId,
-        "planId": planId,
-        "start_date": startDate,
-        "deliveryPartnerId": partnerId,
-        "customerProfileId": customer.customerProfileId,
-        "discount": discount,
-        "end_date": endDate,
-      };
-
       final response = await post(
         url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
-        body: json.encode(payload),
+        body: json.encode({
+          "subscriptionId": subId,
+          "planId": planId,
+          "start_date": startDate,
+          "deliveryPartnerId": partnerId,
+          "customerProfileId": customer.customerProfileId,
+          "discount": discount,
+          "end_date": endDate,
+        }),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         _fetchCustomer();
@@ -292,12 +260,29 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   String _fmtDate(String iso) =>
       DateFormat('dd MMM yyyy').format(DateTime.parse(iso));
-
   String _fmtCurrency(int v) => '₹${NumberFormat('#,##,###').format(v)}';
+
+  // ✅ FIX: NEW helper — computes real "Member since" from createdAt
+  String _memberSince() {
+    if (customer.createdAt == null || customer.createdAt!.isEmpty) return 'N/A';
+    try {
+      final created = DateTime.parse(customer.createdAt!);
+      final now = DateTime.now();
+      final months =
+          (now.year - created.year) * 12 + (now.month - created.month);
+      if (months < 1) return 'New';
+      if (months < 12) return '${months} mo';
+      final years = months ~/ 12;
+      final remMonths = months % 12;
+      if (remMonths == 0) return '${years} yr';
+      return '${years}y ${remMonths}m';
+    } catch (_) {
+      return 'N/A';
+    }
+  }
 
   Future<void> _cancelFullSubcription({required String subId}) async {
     final url = Uri.parse('$baseUrl/customer/cancel-full-subscription/$subId');
-
     try {
       final response = await patch(
         url,
@@ -306,7 +291,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           'Authorization': bearerToken,
         },
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         _fetchCustomer();
         _showSnack('', 'Subscription has been cancelled', _C.green);
@@ -323,7 +307,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
-  // ─── build ───────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -358,7 +341,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  // ─── AppBar ──────────────────────────────
   PreferredSizeWidget _buildAppBar() => AppBar(
     backgroundColor: _C.surface,
     elevation: 0,
@@ -385,10 +367,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         color: _C.textPrimary,
       ),
     ),
-    actions: [
-      _iconBox(Icons.edit_outlined, size: 18, color: _C.primary),
-      SizedBox(width: 12.w),
-    ],
+    actions: [],
   );
 
   Widget _iconBox(
@@ -406,7 +385,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     child: Icon(icon, size: size.sp, color: color),
   );
 
-  // ─── Profile Card ─────────────────────────
   Widget _buildProfileCard() => _card(
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,7 +479,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     ),
   );
 
-  // ─── Wallet Card ─────────────────────────
   Widget _buildWalletCard() => _card(
     child: Row(
       children: [
@@ -576,7 +553,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     ),
   );
 
-  // ─── Stats Grid ──────────────────────────
+  // ✅ FIX: _memberSince() replaces the hardcoded '6 mo'
   Widget _buildStatsGrid() => GridView.count(
     crossAxisCount: 2,
     crossAxisSpacing: 10.w,
@@ -608,7 +585,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       ),
       _statCard(
         'Member since',
-        '6 mo',
+        _memberSince(),
         Icons.calendar_month_outlined,
         _C.pinkLight,
         _C.pink,
@@ -661,7 +638,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     ),
   );
 
-  // ─── Subscriptions ────────────────────────
   Widget _buildSubscriptionsSection() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -738,7 +714,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
             child: Row(
@@ -809,11 +784,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               ],
             ),
           ),
-
-          // Divider
           Container(height: 0.5, color: _C.border),
-
-          // Details
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Column(
@@ -835,11 +806,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               ],
             ),
           ),
-
-          // Divider
           Container(height: 0.5, color: _C.border),
-
-          // Actions
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
             child: Row(
@@ -884,7 +851,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  // ─── Reusable Widgets ─────────────────────
   Widget _card({required Widget child, EdgeInsets? padding}) => Container(
     padding: padding ?? EdgeInsets.all(16.w),
     decoration: BoxDecoration(
@@ -956,10 +922,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     ),
   );
 
-  // ─── Dialogs / Sheets ─────────────────────
   void _showTopUpSheet() {
     final ctrl = TextEditingController();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1148,25 +1112,13 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  void _handlePause(String subId) {
-    _showPauseSheet(subId);
-  }
+  void _handlePause(String subId) => _showPauseSheet(subId);
+  void _handleRenew(ActiveSubscriptions sub) => _showRenewSheet(sub);
+  void _handleCancel(String subId) => _showCancelSheet(subId);
 
-  void _handleRenew(ActiveSubscriptions sub) {
-    _showRenewSheet(sub);
-  }
-
-  void _handleCancel(String subId) {
-    _showCancelSheet(subId);
-  }
-
-  // ─────────────────────────────────────────────
-  // ADD NEW PLAN BOTTOM SHEET IMPLEMENTATION
-  // ─────────────────────────────────────────────
   void _showAddPlanSheet() {
     final PlanController planController = Get.put(PlanController());
     planController.ensureLoaded();
-
     final PartnerController partnerController = Get.put(PartnerController());
     partnerController.ensureLoaded();
 
@@ -1175,10 +1127,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     DateTime? startDate;
     DateTime? endDate;
     int selectedMonths = 1;
-    String selectedScheduleType =
-        "Everyday"; // Matching the dropdown static mapping ("Custom", "Everyday")
+    String selectedScheduleType = "Everyday";
     List<String> selectedDays = [];
-
     final TextEditingController discountCtrl = TextEditingController(text: "0");
     final TextEditingController addressCtrl = TextEditingController(
       text: customer.address ?? "",
@@ -1202,8 +1152,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       startDate!.year,
                       startDate!.month + selectedMonths,
                       startDate!.day,
-                    ).subtract(Duration(days: 1));
-                    ;
+                    ).subtract(const Duration(days: 1));
                   });
                 }
               }
@@ -1217,20 +1166,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                           : (endDate ?? startDate ?? DateTime.now()),
                   firstDate: DateTime.now(),
                   lastDate: DateTime(2035),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: _C.primary,
-                          onPrimary: Colors.white,
-                          onSurface: _C.textPrimary,
+                  builder:
+                      (context, child) => Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: _C.primary,
+                            onPrimary: Colors.white,
+                            onSurface: _C.textPrimary,
+                          ),
                         ),
+                        child: child!,
                       ),
-                      child: child!,
-                    );
-                  },
                 );
-
                 if (picked != null) {
                   setSheetState(() {
                     if (isStart) {
@@ -1252,682 +1199,721 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 String hint,
                 DateTime? date,
                 VoidCallback onTap,
-              ) {
-                return GestureDetector(
-                  onTap: onTap,
-                  child: Container(
-                    height: 46.h,
-                    alignment: Alignment.centerLeft,
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9FB),
-                      borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: _C.border),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          date != null
-                              ? DateFormat('dd MMM yyyy').format(date)
-                              : hint,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13.5.sp,
-                            color:
-                                date != null ? _C.textPrimary : _C.textTertiary,
-                          ),
-                        ),
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 15.sp,
-                          color: _C.textSecondary,
-                        ),
-                      ],
-                    ),
+              ) => GestureDetector(
+                onTap: onTap,
+                child: Container(
+                  height: 46.h,
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9FB),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(color: _C.border),
                   ),
-                );
-              }
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        date != null
+                            ? DateFormat('dd MMM yyyy').format(date)
+                            : hint,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.5.sp,
+                          color:
+                              date != null ? _C.textPrimary : _C.textTertiary,
+                        ),
+                      ),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 15.sp,
+                        color: _C.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              );
 
-              Widget label(String text) {
-                return Padding(
-                  padding: EdgeInsets.only(bottom: 6.h),
-                  child: Text(
-                    text,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                      color: _C.textPrimary,
-                    ),
+              Widget label(String text) => Padding(
+                padding: EdgeInsets.only(bottom: 6.h),
+                child: Text(
+                  text,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: _C.textPrimary,
                   ),
-                );
-              }
+                ),
+              );
 
               return GetBuilder<PlanController>(
-                builder: (_) {
-                  return GetBuilder<PartnerController>(
-                    builder: (_) {
-                      return SafeArea(
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxHeight:
-                                MediaQuery.of(context).size.height * 0.85,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _C.surface,
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(20.r),
-                            ),
-                          ),
-                          padding: EdgeInsets.only(
-                            left: 20.w,
-                            right: 20.w,
-                            top: 16.h,
-                            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24.h,
-                          ),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Center(
-                                  child: Container(
-                                    width: 36.w,
-                                    height: 4.h,
-                                    decoration: BoxDecoration(
-                                      color: _C.border,
-                                      borderRadius: BorderRadius.circular(2.r),
-                                    ),
-                                  ),
+                builder:
+                    (_) => GetBuilder<PartnerController>(
+                      builder:
+                          (_) => SafeArea(
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    MediaQuery.of(context).size.height * 0.85,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _C.surface,
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(20.r),
                                 ),
-                                SizedBox(height: 16.h),
-                                Row(
+                              ),
+                              padding: EdgeInsets.only(
+                                left: 20.w,
+                                right: 20.w,
+                                top: 16.h,
+                                bottom:
+                                    MediaQuery.of(ctx).viewInsets.bottom + 24.h,
+                              ),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Container(
-                                      width: 34.w,
-                                      height: 34.w,
-                                      decoration: const BoxDecoration(
-                                        color: _C.primaryLight,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.add_shopping_cart_rounded,
-                                        color: _C.primary,
-                                        size: 16,
-                                      ),
-                                    ),
-                                    SizedBox(width: 10.w),
-                                    Text(
-                                      'Add New Plan',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 15.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: _C.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 20.h),
-
-                                label("Meal Plan *"),
-                                Container(
-                                  height: 46.h,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 14.w,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF9F9FB),
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    border: Border.all(color: _C.border),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      isExpanded: true,
-                                      value:
-                                          planController.plans.any(
-                                                (p) => p.id == selectedPlanId,
-                                              )
-                                              ? selectedPlanId
-                                              : null,
-                                      hint: Text(
-                                        "Select Meal Plan",
-                                        style: GoogleFonts.poppins(
-                                          color: _C.textTertiary,
-                                          fontSize: 13.5.sp,
+                                    Center(
+                                      child: Container(
+                                        width: 36.w,
+                                        height: 4.h,
+                                        decoration: BoxDecoration(
+                                          color: _C.border,
+                                          borderRadius: BorderRadius.circular(
+                                            2.r,
+                                          ),
                                         ),
                                       ),
-                                      icon: const Icon(
-                                        Icons.keyboard_arrow_down,
-                                        color: _C.textSecondary,
-                                      ),
-                                      items:
-                                          planController.plans.map((p) {
-                                            return DropdownMenuItem<String>(
-                                              value: p.id,
-                                              child: Text(
-                                                p.planName ?? "N/A",
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 13.5.sp,
-                                                  color: _C.textPrimary,
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                      onChanged: (val) {
-                                        setSheetState(() {
-                                          selectedPlanId = val;
-                                          final newlySelectedMonthly =
-                                              planController.plans.any(
-                                                (p) =>
-                                                    p.id == val &&
-                                                    p.isMonthlyPlan,
-                                              );
-                                          if (newlySelectedMonthly) {
-                                            selectedScheduleType = "Everyday";
-                                            selectedDays = List.from(
-                                              _daysOfWeek,
-                                            );
-                                            updateMonthlyEndDate();
-                                          }
-                                        });
-                                      },
                                     ),
-                                  ),
-                                ),
-                                SizedBox(height: 14.h),
-
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          label("Start Date *"),
-                                          dateField(
-                                            "Select Date",
-                                            startDate,
-                                            () async {
-                                              await pickDate(true);
-                                            },
+                                    SizedBox(height: 16.h),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 34.w,
+                                          height: 34.w,
+                                          decoration: const BoxDecoration(
+                                            color: _C.primaryLight,
+                                            shape: BoxShape.circle,
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(width: 12.w),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          isMonthly
-                                              ? label("Duration *")
-                                              : label("End Date *"),
-                                          isMonthly
-                                              ? Container(
-                                                height: 46.h,
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 14.w,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: const Color(
-                                                    0xFFF9F9FB,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        8.r,
-                                                      ),
-                                                  border: Border.all(
-                                                    color: _C.border,
-                                                  ),
-                                                ),
-                                                child: DropdownButtonHideUnderline(
-                                                  child: DropdownButton<int>(
-                                                    isExpanded: true,
-                                                    value: selectedMonths,
-                                                    icon: const Icon(
-                                                      Icons.keyboard_arrow_down,
-                                                      color: _C.textSecondary,
-                                                    ),
-                                                    items:
-                                                        List.generate(
-                                                          12,
-                                                          (index) => index + 1,
-                                                        ).map((m) {
-                                                          return DropdownMenuItem<
-                                                            int
-                                                          >(
-                                                            value: m,
-                                                            child: Text(
-                                                              "$m Month${m > 1 ? 's' : ''}",
-                                                              style: GoogleFonts.poppins(
-                                                                fontSize:
-                                                                    13.5.sp,
-                                                                color:
-                                                                    _C.textPrimary,
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }).toList(),
-                                                    onChanged: (val) {
-                                                      if (val != null) {
-                                                        setSheetState(
-                                                          () =>
-                                                              selectedMonths =
-                                                                  val,
-                                                        );
-                                                        updateMonthlyEndDate();
-                                                      }
-                                                    },
-                                                  ),
-                                                ),
-                                              )
-                                              : dateField(
-                                                "Select Date",
-                                                endDate,
-                                                () async {
-                                                  await pickDate(false);
-                                                },
-                                              ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 14.h),
-
-                                label("Delivery Partner *"),
-                                Container(
-                                  height: 46.h,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 14.w,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF9F9FB),
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    border: Border.all(color: _C.border),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      isExpanded: true,
-                                      value: selectedPartnerId,
-                                      hint: Text(
-                                        "Select Delivery Partner",
-                                        style: GoogleFonts.poppins(
-                                          color: _C.textTertiary,
-                                          fontSize: 13.5.sp,
-                                        ),
-                                      ),
-                                      icon: const Icon(
-                                        Icons.keyboard_arrow_down,
-                                        color: _C.textSecondary,
-                                      ),
-                                      items:
-                                          partnerController.partners.map((e) {
-                                            return DropdownMenuItem<String>(
-                                              value:
-                                                  e
-                                                      .deliveryPartnerProfile
-                                                      ?.id ??
-                                                  "",
-                                              child: Text(
-                                                e.name ?? "Unknown",
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 13.5.sp,
-                                                  color: _C.textPrimary,
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                      onChanged:
-                                          (val) => setSheetState(
-                                            () => selectedPartnerId = val,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 14.h),
-
-                                if (!isMonthly) ...[
-                                  label("Scheduled Delivery Type"),
-                                  Container(
-                                    height: 46.h,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 14.w,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF9F9FB),
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      border: Border.all(color: _C.border),
-                                    ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        isExpanded: true,
-                                        value: selectedScheduleType,
-                                        icon: const Icon(
-                                          Icons.keyboard_arrow_down,
-                                          color: _C.textSecondary,
-                                        ),
-                                        items:
-                                            ["Everyday", "Custom"].map((type) {
-                                              return DropdownMenuItem<String>(
-                                                value: type,
-                                                child: Text(
-                                                  type,
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 13.5.sp,
-                                                    color: _C.textPrimary,
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
-                                        onChanged: (value) {
-                                          setSheetState(() {
-                                            selectedScheduleType =
-                                                value ?? "Everyday";
-                                            if (selectedScheduleType ==
-                                                "Everyday") {
-                                              selectedDays = List.from(
-                                                _daysOfWeek,
-                                              );
-                                            } else {
-                                              selectedDays = [];
-                                            }
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: 14.h),
-                                  if (selectedScheduleType == "Custom") ...[
-                                    label("Select Delivery Days *"),
-                                    Wrap(
-                                      spacing: 8.w,
-                                      runSpacing: 8.h,
-                                      children:
-                                          _daysOfWeek.map((day) {
-                                            final isSelected = selectedDays
-                                                .contains(day);
-                                            return GestureDetector(
-                                              onTap: () {
-                                                setSheetState(() {
-                                                  if (isSelected) {
-                                                    selectedDays.remove(day);
-                                                  } else {
-                                                    selectedDays.add(day);
-                                                  }
-                                                });
-                                              },
-                                              child: Container(
-                                                width: 66.w,
-                                                height: 34.h,
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      isSelected
-                                                          ? _C.primaryLight
-                                                          : Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        8.r,
-                                                      ),
-                                                  border: Border.all(
-                                                    color:
-                                                        isSelected
-                                                            ? _C.primary
-                                                            : Colors
-                                                                .grey
-                                                                .shade300,
-                                                  ),
-                                                ),
-                                                child: Center(
-                                                  child: Text(
-                                                    day.substring(0, 3),
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 11.5.sp,
-                                                      fontWeight:
-                                                          isSelected
-                                                              ? FontWeight.w600
-                                                              : FontWeight.w400,
-                                                      color:
-                                                          isSelected
-                                                              ? _C.primary
-                                                              : _C.textSecondary,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                    ),
-                                    SizedBox(height: 14.h),
-                                  ],
-                                ],
-
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          label("Discount Amount (₹)"),
-                                          TextField(
-                                            controller: discountCtrl,
-                                            keyboardType: TextInputType.number,
-                                            inputFormatters: [
-                                              FilteringTextInputFormatter
-                                                  .digitsOnly,
-                                            ],
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 13.5.sp,
-                                              color: _C.textPrimary,
-                                            ),
-                                            decoration: InputDecoration(
-                                              hintText: '0',
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                    horizontal: 14.w,
-                                                    vertical: 10.h,
-                                                  ),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8.r),
-                                                borderSide: const BorderSide(
-                                                  color: _C.border,
-                                                ),
-                                              ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8.r),
-                                                borderSide: const BorderSide(
-                                                  color: _C.border,
-                                                ),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8.r),
-                                                borderSide: const BorderSide(
-                                                  color: _C.primary,
-                                                ),
-                                              ),
-                                              filled: true,
-                                              fillColor: const Color(
-                                                0xFFF9F9FB,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 14.h),
-
-                                label("Delivery Address"),
-                                TextField(
-                                  controller: addressCtrl,
-                                  maxLines: 2,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13.5.sp,
-                                    color: _C.textPrimary,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText:
-                                        'Enter specific address instructions',
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 14.w,
-                                      vertical: 10.h,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      borderSide: const BorderSide(
-                                        color: _C.border,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      borderSide: const BorderSide(
-                                        color: _C.border,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      borderSide: const BorderSide(
-                                        color: _C.primary,
-                                      ),
-                                    ),
-                                    filled: true,
-                                    fillColor: const Color(0xFFF9F9FB),
-                                  ),
-                                ),
-                                SizedBox(height: 20.h),
-
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () => Get.back(),
-                                        style: OutlinedButton.styleFrom(
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 12.h,
-                                          ),
-                                          side: const BorderSide(
-                                            color: _C.border,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8.r,
-                                            ),
+                                          child: const Icon(
+                                            Icons.add_shopping_cart_rounded,
+                                            color: _C.primary,
+                                            size: 16,
                                           ),
                                         ),
-                                        child: Text(
-                                          'Cancel',
+                                        SizedBox(width: 10.w),
+                                        Text(
+                                          'Add New Plan',
                                           style: GoogleFonts.poppins(
-                                            fontSize: 13.sp,
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: _C.textPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 20.h),
+                                    label("Meal Plan *"),
+                                    Container(
+                                      height: 46.h,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 14.w,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF9F9FB),
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
+                                        border: Border.all(color: _C.border),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          isExpanded: true,
+                                          value:
+                                              planController.plans.any(
+                                                    (p) =>
+                                                        p.id == selectedPlanId,
+                                                  )
+                                                  ? selectedPlanId
+                                                  : null,
+                                          hint: Text(
+                                            "Select Meal Plan",
+                                            style: GoogleFonts.poppins(
+                                              color: _C.textTertiary,
+                                              fontSize: 13.5.sp,
+                                            ),
+                                          ),
+                                          icon: const Icon(
+                                            Icons.keyboard_arrow_down,
                                             color: _C.textSecondary,
                                           ),
+                                          items:
+                                              planController.plans
+                                                  .map(
+                                                    (p) => DropdownMenuItem<
+                                                      String
+                                                    >(
+                                                      value: p.id,
+                                                      child: Text(
+                                                        p.planName ?? "N/A",
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                              fontSize: 13.5.sp,
+                                                              color:
+                                                                  _C.textPrimary,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                          onChanged: (val) {
+                                            setSheetState(() {
+                                              selectedPlanId = val;
+                                              final newlySelectedMonthly =
+                                                  planController.plans.any(
+                                                    (p) =>
+                                                        p.id == val &&
+                                                        p.isMonthlyPlan,
+                                                  );
+                                              if (newlySelectedMonthly) {
+                                                selectedScheduleType =
+                                                    "Everyday";
+                                                selectedDays = List.from(
+                                                  _daysOfWeek,
+                                                );
+                                                updateMonthlyEndDate();
+                                              }
+                                            });
+                                          },
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 10.w),
-                                    Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () {
-                                          print(selectedPartnerId);
-                                          print(selectedPlanId);
-                                          if (selectedPlanId == null ||
-                                              selectedPartnerId == null ||
-                                              startDate == null ||
-                                              endDate == null) {
-                                            _showSnack(
-                                              'Notice',
-                                              'Please complete all required fields.',
-                                              _C.amber,
-                                            );
-                                            return;
-                                          }
-                                          if (selectedScheduleType ==
-                                                  "Custom" &&
-                                              selectedDays.isEmpty) {
-                                            _showSnack(
-                                              'Notice',
-                                              'Please select at least one delivery day.',
-                                              _C.amber,
-                                            );
-                                            return;
-                                          }
-
-                                          final startFmt = DateFormat(
-                                            'yyyy-MM-dd',
-                                          ).format(startDate!);
-                                          final endFmt = DateFormat(
-                                            'yyyy-MM-dd',
-                                          ).format(endDate!);
-                                          final discountVal =
-                                              int.tryParse(discountCtrl.text) ??
-                                              0;
-
-                                          _addPlanSubscriptionApi(
-                                            planId: selectedPlanId!,
-                                            partnerId: selectedPartnerId!,
-                                            startDate: startFmt,
-                                            endDate: endFmt,
-                                            scheduleType:
-                                                selectedScheduleType
-                                                    .toUpperCase(),
-                                            selectedDays:
-                                                selectedScheduleType ==
-                                                        "Everyday"
-                                                    ? List.from(_daysOfWeek)
-                                                    : selectedDays,
-                                            discount: discountVal,
-                                            address: addressCtrl.text.trim(),
-                                          );
-                                          Get.back();
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: _C.primary,
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 12.h,
+                                    SizedBox(height: 14.h),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              label("Start Date *"),
+                                              dateField(
+                                                "Select Date",
+                                                startDate,
+                                                () async {
+                                                  await pickDate(true);
+                                                },
+                                              ),
+                                            ],
                                           ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8.r,
+                                        ),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              isMonthly
+                                                  ? label("Duration *")
+                                                  : label("End Date *"),
+                                              isMonthly
+                                                  ? Container(
+                                                    height: 46.h,
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: 14.w,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFF9F9FB,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8.r,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: _C.border,
+                                                      ),
+                                                    ),
+                                                    child: DropdownButtonHideUnderline(
+                                                      child: DropdownButton<
+                                                        int
+                                                      >(
+                                                        isExpanded: true,
+                                                        value: selectedMonths,
+                                                        icon: const Icon(
+                                                          Icons
+                                                              .keyboard_arrow_down,
+                                                          color:
+                                                              _C.textSecondary,
+                                                        ),
+                                                        items:
+                                                            List.generate(
+                                                                  12,
+                                                                  (index) =>
+                                                                      index + 1,
+                                                                )
+                                                                .map(
+                                                                  (
+                                                                    m,
+                                                                  ) => DropdownMenuItem<
+                                                                    int
+                                                                  >(
+                                                                    value: m,
+                                                                    child: Text(
+                                                                      "$m Month${m > 1 ? 's' : ''}",
+                                                                      style: GoogleFonts.poppins(
+                                                                        fontSize:
+                                                                            13.5.sp,
+                                                                        color:
+                                                                            _C.textPrimary,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                )
+                                                                .toList(),
+                                                        onChanged: (val) {
+                                                          if (val != null) {
+                                                            setSheetState(
+                                                              () =>
+                                                                  selectedMonths =
+                                                                      val,
+                                                            );
+                                                            updateMonthlyEndDate();
+                                                          }
+                                                        },
+                                                      ),
+                                                    ),
+                                                  )
+                                                  : dateField(
+                                                    "Select Date",
+                                                    endDate,
+                                                    () async {
+                                                      await pickDate(false);
+                                                    },
+                                                  ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 14.h),
+                                    label("Delivery Partner *"),
+                                    Container(
+                                      height: 46.h,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 14.w,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF9F9FB),
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
+                                        border: Border.all(color: _C.border),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          isExpanded: true,
+                                          value: selectedPartnerId,
+                                          hint: Text(
+                                            "Select Delivery Partner",
+                                            style: GoogleFonts.poppins(
+                                              color: _C.textTertiary,
+                                              fontSize: 13.5.sp,
+                                            ),
+                                          ),
+                                          icon: const Icon(
+                                            Icons.keyboard_arrow_down,
+                                            color: _C.textSecondary,
+                                          ),
+                                          items:
+                                              partnerController.partners
+                                                  .map(
+                                                    (e) => DropdownMenuItem<
+                                                      String
+                                                    >(
+                                                      value:
+                                                          e
+                                                              .deliveryPartnerProfile
+                                                              ?.id ??
+                                                          "",
+                                                      child: Text(
+                                                        e.name ?? "Unknown",
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                              fontSize: 13.5.sp,
+                                                              color:
+                                                                  _C.textPrimary,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                          onChanged:
+                                              (val) => setSheetState(
+                                                () => selectedPartnerId = val,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 14.h),
+                                    if (!isMonthly) ...[
+                                      label("Scheduled Delivery Type"),
+                                      Container(
+                                        height: 46.h,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 14.w,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF9F9FB),
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          border: Border.all(color: _C.border),
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            isExpanded: true,
+                                            value: selectedScheduleType,
+                                            icon: const Icon(
+                                              Icons.keyboard_arrow_down,
+                                              color: _C.textSecondary,
+                                            ),
+                                            items:
+                                                ["Everyday", "Custom"]
+                                                    .map(
+                                                      (
+                                                        type,
+                                                      ) => DropdownMenuItem<
+                                                        String
+                                                      >(
+                                                        value: type,
+                                                        child: Text(
+                                                          type,
+                                                          style: GoogleFonts.poppins(
+                                                            fontSize: 13.5.sp,
+                                                            color:
+                                                                _C.textPrimary,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    )
+                                                    .toList(),
+                                            onChanged: (value) {
+                                              setSheetState(() {
+                                                selectedScheduleType =
+                                                    value ?? "Everyday";
+                                                if (selectedScheduleType ==
+                                                    "Everyday") {
+                                                  selectedDays = List.from(
+                                                    _daysOfWeek,
+                                                  );
+                                                } else {
+                                                  selectedDays = [];
+                                                }
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: 14.h),
+                                      if (selectedScheduleType == "Custom") ...[
+                                        label("Select Delivery Days *"),
+                                        Wrap(
+                                          spacing: 8.w,
+                                          runSpacing: 8.h,
+                                          children:
+                                              _daysOfWeek.map((day) {
+                                                final isSelected = selectedDays
+                                                    .contains(day);
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    setSheetState(() {
+                                                      if (isSelected) {
+                                                        selectedDays.remove(
+                                                          day,
+                                                        );
+                                                      } else {
+                                                        selectedDays.add(day);
+                                                      }
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    width: 66.w,
+                                                    height: 34.h,
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          isSelected
+                                                              ? _C.primaryLight
+                                                              : Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8.r,
+                                                          ),
+                                                      border: Border.all(
+                                                        color:
+                                                            isSelected
+                                                                ? _C.primary
+                                                                : Colors
+                                                                    .grey
+                                                                    .shade300,
+                                                      ),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        day.substring(0, 3),
+                                                        style: GoogleFonts.poppins(
+                                                          fontSize: 11.5.sp,
+                                                          fontWeight:
+                                                              isSelected
+                                                                  ? FontWeight
+                                                                      .w600
+                                                                  : FontWeight
+                                                                      .w400,
+                                                          color:
+                                                              isSelected
+                                                                  ? _C.primary
+                                                                  : _C.textSecondary,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                        ),
+                                        SizedBox(height: 14.h),
+                                      ],
+                                    ],
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              label("Discount Amount (₹)"),
+                                              TextField(
+                                                controller: discountCtrl,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                inputFormatters: [
+                                                  FilteringTextInputFormatter
+                                                      .digitsOnly,
+                                                ],
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 13.5.sp,
+                                                  color: _C.textPrimary,
+                                                ),
+                                                decoration: InputDecoration(
+                                                  hintText: '0',
+                                                  contentPadding:
+                                                      EdgeInsets.symmetric(
+                                                        horizontal: 14.w,
+                                                        vertical: 10.h,
+                                                      ),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8.r,
+                                                        ),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                          color: _C.border,
+                                                        ),
+                                                  ),
+                                                  enabledBorder:
+                                                      OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8.r,
+                                                            ),
+                                                        borderSide:
+                                                            const BorderSide(
+                                                              color: _C.border,
+                                                            ),
+                                                      ),
+                                                  focusedBorder:
+                                                      OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8.r,
+                                                            ),
+                                                        borderSide:
+                                                            const BorderSide(
+                                                              color: _C.primary,
+                                                            ),
+                                                      ),
+                                                  filled: true,
+                                                  fillColor: const Color(
+                                                    0xFFF9F9FB,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 14.h),
+                                    label("Delivery Address"),
+                                    TextField(
+                                      controller: addressCtrl,
+                                      maxLines: 2,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13.5.sp,
+                                        color: _C.textPrimary,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText:
+                                            'Enter specific address instructions',
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 14.w,
+                                          vertical: 10.h,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: _C.border,
+                                          ),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: _C.border,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: _C.primary,
+                                          ),
+                                        ),
+                                        filled: true,
+                                        fillColor: const Color(0xFFF9F9FB),
+                                      ),
+                                    ),
+                                    SizedBox(height: 20.h),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () => Get.back(),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: 12.h,
+                                              ),
+                                              side: const BorderSide(
+                                                color: _C.border,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.r),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              'Cancel',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 13.sp,
+                                                color: _C.textSecondary,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                        child: Text(
-                                          'Add Plan',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 13.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
+                                        SizedBox(width: 10.w),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              if (selectedPlanId == null ||
+                                                  selectedPartnerId == null ||
+                                                  startDate == null ||
+                                                  endDate == null) {
+                                                _showSnack(
+                                                  'Notice',
+                                                  'Please complete all required fields.',
+                                                  _C.amber,
+                                                );
+                                                return;
+                                              }
+                                              if (selectedScheduleType ==
+                                                      "Custom" &&
+                                                  selectedDays.isEmpty) {
+                                                _showSnack(
+                                                  'Notice',
+                                                  'Please select at least one delivery day.',
+                                                  _C.amber,
+                                                );
+                                                return;
+                                              }
+                                              _addPlanSubscriptionApi(
+                                                planId: selectedPlanId!,
+                                                partnerId: selectedPartnerId!,
+                                                startDate: DateFormat(
+                                                  'yyyy-MM-dd',
+                                                ).format(startDate!),
+                                                endDate: DateFormat(
+                                                  'yyyy-MM-dd',
+                                                ).format(endDate!),
+                                                scheduleType:
+                                                    selectedScheduleType
+                                                        .toUpperCase(),
+                                                selectedDays:
+                                                    selectedScheduleType ==
+                                                            "Everyday"
+                                                        ? List.from(_daysOfWeek)
+                                                        : selectedDays,
+                                                discount:
+                                                    int.tryParse(
+                                                      discountCtrl.text,
+                                                    ) ??
+                                                    0,
+                                                address:
+                                                    addressCtrl.text.trim(),
+                                              );
+                                              Get.back();
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: _C.primary,
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: 12.h,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.r),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              'Add Plan',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 13.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  );
-                },
+                    ),
               );
             },
           ),
     );
   }
 
-  // ─────────────────────────────────────────────
-  // RENEW SUBSCRIPTION BOTTOM SHEET
-  // ─────────────────────────────────────────────
   void _showRenewSheet(ActiveSubscriptions sub) {
     final PartnerController partnerController = Get.put(PartnerController());
     partnerController.ensureLoaded();
-
     final PlanController planController = Get.put(PlanController());
     planController.ensureLoaded();
 
@@ -1940,7 +1926,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       isMonthly = false;
     }
 
-    // Explicit constraint fulfillment: Start date must fall *after* expiration date
     final DateTime subEndDate = DateTime.parse(sub.endDate!);
     final DateTime minRenewalStartDate = subEndDate.add(
       const Duration(days: 1),
@@ -1957,7 +1942,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             startDate!.year,
             startDate!.month + selectedMonths,
             startDate!.day,
-          ).subtract(Duration(days: 1));
+          ).subtract(const Duration(days: 1));
         });
       }
     }
@@ -1989,27 +1974,24 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     isStart
                         ? minRenewalStartDate
                         : (startDate ?? minRenewalStartDate);
-
                 final picked = await showDatePicker(
                   context: context,
                   initialDate:
                       initialDate.isBefore(firstDate) ? firstDate : initialDate,
                   firstDate: firstDate,
                   lastDate: DateTime(2035),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: _C.primary,
-                          onPrimary: Colors.white,
-                          onSurface: _C.textPrimary,
+                  builder:
+                      (context, child) => Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: _C.primary,
+                            onPrimary: Colors.white,
+                            onSurface: _C.textPrimary,
+                          ),
                         ),
+                        child: child!,
                       ),
-                      child: child!,
-                    );
-                  },
                 );
-
                 if (picked != null) {
                   setSheetState(() {
                     if (isStart) {
@@ -2031,42 +2013,40 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 String hint,
                 DateTime? date,
                 VoidCallback onTap,
-              ) {
-                return GestureDetector(
-                  onTap: onTap,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9FB),
-                      border: Border.all(color: _C.border),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          date != null
-                              ? DateFormat('yyyy-MM-dd').format(date)
-                              : hint,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14.sp,
-                            color:
-                                date != null ? _C.textPrimary : _C.textTertiary,
-                          ),
-                        ),
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 16.sp,
-                          color: _C.textSecondary,
-                        ),
-                      ],
-                    ),
+              ) => GestureDetector(
+                onTap: onTap,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 12.h,
                   ),
-                );
-              }
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9FB),
+                    border: Border.all(color: _C.border),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        date != null
+                            ? DateFormat('yyyy-MM-dd').format(date)
+                            : hint,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14.sp,
+                          color:
+                              date != null ? _C.textPrimary : _C.textTertiary,
+                        ),
+                      ),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 16.sp,
+                        color: _C.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              );
 
               return SafeArea(
                 child: Padding(
@@ -2272,50 +2252,53 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: GetBuilder<PartnerController>(
-                            builder: (controller) {
-                              return DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  value: selectedPartnerId,
-                                  hint: Text(
-                                    'Select Delivery Partner',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14.sp,
-                                      color: _C.textTertiary,
+                            builder:
+                                (controller) => DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    isExpanded: true,
+                                    value: selectedPartnerId,
+                                    hint: Text(
+                                      'Select Delivery Partner',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14.sp,
+                                        color: _C.textTertiary,
+                                      ),
                                     ),
+                                    icon: const Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: _C.textSecondary,
+                                    ),
+                                    items:
+                                        controller.partners
+                                            .map(
+                                              (e) => DropdownMenuItem<String>(
+                                                value:
+                                                    e
+                                                        .deliveryPartnerProfile
+                                                        ?.id ??
+                                                    "",
+                                                child: Text(
+                                                  e.name ?? "Unknown",
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 14.sp,
+                                                    color: _C.textPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
+                                    onChanged: (val) {
+                                      setSheetState(
+                                        () => selectedPartnerId = val,
+                                      );
+                                    },
                                   ),
-                                  icon: const Icon(
-                                    Icons.keyboard_arrow_down,
-                                    color: _C.textSecondary,
-                                  ),
-                                  items:
-                                      controller.partners.map((e) {
-                                        return DropdownMenuItem<String>(
-                                          value:
-                                              e.deliveryPartnerProfile?.id ??
-                                              "",
-                                          child: Text(
-                                            e.name ?? "Unknown",
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 14.sp,
-                                              color: _C.textPrimary,
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                  onChanged: (val) {
-                                    setSheetState(
-                                      () => selectedPartnerId = val,
-                                    );
-                                  },
                                 ),
-                              );
-                            },
                           ),
                         ),
                         SizedBox(height: 16.h),
                         Text(
-                          "Discount applied (%)",
+                        "Discount Amount (₹)",
                           style: GoogleFonts.poppins(
                             fontSize: 11.sp,
                             color: _C.textSecondary,
@@ -2398,7 +2381,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                                     );
                                     return;
                                   }
-
                                   if (sub.plan?.id == null) {
                                     _showSnack(
                                       'Error',
@@ -2407,25 +2389,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                                     );
                                     return;
                                   }
-
-                                  final startFmt = DateFormat(
-                                    'yyyy-MM-dd',
-                                  ).format(startDate!);
-                                  final endFmt = DateFormat(
-                                    'yyyy-MM-dd',
-                                  ).format(endDate!);
-                                  final discountVal =
-                                      discountCtrl.text.isEmpty
-                                          ? "0"
-                                          : discountCtrl.text;
-
                                   _renewSubscriptionApi(
                                     subId: sub.id!,
                                     planId: sub.plan!.id!,
-                                    startDate: startFmt,
-                                    endDate: endFmt,
+                                    startDate: DateFormat(
+                                      'yyyy-MM-dd',
+                                    ).format(startDate!),
+                                    endDate: DateFormat(
+                                      'yyyy-MM-dd',
+                                    ).format(endDate!),
                                     partnerId: selectedPartnerId!,
-                                    discount: discountVal,
+                                    discount:
+                                        discountCtrl.text.isEmpty
+                                            ? "0"
+                                            : discountCtrl.text,
                                   );
                                   Get.back();
                                 },
@@ -2461,7 +2438,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   void _showPauseSheet(String subId) {
     DateTime? startDate;
     DateTime? endDate;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2476,26 +2452,23 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                         : (endDate ?? startDate ?? DateTime.now());
                 final firstDate =
                     isStart ? DateTime.now() : (startDate ?? DateTime.now());
-
                 final picked = await showDatePicker(
                   context: context,
                   initialDate: initialDate,
                   firstDate: firstDate,
                   lastDate: DateTime(2030),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: _C.primary,
-                          onPrimary: Colors.white,
-                          onSurface: _C.textPrimary,
+                  builder:
+                      (context, child) => Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: _C.primary,
+                            onPrimary: Colors.white,
+                            onSurface: _C.textPrimary,
+                          ),
                         ),
+                        child: child!,
                       ),
-                      child: child!,
-                    );
-                  },
                 );
-
                 if (picked != null) {
                   setSheetState(() {
                     if (isStart) {
@@ -2514,42 +2487,40 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 String hint,
                 DateTime? date,
                 VoidCallback onTap,
-              ) {
-                return GestureDetector(
-                  onTap: onTap,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9FB),
-                      border: Border.all(color: _C.border),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          date != null
-                              ? DateFormat('yyyy-MM-dd').format(date)
-                              : hint,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14.sp,
-                            color:
-                                date != null ? _C.textPrimary : _C.textTertiary,
-                          ),
-                        ),
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 16.sp,
-                          color: _C.textSecondary,
-                        ),
-                      ],
-                    ),
+              ) => GestureDetector(
+                onTap: onTap,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 12.h,
                   ),
-                );
-              }
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9FB),
+                    border: Border.all(color: _C.border),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        date != null
+                            ? DateFormat('yyyy-MM-dd').format(date)
+                            : hint,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14.sp,
+                          color:
+                              date != null ? _C.textPrimary : _C.textTertiary,
+                        ),
+                      ),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 16.sp,
+                        color: _C.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              );
 
               return SafeArea(
                 child: Padding(
@@ -2677,18 +2648,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                                     );
                                     return;
                                   }
-
-                                  final startFormatted = DateFormat(
-                                    'yyyy-MM-dd',
-                                  ).format(startDate!);
-                                  final endFormatted = DateFormat(
-                                    'yyyy-MM-dd',
-                                  ).format(endDate!);
-
                                   _pauseSubscriptionApi(
                                     subId,
-                                    startFormatted,
-                                    endFormatted,
+                                    DateFormat('yyyy-MM-dd').format(startDate!),
+                                    DateFormat('yyyy-MM-dd').format(endDate!),
                                   );
                                   Get.back();
                                 },
@@ -2724,7 +2687,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   void _showCancelSheet(String subId) {
     DateTime? startDate;
     DateTime? endDate;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2739,26 +2701,23 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                         : (endDate ?? startDate ?? DateTime.now());
                 final firstDate =
                     isStart ? DateTime.now() : (startDate ?? DateTime.now());
-
                 final picked = await showDatePicker(
                   context: context,
                   initialDate: initialDate,
                   firstDate: firstDate,
                   lastDate: DateTime(2030),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: _C.red,
-                          onPrimary: Colors.white,
-                          onSurface: _C.textPrimary,
+                  builder:
+                      (context, child) => Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: _C.red,
+                            onPrimary: Colors.white,
+                            onSurface: _C.textPrimary,
+                          ),
                         ),
+                        child: child!,
                       ),
-                      child: child!,
-                    );
-                  },
                 );
-
                 if (picked != null) {
                   setSheetState(() {
                     if (isStart) {
@@ -2777,42 +2736,40 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 String hint,
                 DateTime? date,
                 VoidCallback onTap,
-              ) {
-                return GestureDetector(
-                  onTap: onTap,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9FB),
-                      border: Border.all(color: _C.border),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          date != null
-                              ? DateFormat('yyyy-MM-dd').format(date)
-                              : hint,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14.sp,
-                            color:
-                                date != null ? _C.textPrimary : _C.textTertiary,
-                          ),
-                        ),
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 16.sp,
-                          color: _C.textSecondary,
-                        ),
-                      ],
-                    ),
+              ) => GestureDetector(
+                onTap: onTap,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 12.h,
                   ),
-                );
-              }
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9FB),
+                    border: Border.all(color: _C.border),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        date != null
+                            ? DateFormat('yyyy-MM-dd').format(date)
+                            : hint,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14.sp,
+                          color:
+                              date != null ? _C.textPrimary : _C.textTertiary,
+                        ),
+                      ),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 16.sp,
+                        color: _C.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              );
 
               return SafeArea(
                 child: Padding(
@@ -2936,13 +2893,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                                     );
                                     return;
                                   }
-                                  final startFmt = DateFormat(
-                                    'yyyy-MM-dd',
-                                  ).format(startDate!);
-
                                   _cancelSubscriptionApi(
                                     subId: subId,
-                                    startDate: startFmt,
+                                    startDate: DateFormat(
+                                      'yyyy-MM-dd',
+                                    ).format(startDate!),
                                   );
                                   Get.back();
                                 },
