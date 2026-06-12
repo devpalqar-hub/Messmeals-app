@@ -331,7 +331,7 @@ class SubscriptionScreen extends StatelessWidget {
           // Table Rows
           for (var data in ctrl.billingTier)
             _buildPricingRow(
-              '${data.minCustomers} - ${data.minCustomers}',
+              '${data.minCustomers} - ${data.maxCustomers}',
               '₹ ${data.perCustomerRate}',
               '₹ ${(double.parse(data.perCustomerRate!) * ctrl.billingModel!.customerCount!).toString()}',
               isCurrent:

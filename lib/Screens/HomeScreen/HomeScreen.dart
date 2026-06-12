@@ -9,6 +9,7 @@ import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 import 'package:mess/Screens/HomeScreen/HomeShimmerView.dart';
 // import 'package:mess/Screens/HomeScreen/HomeView.dart'; // Adjust if needed
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
+import 'package:mess/Screens/HomeScreen/Views/ProfileBottomSheet.dart';
 // import 'package:mess/Screens/HomeScreen/Service/dashbaord_controller.dart'; // Adjust if needed
 import 'package:mess/Screens/HomeScreen/Views/SelectMessBottomSheet.dart';
 import 'package:mess/Screens/HomeScreen/Views/StatItem.dart';
@@ -96,7 +97,15 @@ class Homescreen extends StatelessWidget {
                       ],
                     ),
                     Spacer(),
-                    Icon(CupertinoIcons.bell),
+                    InkWell(
+                      onTap: () {
+                        Get.bottomSheet(ProfileBottomSheet());
+                      },
+                      child: Icon(
+                        CupertinoIcons.person_circle,
+                        color: Colors.black87,
+                      ),
+                    ),
                   ],
                 ),
                 backgroundColor: Colors.white,

@@ -52,7 +52,7 @@ class HomeScreenController extends GetxController {
 
   fetchMyMesses() async {
     authToken = await _getToken() ?? "";
-
+    messes.clear();
     final response = await http.get(
       Uri.parse('$baseUrl/customer/owners/messes'),
       headers: {
@@ -84,6 +84,46 @@ class HomeScreenController extends GetxController {
   void refreshAllData() {
     fetchDashboardStats();
     fetchVariationCount(selectedDate);
+  }
+
+  bool addMessLoading = false;
+  void addNewMess({
+    required String name,
+    required String zipCode,
+    String? phone,
+    String? address,
+  }) async {
+    addMessLoading = true;
+    update();
+    final response = await http.post(
+      Uri.parse('$baseUrl/mess/admin/my-mess'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': '$bearerToken',
+      },
+      body: jsonEncode({
+        "name": name,
+        "address": address,
+        "phone": phone ?? user!.phone,
+        "email": user!.email,
+        "zipcode": zipCode,
+      }),
+    );
+
+    addMessLoading = false;
+    update();
+    print(response.body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      var body = json.decode(response.body);
+      Get.back();
+      messes = [];
+
+      await fetchMyMesses();
+      selectedMessId = body["data"]["id"];
+      fetchDashboardStats();
+    }
+    update();
+    print(response.body);
   }
 
   Future<String?> _getToken() async {
