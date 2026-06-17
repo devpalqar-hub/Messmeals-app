@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Ensure these imports match your actual project structure
 import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 import 'package:mess/Screens/HomeScreen/HomeShimmerView.dart';
-// import 'package:mess/Screens/HomeScreen/HomeView.dart'; // Adjust if needed
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/HomeScreen/Views/ProfileBottomSheet.dart';
 // import 'package:mess/Screens/HomeScreen/Service/dashbaord_controller.dart'; // Adjust if needed
@@ -17,14 +16,46 @@ import 'package:mess/Screens/MealBreakDownScreen/MealBreakDownScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
-
-// ---> IMPORTANT: Add the correct import for your new screen here <---
-// import 'package:mess/Screens/MealsAnalytics/MealsAnalyticsScreen.dart';
+import 'package:mess/Screens/Utils/routes.dart';
 
 class Homescreen extends StatelessWidget {
   Homescreen({super.key});
 
   final HomeScreenController ctrl = Get.put(HomeScreenController());
+
+  // BUG #2427 — Logout function: clears prefs and navigates to login
+  Future<void> _logout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            title: const Text("Logout"),
+            content: const Text("Are you sure you want to logout?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  "Logout",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      Get.offAllNamed(AppRoutes.login);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +114,7 @@ class Homescreen extends StatelessWidget {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                SizedBox(width: 10),
+                                SizedBox(width: 6.w),
                                 RotatedBox(
                                   quarterTurns: 3,
                                   child: Icon(
@@ -118,7 +149,7 @@ class Homescreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 20),
+                          SizedBox(height: 20.h),
 
                           // TOP REVENUE CARD
                           Container(
@@ -143,8 +174,9 @@ class Homescreen extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(height: 8.h),
+                                // BUG #2435 — format to avoid long decimal overflow
                                 Text(
-                                  "₹ ${ctrl.dashboardData!.totalRevenue ?? 0}",
+                                  "₹ ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
                                   style: GoogleFonts.poppins(
                                     fontSize: 26.sp,
                                     fontWeight: FontWeight.w600,
@@ -155,28 +187,30 @@ class Homescreen extends StatelessWidget {
                                 Row(
                                   children: [
                                     Text(
-                                      "This month",
+                                      "Over All",
                                       style: GoogleFonts.poppins(
                                         fontSize: 14.sp,
                                         fontWeight: FontWeight.w400,
                                         color: Colors.white.withOpacity(0.9),
                                       ),
                                     ),
-                                    RotatedBox(
-                                      quarterTurns: 3,
-                                      child: Icon(
-                                        CupertinoIcons.back,
-                                        color: Colors.white.withOpacity(0.8),
+                                    if (false)
+                                      RotatedBox(
+                                        quarterTurns: 3,
+                                        child: Icon(
+                                          CupertinoIcons.back,
+                                          color: Colors.white.withOpacity(0.8),
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ],
                             ),
                           ),
+
                           SizedBox(height: 20.h),
 
-                          // 4-STAT ROW
+                          // 4-STAT ROW — BUG #2435: format Avg/Customer to avoid overflow
                           Container(
                             padding: EdgeInsets.symmetric(vertical: 10.w),
                             margin: EdgeInsets.symmetric(horizontal: 10.w),
@@ -196,8 +230,8 @@ class Homescreen extends StatelessWidget {
                                 Expanded(
                                   child: StatItem(
                                     icon: Icons.shopping_bag_outlined,
-                                    iconColor: Color(0xFF4CB051),
-                                    iconBgColor: Color(0xFFE4F3E8),
+                                    iconColor: const Color(0xFF4CB051),
+                                    iconBgColor: const Color(0xFFE4F3E8),
                                     label: 'Orders',
                                     value:
                                         '${ctrl.dashboardData!.totalOrders ?? 0}',
@@ -207,8 +241,8 @@ class Homescreen extends StatelessWidget {
                                 Expanded(
                                   child: StatItem(
                                     icon: Icons.group_outlined,
-                                    iconColor: Color(0xFF10938F),
-                                    iconBgColor: Color(0xFFE2F3F3),
+                                    iconColor: const Color(0xFF10938F),
+                                    iconBgColor: const Color(0xFFE2F3F3),
                                     label: 'Customers',
                                     value:
                                         '${ctrl.dashboardData!.totalCustomers ?? 0}',
@@ -218,8 +252,8 @@ class Homescreen extends StatelessWidget {
                                 Expanded(
                                   child: StatItem(
                                     icon: Icons.handshake_outlined,
-                                    iconColor: Color(0xFFF67C31),
-                                    iconBgColor: Color(0xFFFEF3ED),
+                                    iconColor: const Color(0xFFF67C31),
+                                    iconBgColor: const Color(0xFFFEF3ED),
                                     label: 'Partners',
                                     value:
                                         '${ctrl.dashboardData!.totalPartners ?? 0}',
@@ -229,11 +263,12 @@ class Homescreen extends StatelessWidget {
                                 Expanded(
                                   child: StatItem(
                                     icon: Icons.account_balance_wallet_outlined,
-                                    iconColor: Color(0xFF8A59F8),
-                                    iconBgColor: Color(0xFFEAE5FA),
+                                    iconColor: const Color(0xFF8A59F8),
+                                    iconBgColor: const Color(0xFFEAE5FA),
                                     label: 'Avg/Customer',
+                                    // BUG #2435 — round to integer to prevent ₹13066.6666666666
                                     value:
-                                        '₹${ctrl.dashboardData!.avgPerCustomer ?? 0}',
+                                        '₹${_formatAmount(ctrl.dashboardData!.avgPerCustomer ?? 0)}',
                                   ),
                                 ),
                               ],
@@ -242,16 +277,13 @@ class Homescreen extends StatelessWidget {
 
                           SizedBox(height: 20.h),
 
-                          // ==========================================
-                          // MAIN BUTTON: FOOD PREPARATION ANALYTICS
-                          // ==========================================
+                          // FOOD PREP ANALYTICS BUTTON
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10.w),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  // Ensure MealsAnalyticsScreen is properly imported
                                   Get.to(
                                     () => MealsAnalyticsScreen(),
                                     transition: Transition.rightToLeft,
@@ -268,7 +300,7 @@ class Homescreen extends StatelessWidget {
                                       colors: [
                                         Color(0xFF10938F),
                                         Color(0xFF0D7A76),
-                                      ], // Teal Gradient
+                                      ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
@@ -337,7 +369,6 @@ class Homescreen extends StatelessWidget {
                             ),
                           ),
 
-                          // ==========================================
                           SizedBox(height: 24.h),
 
                           // REVENUE SUMMARY
@@ -346,7 +377,7 @@ class Homescreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF111827),
+                              color: const Color(0xFF111827),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -355,8 +386,9 @@ class Homescreen extends StatelessWidget {
                               Expanded(
                                 child: RevenueCard(
                                   title: 'Total Revenue',
+                                  // BUG #2435 — format revenue amounts
                                   amount:
-                                      '₹${ctrl.dashboardData!.totalRevenue!}',
+                                      '₹${_formatAmount(ctrl.dashboardData!.totalRevenue!)}',
                                   period: 'This Month',
                                   icon: Icons.trending_up,
                                   themeColor: const Color(0xFF2ECA50),
@@ -368,8 +400,8 @@ class Homescreen extends StatelessWidget {
                                 child: RevenueCard(
                                   title: 'Pending Revenue',
                                   amount:
-                                      '₹${ctrl.dashboardData!.pendingRevenue!}',
-                                  period: 'This Week',
+                                      '₹${_formatAmount(ctrl.dashboardData!.pendingRevenue!)}',
+                                  period: 'Over All',
                                   icon: Icons.access_time,
                                   themeColor: const Color(0xFFF16E22),
                                   iconBgColor: const Color(0xFFFEF2E9),
@@ -386,7 +418,7 @@ class Homescreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF111827),
+                              color: const Color(0xFF111827),
                             ),
                           ),
                           SizedBox(height: 8.h),
@@ -397,12 +429,11 @@ class Homescreen extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: InkWell(
-                                    onTap: () {
-                                      Get.to(
-                                        () => AddCustomerScreen(),
-                                        transition: Transition.rightToLeft,
-                                      );
-                                    },
+                                    onTap:
+                                        () => Get.to(
+                                          () => AddCustomerScreen(),
+                                          transition: Transition.rightToLeft,
+                                        ),
                                     child: QuickActionCard(
                                       label: 'Add Customer',
                                       icon: Icons.person_add_alt_1_outlined,
@@ -414,12 +445,11 @@ class Homescreen extends StatelessWidget {
                                 SizedBox(width: 8.w),
                                 Expanded(
                                   child: InkWell(
-                                    onTap: () {
-                                      Get.to(
-                                        () => AddPartnerScreen(),
-                                        transition: Transition.rightToLeft,
-                                      );
-                                    },
+                                    onTap:
+                                        () => Get.to(
+                                          () => AddPartnerScreen(),
+                                          transition: Transition.rightToLeft,
+                                        ),
                                     child: QuickActionCard(
                                       label: 'Add Partner',
                                       icon: Icons.group_outlined,
@@ -431,12 +461,11 @@ class Homescreen extends StatelessWidget {
                                 SizedBox(width: 8.w),
                                 Expanded(
                                   child: InkWell(
-                                    onTap: () {
-                                      Get.to(
-                                        () => SubscriptionScreen(),
-                                        transition: Transition.rightToLeft,
-                                      );
-                                    },
+                                    onTap:
+                                        () => Get.to(
+                                          () => SubscriptionScreen(),
+                                          transition: Transition.rightToLeft,
+                                        ),
                                     child: QuickActionCard(
                                       label: 'Reports',
                                       icon: Icons.pie_chart_outline,
@@ -459,7 +488,17 @@ class Homescreen extends StatelessWidget {
       },
     );
   }
-}
 
-// NOTE: Ensure your existing DividerWidget, RevenueCard, and QuickActionCard 
-// are correctly referenced or exist in the same file/imports.
+  /// BUG #2435 — formats numbers: removes trailing decimals, rounds to int
+  String _formatAmount(dynamic value) {
+    if (value == null) return '0';
+    final num parsed =
+        value is num ? value : num.tryParse(value.toString()) ?? 0;
+    // If it's a whole number, show without decimals
+    if (parsed == parsed.roundToDouble()) {
+      return parsed.toInt().toString();
+    }
+    // Otherwise round to 2 decimal places max
+    return parsed.toStringAsFixed(2);
+  }
+}

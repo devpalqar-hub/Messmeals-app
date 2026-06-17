@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -8,11 +9,10 @@ import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
-import 'package:mess/main.dart' show baseUrl;
+import 'package:mess/main.dart' show baseUrl, bearerToken;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomerController extends GetxController {
-  // final AuthController authController = Get.put(AuthController());
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 
@@ -59,14 +59,13 @@ class CustomerController extends GetxController {
       }
 
       final url =
-          '$baseUrl/customer?page=$page&limit=$limit&messId=$messId '
+          '$baseUrl/customer?page=$page&limit=$limit&messId=$messId'
           '${search != null && search.isNotEmpty ? '&search=$search' : ''}'
           '${planId != null && planId.isNotEmpty ? '&planId=$planId' : ''}';
       debugPrint("--------url: $url");
 
       final response = await http.get(
         Uri.parse(url),
-
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
@@ -123,7 +122,26 @@ class CustomerController extends GetxController {
     required String preferredTime,
     required List<String> deliveryDays,
   }) async {
-    try {
+    // BUG #2409 — prevent duplicate phone number among existing customers
+    final isDuplicate = customers.any((c) => c.phone.trim() == phone.trim());
+    if (isDuplicate) {
+      Fluttertoast.showToast(
+        msg: "A customer with this phone number already exists",
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+
+   try {
+      final messId = dashboardController.selectedMessId;
+      if (messId == null) {
+        Fluttertoast.showToast(
+          msg: "No mess selected. Please select a mess first.",
+        );
+        return false;
+      }
+
       final url = Uri.parse("$baseUrl/customer/register-user");
       final requestBody = {
         "name": name,
@@ -131,21 +149,17 @@ class CustomerController extends GetxController {
         if (email.isNotEmpty) "email": email,
         "address": address,
         "location": location,
+        "messId": messId, // ← THIS was missing
         "planId": planId,
         "deliveryPartnerId": deliveryPartnerId,
         "start_date": DateFormat(
           "yyyy-MM-dd",
         ).format(DateTime.parse(startDate)),
         "end_date": DateFormat("yyyy-MM-dd").format(DateTime.parse(endDate)),
-
         "walletAmount": double.tryParse(walletAmount) ?? 0,
-
         "discountAmount": double.tryParse(discountAmount) ?? 0,
-
         "deliveryType": deliveryType,
-
         "preferredTime": preferredTime,
-
         "deliveryDays": deliveryDays,
       };
 
@@ -157,22 +171,31 @@ class CustomerController extends GetxController {
         },
         body: jsonEncode(requestBody),
       );
+
       if (response.body.isNotEmpty) {
         try {
           final decoded = jsonDecode(response.body);
-
           debugPrint(const JsonEncoder.withIndent('  ').convert(decoded));
         } catch (e) {}
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Fluttertoast.showToast(msg: "Customer added successfully");
-
         return true;
       }
 
-      Fluttertoast.showToast(msg: "Failed: ${response.statusCode}");
+      if (response.statusCode == 400 || response.statusCode == 409) {
+        try {
+          final error = jsonDecode(response.body);
+          final msg = error['message'] ?? "Failed: ${response.statusCode}";
+          Fluttertoast.showToast(msg: msg);
+        } catch (_) {
+          Fluttertoast.showToast(msg: "Failed: ${response.statusCode}");
+        }
+        return false;
+      }
 
+      Fluttertoast.showToast(msg: "Failed: ${response.statusCode}");
       return false;
     } catch (e) {
       return false;
@@ -207,49 +230,26 @@ class CustomerController extends GetxController {
         if (discount != null) "discount": discount,
       };
 
-      final body = jsonEncode(bodyMap);
-
-      final startTime = DateTime.now();
-
       final response = await http.patch(
         url,
-        body: body,
+        body: jsonEncode(bodyMap),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
       );
 
-      final endTime = DateTime.now();
-
-      /// 🔥 RESPONSE LOG
       if (kDebugMode) {
-        debugPrint("=========== UPDATE CUSTOMER RESPONSE ==========");
-        debugPrint("STATUS   : ${response.statusCode}");
-        debugPrint(
-          "TIME     : ${endTime.difference(startTime).inMilliseconds} ms",
-        );
-        debugPrint("BODY     : ${_prettyJsonString(response.body)}");
-        debugPrint("===============================================");
+        debugPrint("STATUS: ${response.statusCode}");
+        debugPrint("BODY: ${_prettyJsonString(response.body)}");
       }
-
-      /// 🔥 401 AUTO LOGOUT (IMPORTANT)
-      // if (response.statusCode == 401) {
-      //   Get.snackbar("Session Expired", "Please login again");
-      //   await authController.logout(); // make sure you have this
-      //   return;
-      // }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         await dashboardController.fetchDashboardStats();
         await refreshCustomers();
-
         AppToast.success(data['message'] ?? "Customer updated successfully");
-
         await Future.delayed(const Duration(milliseconds: 500));
-
         if (Get.isOverlaysOpen) {
           Get.back(closeOverlays: true);
         } else if (Get.key.currentState?.canPop() ?? false) {
@@ -257,13 +257,10 @@ class CustomerController extends GetxController {
         }
       } else {
         final error = jsonDecode(response.body);
-
         AppToast.error(error['message'] ?? "Failed to update customer");
       }
     } catch (e, stack) {
-      debugPrint("❌ UPDATE CUSTOMER ERROR: $e");
-      debugPrint("📍 STACK TRACE: $stack");
-
+      debugPrint("❌ UPDATE CUSTOMER ERROR: $e\n$stack");
       AppToast.error("Something went wrong: $e");
     } finally {
       isLoading = false;
@@ -276,25 +273,18 @@ class CustomerController extends GetxController {
       isLoading = true;
       update();
 
-      final url = '$baseUrl/customer/$Id';
-      debugPrint("🗑 DELETE URL => $url");
-
       final response = await http.delete(
-        Uri.parse(url),
+        Uri.parse('$baseUrl/customer/$Id'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
       );
 
-      debugPrint("🗑 STATUS => ${response.statusCode}");
-      debugPrint("🗑 BODY => ${response.body}");
-
       if (response.statusCode == 200 || response.statusCode == 204) {
         customers.removeWhere((c) => c.id == Id);
         await refreshCustomers();
         await dashboardController.fetchDashboardStats();
-
         AppToast.success("Customer deleted successfully");
       } else {
         AppToast.error("Failed to delete customer");
@@ -319,57 +309,42 @@ class CustomerController extends GetxController {
       isLoading = true;
       update();
 
-      final url = Uri.parse('$baseUrl/customer/renew-subscription');
-
-      final Map<String, dynamic> bodyMap = {
-        "planId": planId,
-        "start_date": startDate,
-        "end_date": endDate,
-        "deliveryPartnerId": deliveryPartnerId,
-        "discount": discount,
-        "customerProfileId": customerProfileId,
-      };
-
-      final body = jsonEncode(bodyMap);
-
-      // ⏱️ Start time
-
       final response = await http.post(
-        url,
-        body: body,
+        Uri.parse('$baseUrl/customer/renew-subscription'),
+        body: jsonEncode({
+          "planId": planId,
+          "start_date": startDate,
+          "end_date": endDate,
+          "deliveryPartnerId": deliveryPartnerId,
+          "discount": discount,
+          "customerProfileId": customerProfileId,
+        }),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
       );
 
-      // ⏱️ End time
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // ✅ Refresh dashboard
         await dashboardController.fetchDashboardStats();
         await refreshCustomers();
-
         AppToast.success("Subscription renewed successfully");
 
-        // ✅ Refresh single customer
-        final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
         final customerResponse = await http.get(
-          customerUrl,
+          Uri.parse('$baseUrl/customer/$customerProfileId'),
           headers: {'Authorization': bearerToken},
         );
 
         if (customerResponse.statusCode == 200) {
-          final updatedData = jsonDecode(customerResponse.body)['data'];
-          final updatedCustomer = CustomerModel.fromJson(updatedData);
-
+          final updatedCustomer = CustomerModel.fromJson(
+            jsonDecode(customerResponse.body)['data'],
+          );
           final index = customers.indexWhere((c) => c.id == customerProfileId);
           if (index != -1) {
             customers[index] = updatedCustomer;
             update();
           }
         }
-
         return true;
       } else {
         final error = jsonDecode(response.body);
@@ -382,15 +357,6 @@ class CustomerController extends GetxController {
     } finally {
       isLoading = false;
       update();
-    }
-  }
-
-  String _prettyJsonString(String input) {
-    try {
-      final jsonObj = jsonDecode(input);
-      return const JsonEncoder.withIndent('  ').convert(jsonObj);
-    } catch (e) {
-      return input;
     }
   }
 
@@ -409,53 +375,25 @@ class CustomerController extends GetxController {
         return;
       }
 
-      final url = Uri.parse(
-        '$baseUrl/customer/pause-subscription/$activeSubscriptionId',
-      );
-
-      final bodyMap = {
-        "customerProfileId": customerProfileId,
-        "pause_start_date": DateFormat('yyyy-MM-dd').format(startDate),
-        "pause_end_date": DateFormat('yyyy-MM-dd').format(endDate),
-      };
-
-      final body = jsonEncode(bodyMap);
-
-      /// 🔥 LOG REQUEST
-      debugPrint("========== PAUSE SUBSCRIPTION REQUEST ==========");
-      debugPrint("URL: $url");
-      debugPrint("METHOD: PATCH");
-      debugPrint(
-        "HEADERS: {Content-Type: application/json, Authorization: Bearer $token}",
-      );
-      debugPrint("BODY: $body");
-      debugPrint("================================================");
-
       final response = await http.patch(
-        url,
+        Uri.parse('$baseUrl/customer/pause-subscription/$activeSubscriptionId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: body,
+        body: jsonEncode({
+          "customerProfileId": customerProfileId,
+          "pause_start_date": DateFormat('yyyy-MM-dd').format(startDate),
+          "pause_end_date": DateFormat('yyyy-MM-dd').format(endDate),
+        }),
       );
 
-      /// 🔥 LOG RESPONSE
-      debugPrint("========== PAUSE SUBSCRIPTION RESPONSE ==========");
-      debugPrint("STATUS CODE: ${response.statusCode}");
-      debugPrint("BODY: ${response.body}");
-      debugPrint("=================================================");
-
       if (response.statusCode == 200) {
-        await refreshCustomers();
-
         AppToast.show(
           title: "Paused Successfully",
           message:
               "Order paused from ${DateFormat('dd MMM').format(startDate)} to ${DateFormat('dd MMM').format(endDate)}",
         );
-
-        // Refresh data
         await dashboardController.fetchDashboardStats();
         await refreshCustomers();
         await fetchCustomerDetails(customerProfileId);
@@ -477,73 +415,37 @@ class CustomerController extends GetxController {
       isLoading = true;
       update();
 
-      final url = Uri.parse(
-        '$baseUrl/customer/cancel-subscription/$activeSubscriptionId',
-      );
-
-      /// 🔥 LOG REQUEST
-      debugPrint("========== CANCEL SUBSCRIPTION REQUEST ==========");
-      debugPrint("URL: $url");
-      debugPrint("METHOD: PATCH");
-      debugPrint(
-        "HEADERS: {Content-Type: application/json, Authorization: $bearerToken}",
-      );
-      debugPrint("BODY: {}");
-      debugPrint("=================================================");
-
       final response = await http.patch(
-        url,
+        Uri.parse(
+          '$baseUrl/customer/cancel-subscription/$activeSubscriptionId',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
       );
 
-      /// 🔥 LOG RESPONSE
-      debugPrint("========== CANCEL SUBSCRIPTION RESPONSE ==========");
-      debugPrint("STATUS CODE: ${response.statusCode}");
-      debugPrint("BODY: ${response.body}");
-      debugPrint("==================================================");
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         AppToast.success("Subscription cancelled successfully");
 
-        /// 🔥 FETCH UPDATED CUSTOMER
-        final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
-
-        debugPrint("====== FETCH UPDATED CUSTOMER REQUEST ======");
-        debugPrint("URL: $customerUrl");
-        debugPrint("METHOD: GET");
-        debugPrint("HEADERS: {Authorization: $bearerToken}");
-        debugPrint("===========================================");
-
         final customerResponse = await http.get(
-          customerUrl,
+          Uri.parse('$baseUrl/customer/$customerProfileId'),
           headers: {'Authorization': bearerToken},
         );
 
-        /// 🔥 LOG CUSTOMER RESPONSE
-        debugPrint("====== FETCH UPDATED CUSTOMER RESPONSE ======");
-        debugPrint("STATUS CODE: ${customerResponse.statusCode}");
-        debugPrint("BODY: ${customerResponse.body}");
-        debugPrint("============================================");
-
         if (customerResponse.statusCode == 200) {
-          final updatedData = jsonDecode(customerResponse.body)['data'];
-          final updatedCustomer = CustomerModel.fromJson(updatedData);
-
+          final updatedCustomer = CustomerModel.fromJson(
+            jsonDecode(customerResponse.body)['data'],
+          );
           final index = customers.indexWhere((c) => c.id == customerProfileId);
-
           if (index != -1) {
             customers[index] = updatedCustomer;
             update();
           }
-
           if (Get.isBottomSheetOpen ?? false) {
             Get.back(result: updatedCustomer);
           }
         }
-
         return true;
       } else {
         final error = jsonDecode(response.body);
@@ -568,74 +470,33 @@ class CustomerController extends GetxController {
       isLoading = true;
       update();
 
-      final url = Uri.parse(
-        '$baseUrl/customer/update-wallet/$customerProfileId',
-      );
-
-      final bodyMap = {"amount": amount};
-      final body = jsonEncode(bodyMap);
-
-      /// 🔥 LOG REQUEST
-      debugPrint("========== UPDATE WALLET REQUEST ==========");
-      debugPrint("URL: $url");
-      debugPrint("METHOD: PATCH");
-      debugPrint(
-        "HEADERS: {Content-Type: application/json, Authorization: $bearerToken}",
-      );
-      debugPrint("BODY: $body");
-      debugPrint("===========================================");
-
       final response = await http.patch(
-        url,
-        body: body,
+        Uri.parse('$baseUrl/customer/update-wallet/$customerProfileId'),
+        body: jsonEncode({"amount": amount}),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
       );
 
-      /// 🔥 LOG RESPONSE
-      debugPrint("========== UPDATE WALLET RESPONSE ==========");
-      debugPrint("STATUS CODE: ${response.statusCode}");
-      debugPrint("BODY: ${response.body}");
-      debugPrint("============================================");
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         AppToast.success("Wallet updated successfully");
-
         await dashboardController.fetchDashboardStats();
 
-        /// 🔥 FETCH UPDATED CUSTOMER
-        final customerUrl = Uri.parse('$baseUrl/customer/$customerProfileId');
-
-        debugPrint("====== FETCH UPDATED CUSTOMER REQUEST ======");
-        debugPrint("URL: $customerUrl");
-        debugPrint("METHOD: GET");
-        debugPrint("HEADERS: {Authorization: $bearerToken}");
-        debugPrint("===========================================");
-
         final customerResponse = await http.get(
-          customerUrl,
+          Uri.parse('$baseUrl/customer/$customerProfileId'),
           headers: {'Authorization': bearerToken},
         );
 
-        /// 🔥 LOG CUSTOMER RESPONSE
-        debugPrint("====== FETCH UPDATED CUSTOMER RESPONSE ======");
-        debugPrint("STATUS CODE: ${customerResponse.statusCode}");
-        debugPrint("BODY: ${customerResponse.body}");
-        debugPrint("============================================");
-
         if (customerResponse.statusCode == 200) {
-          final updatedData = jsonDecode(customerResponse.body)['data'];
-          final updatedCustomer = CustomerModel.fromJson(updatedData);
-
+          final updatedCustomer = CustomerModel.fromJson(
+            jsonDecode(customerResponse.body)['data'],
+          );
           final index = customers.indexWhere((c) => c.id == customerProfileId);
-
           if (index != -1) {
             customers[index] = updatedCustomer;
             update();
           }
-
           if (Get.isBottomSheetOpen ?? false) {
             Get.back(result: updatedCustomer);
           }
@@ -654,39 +515,35 @@ class CustomerController extends GetxController {
   }
 
   Future<void> fetchCustomerDetails(String id) async {
-    final url = '$baseUrl/customer/$id';
-
     try {
-      debugPrint("🚀 FETCH CUSTOMER DETAILS → $id");
-
       final response = await http.get(
-        Uri.parse(url),
+        Uri.parse('$baseUrl/customer/$id'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
       );
 
-      debugPrint("STATUS: ${response.statusCode}");
-      debugPrint("BODY: ${response.body}");
-
       if (response.statusCode == 200) {
-        final data = json.decode(response.body)['data'];
-
-        final updatedCustomer = CustomerModel.fromJson(data);
-
+        final updatedCustomer = CustomerModel.fromJson(
+          json.decode(response.body)['data'],
+        );
         final index = customers.indexWhere((c) => c.id == id);
-
         if (index != -1) {
           customers[index] = updatedCustomer;
           update();
-          debugPrint("✅ Customer updated in list");
-        } else {
-          debugPrint("⚠️ Customer NOT FOUND in list");
         }
       }
     } catch (e) {
       debugPrint("❌ ERROR: $e");
+    }
+  }
+
+  String _prettyJsonString(String input) {
+    try {
+      return const JsonEncoder.withIndent('  ').convert(jsonDecode(input));
+    } catch (_) {
+      return input;
     }
   }
 }

@@ -11,6 +11,7 @@ class CustomerDetailModel {
   int? noOfDaysToEnd;
   int? totalOrders;
   int? totalSpent;
+  String? createdAt; // ← ADDED
   List<ActiveSubscriptions>? activeSubscriptions;
 
   CustomerDetailModel({
@@ -26,6 +27,7 @@ class CustomerDetailModel {
     this.noOfDaysToEnd,
     this.totalOrders,
     this.totalSpent,
+    this.createdAt, // ← ADDED
     this.activeSubscriptions,
   });
 
@@ -42,6 +44,8 @@ class CustomerDetailModel {
     noOfDaysToEnd = json['noOfDaysToEnd'];
     totalOrders = json['totalOrders'];
     totalSpent = json['totalSpent'];
+    // ← ADDED: try both common backend field names
+    createdAt = json['createdAt'] ?? json['created_at'] ?? json['joinedAt'];
     if (json['activeSubscriptions'] != null) {
       activeSubscriptions = <ActiveSubscriptions>[];
       json['activeSubscriptions'].forEach((v) {
@@ -64,6 +68,7 @@ class CustomerDetailModel {
     data['noOfDaysToEnd'] = this.noOfDaysToEnd;
     data['totalOrders'] = this.totalOrders;
     data['totalSpent'] = this.totalSpent;
+    data['createdAt'] = this.createdAt; // ← ADDED
     if (this.activeSubscriptions != null) {
       data['activeSubscriptions'] =
           this.activeSubscriptions!.map((v) => v.toJson()).toList();

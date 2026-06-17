@@ -22,7 +22,7 @@ class _OrderCardState extends State<OrderCard> with TickerProviderStateMixin {
 
   final DeliveriesController _controller = Get.find();
 
-  final List<String> _statusValues = ["PENDING", "PROGRESS", "DELIVERED"];
+  final List<String> _statusValues = ["PENDING", "DELIVERED", "UNDELIVERED"];
 
   Customer? get customer => widget.delivery.customer;
   User? get user => customer?.user;

@@ -343,7 +343,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _C.background,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16.w),
@@ -354,36 +354,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TittleText(text: "Deliveries"),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => GenerateDeliveriesDialog(),
-                          );
-                        },
-                        icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
-                        label: Text(
-                          "Generate",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _C.textPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 20.w,
-                            vertical: 12.h,
-                          ),
-                        ),
-                      ),
-                    ],
+                    children: [TittleText(text: "Deliveries")],
                   ),
                   SizedBox(height: 14.h),
 
@@ -451,7 +422,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
             Expanded(
               child: _dropdown(
                 value: selectedStatus,
-                items: ["All Status", "Pending", "Progress", "Delivered"],
+                items: ["All Status", "Pending", "Delivered", "Completed"],
                 onChanged: (v) {
                   setState(() => selectedStatus = v!);
                   _triggerFilterSearch();
@@ -482,11 +453,24 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                           color: _C.textPrimary,
                         ),
                       ),
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 16.sp,
-                        color: _C.textSecondary,
-                      ),
+                      // ✅ FIX: show X to clear date, calendar icon when no date
+                      selectedDate != null
+                          ? GestureDetector(
+                            onTap: () {
+                              setState(() => selectedDate = null);
+                              _triggerFilterSearch();
+                            },
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 16.sp,
+                              color: _C.red,
+                            ),
+                          )
+                          : Icon(
+                            Icons.calendar_today_rounded,
+                            size: 16.sp,
+                            color: _C.textSecondary,
+                          ),
                     ],
                   ),
                 ),
@@ -630,7 +614,7 @@ class _OrderCardState extends State<OrderCard> {
                   ),
                 ),
                 SizedBox(height: 12.h),
-                ...["PENDING", "PROGRESS", "DELIVERED"].map((status) {
+                ...["PENDING", "DELIVERED", "UNDELIVERED"].map((status) {
                   final isCurrent =
                       deliveryVar.status.toString().toUpperCase() == status;
                   return ListTile(
