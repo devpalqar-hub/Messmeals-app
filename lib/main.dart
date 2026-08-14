@@ -3,21 +3,24 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/OnboardingScreen/Service/onboarding_controller.dart';
 import 'package:mess/Screens/Utils/routes.dart';
 import 'package:mess/dashbaord_binding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 String baseUrl = "https://staging-api.messmeals.com";
 String? login;
+bool onboardingSeen = false;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final authController = Get.put(AuthController());
+  Get.put(AuthController());
   SharedPreferences pref = await SharedPreferences.getInstance();
   bearerToken = "Bearer " + (pref.getString("token") ?? "");
   print('TOKEN: ${pref.getString("token")}');
   login = pref.getString("LOGIN");
+  onboardingSeen = pref.getBool(onboardingSeenKey) ?? false;
   runApp(const MessMeals());
 }
 
@@ -32,7 +35,7 @@ class MessMeals extends StatelessWidget {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
           initialBinding: AppBindings(),
-          initialRoute: login == "IN" ? AppRoutes.dashboard : AppRoutes.login,
+          initialRoute: AppRoutes.splash,
           getPages: AppRoutes.routes,
           // BUG #2414 — stops keyboard from causing layout overflow on iPhone
           builder: (context, widget) {
