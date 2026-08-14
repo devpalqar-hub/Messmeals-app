@@ -3,11 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
-<<<<<<< HEAD
-import 'package:mess/Screens/Utils/Colors.dart';
-=======
 import 'package:mess/Screens/OnboardingScreen/Service/onboarding_controller.dart';
->>>>>>> origin/copilot/dev-sabari
 import 'package:mess/Screens/Utils/routes.dart';
 import 'package:mess/dashbaord_binding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,13 +35,7 @@ class MessMeals extends StatelessWidget {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
           initialBinding: AppBindings(),
-<<<<<<< HEAD
-          color: PrimaryColor,
-          theme: ThemeData(primaryColor: PrimaryColor),
-          initialRoute: login == "IN" ? AppRoutes.dashboard : AppRoutes.login,
-=======
           initialRoute: AppRoutes.splash,
->>>>>>> origin/copilot/dev-sabari
           getPages: AppRoutes.routes,
           // BUG #2414 — stops keyboard from causing layout overflow on iPhone
           builder: (context, widget) {
