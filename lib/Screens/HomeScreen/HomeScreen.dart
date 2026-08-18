@@ -12,6 +12,7 @@ import 'package:mess/Screens/HomeScreen/Views/SelectMessBottomSheet.dart';
 import 'package:mess/Screens/HomeScreen/Views/StatItem.dart';
 import 'package:mess/Screens/MealBreakDownScreen/MealBreakDownScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
+import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
 import 'package:mess/Screens/Utils/routes.dart';
@@ -125,7 +126,7 @@ class Homescreen extends StatelessWidget {
                           ),
                       ],
                     ),
-                    const Spacer(),
+                      const Spacer(),
                     // BUG #2427 — Logout button in AppBar
                     PopupMenuButton<String>(
                       icon: const Icon(CupertinoIcons.ellipsis_vertical),
@@ -152,6 +153,19 @@ class Homescreen extends StatelessWidget {
                               ),
                             ),
                           ],
+                    ),
+
+                  
+                    // Settings icon — opens the Mess Profile Settings screen
+                    IconButton(
+                      onPressed: () {
+                        Get.to(
+                          () => const MessProfileSettingsScreen(),
+                          transition: Transition.rightToLeft,
+                        );
+                      },
+                      icon: const Icon(Icons.settings_outlined),
+                      color: const Color(0xFF111827),
                     ),
                   ],
                 ),

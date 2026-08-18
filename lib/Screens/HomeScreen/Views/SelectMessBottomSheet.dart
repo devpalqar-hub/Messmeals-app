@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/get_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
+import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
 
 class SelectMessBottomsheet extends StatefulWidget {
@@ -78,8 +77,10 @@ class _SelectMessBottomsheetState extends State<SelectMessBottomsheet> {
           InkWell(
             onTap: () {
               Get.back();
-              // TODO: Navigate to Add Mess Screen here
-              // Get.to(() => AddMessScreen());
+              Get.to(
+                () => const MessProfileSettingsScreen(forceCreate: true),
+                transition: Transition.rightToLeft,
+              );
             },
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 12.h),
