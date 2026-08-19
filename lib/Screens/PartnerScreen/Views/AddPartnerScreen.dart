@@ -17,7 +17,7 @@ class AddPartnerScreen extends StatefulWidget {
 
 class _AddPartnerScreenState extends State<AddPartnerScreen> {
   final _formKey = GlobalKey<FormState>();
-  final PartnerController controller = Get.find<PartnerController>();
+   final PartnerController controller = Get.put(PartnerController());
 
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
@@ -91,7 +91,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: Color(0xff07A4A5),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),

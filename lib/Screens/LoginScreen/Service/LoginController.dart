@@ -35,6 +35,12 @@ class AuthController extends GetxController {
   String get countryCode =>
       "+${CountryPickerUtils.getCountryByIsoCode(selectedCountry).phoneCode}";
 
+  /// Set when the last `sendOtp` call failed because no account exists
+  /// for the given phone number. Used by the UI to decide whether to
+  /// show the "Account Not Found" bottom sheet.
+  bool lastLoginUserNotFound = false;
+  String lastErrorMessage = "";
+
   void log(String msg) => print("AUTH_LOG → $msg");
 
   void _refreshUI() => update();
@@ -44,9 +50,11 @@ class AuthController extends GetxController {
   }
 
   // --- Auth Methods ---
-  Future<bool> sendOtp(String phone) async {
+  Future<bool> sendOtp(String phone, {bool silent = false}) async {
     try {
       isLoading = true;
+      lastLoginUserNotFound = false;
+      lastErrorMessage = "";
       _refreshUI();
 
       final url = Uri.parse("$baseUrl/auth/send-login-otp");
@@ -71,14 +79,31 @@ class AuthController extends GetxController {
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           data["sessionId"] != null) {
         sessionId = data["sessionId"];
-        Fluttertoast.showToast(msg: data["message"] ?? "OTP sent successfully");
+        if (!silent) {
+          Fluttertoast.showToast(msg: data["message"] ?? "OTP sent successfully");
+        }
         return true;
       }
 
-      Fluttertoast.showToast(msg: data["message"] ?? "User not registered");
+      final message = (data["message"] ?? "User not registered").toString();
+      lastErrorMessage = message;
+
+      final lowerMsg = message.toLowerCase();
+      lastLoginUserNotFound =
+          response.statusCode == 404 ||
+          lowerMsg.contains("not regist") ||
+          lowerMsg.contains("not found") ||
+          lowerMsg.contains("no account") ||
+          lowerMsg.contains("does not exist") ||
+          lowerMsg.contains("doesn't exist") ||
+          lowerMsg.contains("no user");
+
+      if (!silent) Fluttertoast.showToast(msg: message);
       return false;
     } catch (e) {
       debugPrint("❌ SEND OTP ERROR: $e");
+      lastErrorMessage = "Something went wrong. Please try again.";
+      if (!silent) Fluttertoast.showToast(msg: lastErrorMessage);
       return false;
     } finally {
       isLoading = false;

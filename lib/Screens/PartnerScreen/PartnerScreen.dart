@@ -73,7 +73,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
+                          backgroundColor:Color(0xff07A4A5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -87,6 +87,9 @@ class _PartnerScreenState extends State<PartnerScreen> {
                   ),
 
                   SizedBox(height: 6.h),
+
+
+
 
                   Text(
                     "${controller.totalRecords} total",
