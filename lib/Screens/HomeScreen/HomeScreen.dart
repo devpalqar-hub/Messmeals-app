@@ -14,12 +14,14 @@ import 'package:mess/Screens/HomeScreen/Views/SelectMessBottomSheet.dart';
 import 'package:mess/Screens/HomeScreen/Views/StatItem.dart';
 import 'package:mess/Screens/MealBreakDownScreen/MealBreakDownScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
+import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
 import 'package:mess/Screens/Utils/routes.dart';
 
 class Homescreen extends StatelessWidget {
-  Homescreen({super.key});
+  final Function(int) onNavigateToTab;
+  Homescreen({super.key, required this.onNavigateToTab});
 
   final HomeScreenController ctrl = Get.put(HomeScreenController());
 
@@ -137,6 +139,18 @@ class Homescreen extends StatelessWidget {
                         color: Colors.black87,
                       ),
                     ),
+
+                    // Settings icon — opens the Mess Profile Settings screen
+                    IconButton(
+                      onPressed: () {
+                        Get.to(
+                          () => const MessProfileSettingsScreen(),
+                          transition: Transition.rightToLeft,
+                        );
+                      },
+                      icon: const Icon(Icons.settings_outlined),
+                      color: const Color(0xFF111827),
+                    ),
                   ],
                 ),
                 backgroundColor: Colors.white,
@@ -228,35 +242,50 @@ class Homescreen extends StatelessWidget {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: StatItem(
-                                    icon: Icons.shopping_bag_outlined,
-                                    iconColor: const Color(0xFF4CB051),
-                                    iconBgColor: const Color(0xFFE4F3E8),
-                                    label: 'Orders',
-                                    value:
-                                        '${ctrl.dashboardData!.totalOrders ?? 0}',
+                                  child: InkWell(
+                                    onTap: () {
+                                      onNavigateToTab(3);
+                                    },
+                                    child: StatItem(
+                                      icon: Icons.shopping_bag_outlined,
+                                      iconColor: const Color(0xFF4CB051),
+                                      iconBgColor: const Color(0xFFE4F3E8),
+                                      label: 'Orders',
+                                      value:
+                                          '${ctrl.dashboardData!.totalOrders ?? 0}',
+                                    ),
                                   ),
                                 ),
                                 const DividerWidget(),
                                 Expanded(
-                                  child: StatItem(
-                                    icon: Icons.group_outlined,
-                                    iconColor: const Color(0xFF10938F),
-                                    iconBgColor: const Color(0xFFE2F3F3),
-                                    label: 'Customers',
-                                    value:
-                                        '${ctrl.dashboardData!.totalCustomers ?? 0}',
+                                  child: InkWell(
+                                    onTap: () {
+                                      onNavigateToTab(1);
+                                    },
+                                    child: StatItem(
+                                      icon: Icons.group_outlined,
+                                      iconColor: const Color(0xFF10938F),
+                                      iconBgColor: const Color(0xFFE2F3F3),
+                                      label: 'Customers',
+                                      value:
+                                          '${ctrl.dashboardData!.totalCustomers ?? 0}',
+                                    ),
                                   ),
                                 ),
                                 const DividerWidget(),
                                 Expanded(
-                                  child: StatItem(
-                                    icon: Icons.handshake_outlined,
-                                    iconColor: const Color(0xFFF67C31),
-                                    iconBgColor: const Color(0xFFFEF3ED),
-                                    label: 'Partners',
-                                    value:
-                                        '${ctrl.dashboardData!.totalPartners ?? 0}',
+                                  child: InkWell(
+                                    onTap: () {
+                                      onNavigateToTab(2);
+                                    },
+                                    child: StatItem(
+                                      icon: Icons.handshake_outlined,
+                                      iconColor: const Color(0xFFF67C31),
+                                      iconBgColor: const Color(0xFFFEF3ED),
+                                      label: 'Partners',
+                                      value:
+                                          '${ctrl.dashboardData!.totalPartners ?? 0}',
+                                    ),
                                   ),
                                 ),
                                 const DividerWidget(),
@@ -276,7 +305,71 @@ class Homescreen extends StatelessWidget {
                           ),
 
                           SizedBox(height: 20.h),
-
+                             // QUICK ACTIONS
+                          Text(
+                            '  Quick Actions',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF111827),
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap:
+                                        () => Get.to(
+                                          () => AddCustomerScreen(),
+                                          transition: Transition.rightToLeft,
+                                        ),
+                                    child: QuickActionCard(
+                                      label: 'Add Customer',
+                                      icon: Icons.person_add_alt_1_outlined,
+                                      iconColor: const Color(0xFF269185),
+                                      iconBgColor: const Color(0xFFE8F6F4),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap:
+                                        () => Get.to(
+                                          () => AddPartnerScreen(),
+                                          transition: Transition.rightToLeft,
+                                        ),
+                                    child: QuickActionCard(
+                                      label: 'Add Partner',
+                                      icon: Icons.group_outlined,
+                                      iconColor: const Color(0xFF7D39D3),
+                                      iconBgColor: const Color(0xFFEFE8FB),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap:
+                                        () => Get.to(
+                                          () => SubscriptionScreen(),
+                                          transition: Transition.rightToLeft,
+                                        ),
+                                    child: QuickActionCard(
+                                      label: 'Reports',
+                                      icon: Icons.pie_chart_outline,
+                                      iconColor: const Color(0xFFDC9E2C),
+                                      iconBgColor: const Color(0xFFFEF5E5),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                           // FOOD PREP ANALYTICS BUTTON
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -410,73 +503,8 @@ class Homescreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          SizedBox(height: 20.h),
+                        
 
-                          // QUICK ACTIONS
-                          Text(
-                            '  Quick Actions',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF111827),
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: InkWell(
-                                    onTap:
-                                        () => Get.to(
-                                          () => AddCustomerScreen(),
-                                          transition: Transition.rightToLeft,
-                                        ),
-                                    child: QuickActionCard(
-                                      label: 'Add Customer',
-                                      icon: Icons.person_add_alt_1_outlined,
-                                      iconColor: const Color(0xFF269185),
-                                      iconBgColor: const Color(0xFFE8F6F4),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Expanded(
-                                  child: InkWell(
-                                    onTap:
-                                        () => Get.to(
-                                          () => AddPartnerScreen(),
-                                          transition: Transition.rightToLeft,
-                                        ),
-                                    child: QuickActionCard(
-                                      label: 'Add Partner',
-                                      icon: Icons.group_outlined,
-                                      iconColor: const Color(0xFF7D39D3),
-                                      iconBgColor: const Color(0xFFEFE8FB),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Expanded(
-                                  child: InkWell(
-                                    onTap:
-                                        () => Get.to(
-                                          () => SubscriptionScreen(),
-                                          transition: Transition.rightToLeft,
-                                        ),
-                                    child: QuickActionCard(
-                                      label: 'Reports',
-                                      icon: Icons.pie_chart_outline,
-                                      iconColor: const Color(0xFFDC9E2C),
-                                      iconBgColor: const Color(0xFFFEF5E5),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                           SizedBox(height: 30.h),
                         ],
                       ),

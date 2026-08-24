@@ -198,7 +198,7 @@ class LoginScreen extends StatelessWidget {
                                 SizedBox(height: 32.h),
 
                                 /// SEND OTP BUTTON
-                                _buildSendOtpButton(),
+                                _buildSendOtpButton(context),
 
                                 SizedBox(height: 32.h),
 
@@ -370,7 +370,7 @@ class LoginScreen extends StatelessWidget {
   }
 
   /// Extracted Button Widget
-  Widget _buildSendOtpButton() {
+  Widget _buildSendOtpButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 56.h,
@@ -397,9 +397,19 @@ class LoginScreen extends StatelessWidget {
                     return;
                   }
 
-                  bool success = await authCtrl.sendOtp(phone);
+                  bool success = await authCtrl.sendOtp(phone, silent: true);
                   if (success) {
                     Get.to(() => OtpVerificationScreen(phoneNumber: phone));
+                  } else if (authCtrl.lastLoginUserNotFound) {
+                    _showUserNotFoundSheet(context, phone);
+                  } else {
+                    AppToast.show(
+                      title: "Error",
+                      message:
+                          authCtrl.lastErrorMessage.isNotEmpty
+                              ? authCtrl.lastErrorMessage
+                              : "Something went wrong. Please try again.",
+                    );
                   }
                 },
         child:
@@ -433,6 +443,191 @@ class LoginScreen extends StatelessWidget {
                   ],
                 ),
       ),
+    );
+  }
+
+  /// Shown when the entered phone number has no account associated
+  /// with it. Lets the user re-check the number or head to Sign Up.
+  void _showUserNotFoundSheet(BuildContext context, String phone) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(
+              24.w,
+              14.h,
+              24.w,
+              MediaQuery.of(sheetContext).padding.bottom + 24.h,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                /// DRAG HANDLE
+                Container(
+                  width: 44.w,
+                  height: 5.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+
+                /// ICON
+                Container(
+                  height: 72.h,
+                  width: 72.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFFDECEC),
+                  ),
+                  child: Icon(
+                    Icons.person_search_rounded,
+                    color: const Color(0xFFE05353),
+                    size: 36.sp,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+
+                /// TITLE
+                Text(
+                  "Account Not Found",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1F2937),
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                SizedBox(height: 10.h),
+
+                /// MESSAGE
+                Text(
+                  "We couldn't find an account for",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+
+                /// PHONE NUMBER CHIP
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    border: Border.all(color: Colors.grey.shade200),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    "${authCtrl.countryCode} $phone",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF374151),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10.h),
+
+                Text(
+                  "Please check your number is correct, or create a new account to get started.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.grey.shade500,
+                    height: 1.4,
+                  ),
+                ),
+                SizedBox(height: 28.h),
+
+                /// SIGN UP BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 54.h,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryGreen,
+                      elevation: 2,
+                      shadowColor: primaryGreen.withOpacity(0.4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                    ),
+                    onPressed: () {
+                      Get.back();
+                      Get.to(() => SignUpScreen());
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Create New Account",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 20.sp,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+
+                /// CHECK NUMBER AGAIN BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 54.h,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                    ),
+                    onPressed: () => Get.back(),
+                    child: Text(
+                      "Check Number Again",
+                      style: TextStyle(
+                        color: const Color(0xFF374151),
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

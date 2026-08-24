@@ -327,11 +327,11 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
                   ),
                   SizedBox(height: 16.h),
 
-                  /// DELIVERY PARTNER
-                  title("Delivery Partner *"),
+                  /// DELIVERY PARTNER (optional)
+                  title("Delivery Partner"),
                   SizedBox(height: 8.h),
                   dropdownField(
-                    hint: "Select Delivery Partner",
+                    hint: "Select Delivery Partner (optional)",
                     selectedId: widget.selectedDeliveryPartnerId,
                     ids:
                         partnerController.partners

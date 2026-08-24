@@ -19,13 +19,22 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
 
-  final List<Widget> screens = [
-    Homescreen(),
-    CustomersScreen(),
-    PartnerScreen(),
-    DeliveriesScreen(),
-    PlanScreen(),
-  ];
+  late final List<Widget> screens;
+
+  @override
+  void initState() {
+    super.initState();
+
+    screens = [
+      Homescreen(
+        onNavigateToTab: onTabTapped,
+      ),
+      CustomersScreen(),
+      PartnerScreen(),
+      DeliveriesScreen(),
+      PlanScreen(),
+    ];
+  }
 
   void onTabTapped(int index) {
     setState(() {
@@ -35,17 +44,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(HomeScreenController(), permanent: true);
+    Get.put(HomeScreenController(), permanent: true);
 
     return Scaffold(
       backgroundColor: Colors.white,
+
       bottomNavigationBar: SafeArea(
         child: BottomBar(
           selectedIndex: selectedIndex,
           onItemTapped: onTabTapped,
         ),
       ),
-      body: SafeArea(child: screens[selectedIndex]),
+
+      body: SafeArea(
+        child: screens[selectedIndex],
+      ),
     );
   }
 }
