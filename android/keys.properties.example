@@ -1,0 +1,11 @@
+# Copy this file to android/keys.properties (same directory) and fill in your
+# real release keystore details. keys.properties is git-ignored on purpose —
+# never commit real signing credentials.
+#
+# storeFile is resolved relative to the android/app directory, e.g. if your
+# keystore lives at android/app/my-release-key.jks, use just the filename below.
+
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=CHANGE_ME
+storeFile=my-release-key.jks

@@ -10,7 +10,7 @@ import 'package:mess/Screens/MealBreakDownScreen/Services/MealAnalyticsControlle
 class _C {
   static const surface = Colors.white;
   static const border = Color(0xFFEEEEF0);
-  static const primary = Color(0xFF07A4A5);
+  static const primary = Color(0xFF7ED321);
   static const primaryLight = Color(0xFFE4F9F9);
   static const primaryMid = Color(0x4F07A4A5);
   static const amber = Color(0xFF854F0B);

@@ -6,9 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/LoginScreen/Service/SignUpController.dart';
+import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
-import 'package:mess/Screens/Utils/Colors.dart'; // uses PrimaryColor from home
 
+/// Simple, minimal OTP verification screen — matches LoginScreen's plain
+/// white background, flat brand-green accents, and no decorative chrome.
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
   final bool isSignup;
@@ -25,10 +27,6 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final AuthController authCtrl = Get.find<AuthController>();
-
-  // Aligns with HomeScreen's PrimaryColor (teal #10938F)
-  static const Color _primary = Color(0xFF10938F);
-  static const Color _bg = Color(0xFFF5F7FA);
 
   final List<TextEditingController> _otpCtrl = List.generate(
     6,
@@ -119,16 +117,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ),
         decoration: InputDecoration(
           counterText: '',
-          filled: true,
-          fillColor: Colors.white,
+          filled: false,
           contentPadding: EdgeInsets.zero,
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            borderSide: const BorderSide(color: _primary, width: 1.8),
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: BorderSide(color: AppColors.primary, width: 1.6),
           ),
         ),
         onChanged: (v) {
@@ -184,197 +181,136 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Get.back(),
-          child: Container(
-            margin: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 16,
-              color: Color(0xFF111827),
-            ),
-          ),
-        ),
-        title: Text(
-          'Verify OTP',
-          style: GoogleFonts.poppins(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18.sp,
             color: const Color(0xFF111827),
           ),
         ),
-        centerTitle: true,
       ),
       body: GetBuilder<AuthController>(
         builder:
             (_) => SafeArea(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 12.h),
 
-                    // ── HEADER CARD ──────────────────────────────────────────
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(20.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: Colors.grey.shade100),
+                    /// HEADING
+                    Text(
+                      'Verify your number',
+                      style: GoogleFonts.poppins(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF111827),
                       ),
-                      child: Column(
+                    ),
+                    SizedBox(height: 6.h),
+                    RichText(
+                      text: TextSpan(
+                        text: 'We sent a 6-digit code to ',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey.shade600,
+                        ),
                         children: [
-                          // Teal icon circle — matches home screen teal
-                          Container(
-                            width: 56.w,
-                            height: 56.w,
-                            decoration: BoxDecoration(
-                              color: _primary.withOpacity(0.08),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.shield_outlined,
-                              color: _primary,
-                              size: 28.sp,
-                            ),
-                          ),
-                          SizedBox(height: 14.h),
-                          Text(
-                            'Enter verification code',
+                          TextSpan(
+                            text: widget.phoneNumber,
                             style: GoogleFonts.poppins(
-                              fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF111827),
                             ),
                           ),
-                          SizedBox(height: 6.h),
-                          RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              text: 'We sent a 6-digit code to\n',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13.sp,
-                                color: Colors.grey.shade500,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: widget.phoneNumber,
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF111827),
-                                  ),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: GestureDetector(
+                              onTap: () => Get.back(),
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 6.w),
+                                child: Icon(
+                                  Icons.edit_outlined,
+                                  size: 14.sp,
+                                  color: AppColors.primaryDark,
                                 ),
-                                WidgetSpan(
-                                  child: GestureDetector(
-                                    onTap: () => Get.back(),
-                                    child: Padding(
-                                      padding: EdgeInsets.only(left: 6.w),
-                                      child: Icon(
-                                        Icons.edit_outlined,
-                                        size: 14.sp,
-                                        color: _primary,
-                                      ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 32.h),
+
+                    Text(
+                      'OTP Code',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF374151),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(6, _otpBox),
+                    ),
+
+                    SizedBox(height: 24.h),
+
+                    /// Timer / Resend row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _seconds > 0
+                              ? 'Resend code in $_timerText'
+                              : "Didn't receive the code?",
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5.sp,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _resendOtp,
+                          child:
+                              _isResending
+                                  ? SizedBox(
+                                    width: 14.w,
+                                    height: 14.w,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.8,
+                                      color: AppColors.primary,
+                                    ),
+                                  )
+                                  : Text(
+                                    'Resend',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12.5.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          _seconds == 0 && !_isResending
+                                              ? AppColors.primaryDark
+                                              : Colors.grey.shade300,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
 
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 32.h),
 
-                    // ── OTP INPUT CARD ───────────────────────────────────────
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 20.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: Colors.grey.shade100),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'OTP Code',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(6, _otpBox),
-                          ),
-                          SizedBox(height: 18.h),
-                          const Divider(height: 1),
-                          SizedBox(height: 16.h),
-
-                          // Timer / Resend row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _seconds > 0
-                                    ? 'Resend code in $_timerText'
-                                    : "Didn't receive the code?",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: _resendOtp,
-                                child:
-                                    _isResending
-                                        ? SizedBox(
-                                          width: 14.w,
-                                          height: 14.w,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 1.8,
-                                            color: _primary,
-                                          ),
-                                        )
-                                        : Text(
-                                          'Resend',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color:
-                                                _seconds == 0 && !_isResending
-                                                    ? _primary
-                                                    : Colors.grey.shade300,
-                                          ),
-                                        ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 28.h),
-
-                    // ── VERIFY BUTTON ────────────────────────────────────────
+                    /// VERIFY BUTTON
                     SizedBox(
                       width: double.infinity,
                       height: 52.h,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
+                          backgroundColor: AppColors.primary,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
@@ -384,36 +320,25 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         child:
                             authCtrl.isLoading
                                 ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
+                                  height: 22,
+                                  width: 22,
                                   child: CircularProgressIndicator(
                                     color: Colors.white,
-                                    strokeWidth: 2,
+                                    strokeWidth: 2.5,
                                   ),
                                 )
-                                : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Verify & Continue',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 15.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                  ],
+                                : Text(
+                                  'Verify & Continue',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
                                 ),
                       ),
                     ),
 
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 24.h),
                   ],
                 ),
               ),

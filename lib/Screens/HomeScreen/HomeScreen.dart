@@ -16,7 +16,7 @@ import 'package:mess/Screens/MealBreakDownScreen/MealBreakDownScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
-import 'package:mess/Screens/Utils/Colors.dart';
+import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/routes.dart';
 
 class Homescreen extends StatelessWidget {
@@ -68,12 +68,23 @@ class Homescreen extends StatelessWidget {
             : Scaffold(
               backgroundColor: Colors.white,
               appBar: AppBar(
+                titleSpacing: 16.w,
                 title: Row(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: PrimaryColor,
+                    Container(
+                      height: 38.w,
+                      width: 38.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: AppColors.primaryGradient,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      alignment: Alignment.center,
                       child: Text(
-                        ctrl.user!.name[0],
+                        ctrl.user!.name[0].toUpperCase(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -163,134 +174,189 @@ class Homescreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 20.h),
+                          SizedBox(height: 16.h),
 
                           // TOP REVENUE CARD
                           Container(
-                            height: 140.h,
+                            width: double.infinity,
+                            height: 122.h,
                             margin: EdgeInsets.symmetric(horizontal: 10.w),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.r),
-                              image: const DecorationImage(
-                                image: AssetImage("assets/homeRevenueCard.png"),
-                                fit: BoxFit.cover,
-                              ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 22.w,
+                              vertical: 18.h,
                             ),
-                            padding: EdgeInsets.only(left: 30.w, top: 20.h),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14.r),
+                              gradient: LinearGradient(
+                                colors: AppColors.primaryGradient,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.28),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
                               children: [
-                                Text(
-                                  "Total Revenue",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14.sp,
-                                    color: Colors.white,
+                                Positioned(
+                                  right: -6.w,
+                                  top: -6.h,
+                                  child: Icon(
+                                    Icons.account_balance_wallet_rounded,
+                                    size: 72.sp,
+                                    color: Colors.white.withOpacity(0.14),
                                   ),
                                 ),
-                                SizedBox(height: 8.h),
-                                // BUG #2435 — format to avoid long decimal overflow
-                                Text(
-                                  "₹ ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 26.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(height: 6.h),
-                                Row(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      "Over All",
+                                      "Total Revenue",
                                       style: GoogleFonts.poppins(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w400,
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w500,
                                         color: Colors.white.withOpacity(0.9),
                                       ),
                                     ),
-                                    if (false)
-                                      RotatedBox(
-                                        quarterTurns: 3,
-                                        child: Icon(
-                                          CupertinoIcons.back,
-                                          color: Colors.white.withOpacity(0.8),
-                                        ),
+                                    SizedBox(height: 6.h),
+                                    // BUG #2435 — format to avoid long decimal overflow
+                                    Text(
+                                      "₹ ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 26.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
                                       ),
+                                    ),
+                                    SizedBox(height: 6.h),
+                                    Text(
+                                      "Overall earnings",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.white.withOpacity(0.85),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
                             ),
                           ),
 
-                          SizedBox(height: 20.h),
+                          SizedBox(height: 16.h),
 
-                          // 4-STAT ROW — BUG #2435: format Avg/Customer to avoid overflow
-                          Container(
-                            padding: EdgeInsets.symmetric(vertical: 10.w),
-                            margin: EdgeInsets.symmetric(horizontal: 10.w),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ],
+                          // REVENUE SUMMARY — grouped with the hero card since both are financial figures
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            child: Text(
+                              'Revenue Summary',
+                              style: GoogleFonts.poppins(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF111827),
+                              ),
                             ),
+                          ),
+                          SizedBox(height: 10.h),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: RevenueCard(
+                                  title: 'Total Revenue',
+                                  // BUG #2435 — format revenue amounts
+                                  amount:
+                                      '₹${_formatAmount(ctrl.dashboardData!.totalRevenue!)}',
+                                  period: 'This Month',
+                                  icon: Icons.trending_up,
+                                  themeColor: AppColors.primaryDark,
+                                  iconBgColor: AppColors.primary.withOpacity(0.12),
+                                  cardBgColor: const Color(0xFFF9FCF9),
+                                ),
+                              ),
+                              Expanded(
+                                child: RevenueCard(
+                                  title: 'Pending Revenue',
+                                  amount:
+                                      '₹${_formatAmount(ctrl.dashboardData!.pendingRevenue!)}',
+                                  period: 'Over All',
+                                  icon: Icons.access_time,
+                                  themeColor: const Color(0xFFF16E22),
+                                  iconBgColor: const Color(0xFFFEF2E9),
+                                  cardBgColor: const Color(0xFFFFF9F5),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: 22.h),
+
+                          // OVERVIEW — KPI GRID (BUG #2435: format Avg/Customer to avoid overflow)
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            child: Text(
+                              'Overview',
+                              style: GoogleFonts.poppins(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10.w),
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: InkWell(
-                                    onTap: () {
-                                      onNavigateToTab(3);
-                                    },
-                                    child: StatItem(
-                                      icon: Icons.shopping_bag_outlined,
-                                      iconColor: const Color(0xFF4CB051),
-                                      iconBgColor: const Color(0xFFE4F3E8),
-                                      label: 'Orders',
-                                      value:
-                                          '${ctrl.dashboardData!.totalOrders ?? 0}',
-                                    ),
+                                  child: _kpiCard(
+                                    onTap: () => onNavigateToTab(3),
+                                    icon: Icons.shopping_bag_outlined,
+                                    iconColor: const Color(0xFF4CB051),
+                                    iconBgColor: const Color(0xFFE4F3E8),
+                                    label: 'Orders',
+                                    value:
+                                        '${ctrl.dashboardData!.totalOrders ?? 0}',
                                   ),
                                 ),
-                                const DividerWidget(),
+                                SizedBox(width: 10.w),
                                 Expanded(
-                                  child: InkWell(
-                                    onTap: () {
-                                      onNavigateToTab(1);
-                                    },
-                                    child: StatItem(
-                                      icon: Icons.group_outlined,
-                                      iconColor: const Color(0xFF10938F),
-                                      iconBgColor: const Color(0xFFE2F3F3),
-                                      label: 'Customers',
-                                      value:
-                                          '${ctrl.dashboardData!.totalCustomers ?? 0}',
-                                    ),
+                                  child: _kpiCard(
+                                    onTap: () => onNavigateToTab(1),
+                                    icon: Icons.group_outlined,
+                                    iconColor: const Color(0xFF10938F),
+                                    iconBgColor: const Color(0xFFE2F3F3),
+                                    label: 'Customers',
+                                    value:
+                                        '${ctrl.dashboardData!.totalCustomers ?? 0}',
                                   ),
                                 ),
-                                const DividerWidget(),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            child: Row(
+                              children: [
                                 Expanded(
-                                  child: InkWell(
-                                    onTap: () {
-                                      onNavigateToTab(2);
-                                    },
-                                    child: StatItem(
-                                      icon: Icons.handshake_outlined,
-                                      iconColor: const Color(0xFFF67C31),
-                                      iconBgColor: const Color(0xFFFEF3ED),
-                                      label: 'Partners',
-                                      value:
-                                          '${ctrl.dashboardData!.totalPartners ?? 0}',
-                                    ),
+                                  child: _kpiCard(
+                                    onTap: () => onNavigateToTab(2),
+                                    icon: Icons.handshake_outlined,
+                                    iconColor: const Color(0xFFF67C31),
+                                    iconBgColor: const Color(0xFFFEF3ED),
+                                    label: 'Partners',
+                                    value:
+                                        '${ctrl.dashboardData!.totalPartners ?? 0}',
                                   ),
                                 ),
-                                const DividerWidget(),
+                                SizedBox(width: 10.w),
                                 Expanded(
-                                  child: StatItem(
+                                  child: _kpiCard(
                                     icon: Icons.account_balance_wallet_outlined,
                                     iconColor: const Color(0xFF8A59F8),
                                     iconBgColor: const Color(0xFFEAE5FA),
@@ -304,17 +370,20 @@ class Homescreen extends StatelessWidget {
                             ),
                           ),
 
-                          SizedBox(height: 20.h),
-                             // QUICK ACTIONS
-                          Text(
-                            '  Quick Actions',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF111827),
+                          SizedBox(height: 22.h),
+                          // QUICK ACTIONS
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            child: Text(
+                              'Quick Actions',
+                              style: GoogleFonts.poppins(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF111827),
+                              ),
                             ),
                           ),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: 10.h),
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10.w),
                             child: Row(
@@ -330,8 +399,8 @@ class Homescreen extends StatelessWidget {
                                     child: QuickActionCard(
                                       label: 'Add Customer',
                                       icon: Icons.person_add_alt_1_outlined,
-                                      iconColor: const Color(0xFF269185),
-                                      iconBgColor: const Color(0xFFE8F6F4),
+                                      iconColor: AppColors.primaryDark,
+                                      iconBgColor: AppColors.primary.withOpacity(0.12),
                                     ),
                                   ),
                                 ),
@@ -370,6 +439,7 @@ class Homescreen extends StatelessWidget {
                               ],
                             ),
                           ),
+                          SizedBox(height: 14.h),
                           // FOOD PREP ANALYTICS BUTTON
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -386,13 +456,13 @@ class Homescreen extends StatelessWidget {
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 20.w,
-                                    vertical: 16.h,
+                                    vertical: 14.h,
                                   ),
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                    gradient: LinearGradient(
                                       colors: [
-                                        Color(0xFF10938F),
-                                        Color(0xFF0D7A76),
+                                        AppColors.primaryDark,
+                                        AppColors.primary,
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -400,9 +470,7 @@ class Homescreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(10.r),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(
-                                          0xFF10938F,
-                                        ).withOpacity(0.3),
+                                        color: AppColors.primary.withOpacity(0.3),
                                         blurRadius: 8,
                                         spreadRadius: 2,
                                         offset: const Offset(0, 4),
@@ -462,50 +530,7 @@ class Homescreen extends StatelessWidget {
                             ),
                           ),
 
-                          SizedBox(height: 24.h),
-
-                          // REVENUE SUMMARY
-                          Text(
-                            '  Revenue Summary',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF111827),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RevenueCard(
-                                  title: 'Total Revenue',
-                                  // BUG #2435 — format revenue amounts
-                                  amount:
-                                      '₹${_formatAmount(ctrl.dashboardData!.totalRevenue!)}',
-                                  period: 'This Month',
-                                  icon: Icons.trending_up,
-                                  themeColor: const Color(0xFF2ECA50),
-                                  iconBgColor: const Color(0xFFE8F8EE),
-                                  cardBgColor: const Color(0xFFF9FCF9),
-                                ),
-                              ),
-                              Expanded(
-                                child: RevenueCard(
-                                  title: 'Pending Revenue',
-                                  amount:
-                                      '₹${_formatAmount(ctrl.dashboardData!.pendingRevenue!)}',
-                                  period: 'Over All',
-                                  icon: Icons.access_time,
-                                  themeColor: const Color(0xFFF16E22),
-                                  iconBgColor: const Color(0xFFFEF2E9),
-                                  cardBgColor: const Color(0xFFFFF9F5),
-                                ),
-                              ),
-                            ],
-                          ),
-                        
-
-                          SizedBox(height: 30.h),
+                          SizedBox(height: 20.h),
                         ],
                       ),
                     );
@@ -514,6 +539,77 @@ class Homescreen extends StatelessWidget {
               ),
             );
       },
+    );
+  }
+
+  /// Compact KPI tile used in the Overview grid — icon left, value + label right.
+  Widget _kpiCard({
+    VoidCallback? onTap,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required String label,
+    required String value,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14.r),
+      child: Container(
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: const Color(0xFFF1F3F5)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 40.w,
+              width: 40.w,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(icon, color: iconColor, size: 20.sp),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

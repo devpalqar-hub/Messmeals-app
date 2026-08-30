@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
+import 'package:mess/Screens/PlanScreen/Views/AddPlanScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
+import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
 class PlanScheduleWidget extends StatefulWidget {
@@ -91,14 +93,33 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
     }
   }
 
+  Future<void> _openAddPlan() async {
+    await Get.to(() => AddPlanScreen());
+    planController.refreshPlans();
+  }
+
+  Future<void> _openAddPartner() async {
+    await Get.to(() => const AddPartnerScreen());
+    partnerController.fetchPartners();
+  }
+
   Future<void> pickDate(bool isStart) async {
+    final now = DateTime.now();
+    // Start date is allowed to go back to a past date (e.g. backdating a customer who
+    // already started their plan before being entered into the system). End date still
+    // can't be before the chosen start date (or today, if no start date is picked yet).
+    final DateTime firstSelectableDate =
+        isStart
+            ? DateTime(now.year - 2)
+            : (selectedStartDate ?? DateTime(now.year, now.month, now.day));
+
     DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate:
           isStart
-              ? (selectedStartDate ?? DateTime.now())
-              : (selectedEndDate ?? DateTime.now()),
-      firstDate: DateTime.now(),
+              ? (selectedStartDate ?? now)
+              : (selectedEndDate ?? firstSelectableDate),
+      firstDate: firstSelectableDate,
       lastDate: DateTime(2035),
       builder: (context, child) {
         return Theme(
@@ -192,7 +213,13 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
                   SizedBox(height: 24.h),
 
                   /// MEAL PLAN
-                  title("Meal Plan *"),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      title("Meal Plan *"),
+                      addLink("Add Plan", _openAddPlan),
+                    ],
+                  ),
                   SizedBox(height: 8.h),
                   dropdownField(
                     hint: "Select Meal Plan",
@@ -328,7 +355,13 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
                   SizedBox(height: 16.h),
 
                   /// DELIVERY PARTNER (optional)
-                  title("Delivery Partner"),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      title("Delivery Partner"),
+                      addLink("Add Partner", _openAddPartner),
+                    ],
+                  ),
                   SizedBox(height: 8.h),
                   dropdownField(
                     hint: "Select Delivery Partner (optional)",
@@ -461,6 +494,27 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
         fontSize: 14.sp,
         fontWeight: FontWeight.w500,
         color: const Color(0xFF111827),
+      ),
+    );
+  }
+
+  Widget addLink(String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.add_circle_outline, size: 15.sp, color: AppColors.primary),
+          SizedBox(width: 4.w),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w500,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
       ),
     );
   }

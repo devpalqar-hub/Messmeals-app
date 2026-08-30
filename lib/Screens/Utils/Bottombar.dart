@@ -19,6 +19,7 @@ class BottomBar extends StatelessWidget {
       {'icon': Icons.local_shipping_outlined, 'label': 'Partners'},
       {'icon': Icons.inventory_2_outlined, 'label': 'Deliveries'},
       {'icon': Icons.assignment_outlined, 'label': 'Plans'},
+      {'icon': Icons.restaurant_menu_outlined, 'label': 'Menu'},
     ];
 
     return Container(
@@ -40,7 +41,7 @@ class BottomBar extends StatelessWidget {
               children: [
                 Icon(
                   item['icon'] as IconData,
-                  color: isSelected ? Color(0xff07A4A5) : Colors.grey,
+                  color: isSelected ? Color(0xFF7ED321) : Colors.grey,
                   size: 20, // ✅ FIX 2 → smaller icon
                 ),
                 const SizedBox(height: 2), // ✅ less gap
@@ -49,7 +50,7 @@ class BottomBar extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 10,
                     fontWeight: FontWeight.w500, // ✅ FIX 3 → smaller text
-                    color: isSelected ? Color(0xff07A4A5) : Colors.grey,
+                    color: isSelected ? Color(0xFF7ED321) : Colors.grey,
                   ),
                 ),
               ],

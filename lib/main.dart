@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/OnboardingScreen/Service/onboarding_controller.dart';
+import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/routes.dart';
 import 'package:mess/dashbaord_binding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,6 +38,45 @@ class MessMeals extends StatelessWidget {
           initialBinding: AppBindings(),
           initialRoute: AppRoutes.splash,
           getPages: AppRoutes.routes,
+          theme: ThemeData(
+            useMaterial3: false,
+            scaffoldBackgroundColor: Colors.white,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primary,
+              primary: AppColors.primary,
+              secondary: AppColors.secondary,
+            ),
+            primaryColor: AppColors.primary,
+            // Any loader left without an explicit color (Center(child: CircularProgressIndicator()))
+            // now renders in the brand green instead of Flutter's default blue.
+            progressIndicatorTheme: const ProgressIndicatorThemeData(
+              color: AppColors.primary,
+            ),
+            switchTheme: SwitchThemeData(
+              thumbColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.selected)
+                    ? AppColors.primary
+                    : null,
+              ),
+              trackColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.selected)
+                    ? AppColors.primary.withOpacity(0.4)
+                    : null,
+              ),
+            ),
+            checkboxTheme: CheckboxThemeData(
+              fillColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.selected)
+                    ? AppColors.primary
+                    : null,
+              ),
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              foregroundColor: Color(0xFF111827),
+              elevation: 0,
+            ),
+          ),
           // BUG #2414 — stops keyboard from causing layout overflow on iPhone
           builder: (context, widget) {
             return MediaQuery(

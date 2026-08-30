@@ -92,7 +92,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff07A4A5),
+                    backgroundColor: Color(0xFF7ED321),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),

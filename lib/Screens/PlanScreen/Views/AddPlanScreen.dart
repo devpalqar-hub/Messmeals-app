@@ -10,6 +10,8 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
+import 'package:mess/Screens/MenuScreen/Service/MenuController.dart';
+import 'package:mess/Screens/MenuScreen/Views/AddMenuScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
 class AddPlanScreen extends StatefulWidget {
@@ -21,6 +23,7 @@ class AddPlanScreen extends StatefulWidget {
   final String? minPrice;
   final List<String> imageUrl;
   final List<String>? selectedVariations;
+  final List<String>? selectedMenus;
   final String? planType;
 
   const AddPlanScreen({
@@ -33,6 +36,7 @@ class AddPlanScreen extends StatefulWidget {
     this.minPrice,
     this.imageUrl = const [],
     this.selectedVariations,
+    this.selectedMenus,
     this.planType,
   });
 
@@ -45,6 +49,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   final VariationController variationController = Get.put(
     VariationController(),
   );
+  final MessMenuController menuController = Get.put(MessMenuController());
 
   final TextEditingController nameCtrl = TextEditingController();
   final TextEditingController descCtrl = TextEditingController();
@@ -54,6 +59,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   List<File> selectedImages = [];
   List<String> existingImages = []; // for edit mode (network images)
   List<String> selectedVariationIds = [];
+  List<String> selectedMenuIds = [];
 
   String planType = "MONTHLY";
 
@@ -62,6 +68,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
     super.initState();
 
     variationController.fetchVariations();
+    menuController.ensureLoaded();
 
     nameCtrl.text = widget.planName ?? '';
     descCtrl.text = widget.description ?? '';
@@ -73,7 +80,16 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       selectedVariationIds = List<String>.from(widget.selectedVariations!);
     }
 
+    if (widget.selectedMenus != null) {
+      selectedMenuIds = List<String>.from(widget.selectedMenus!);
+    }
+
     existingImages = List<String>.from(widget.imageUrl);
+  }
+
+  Future<void> _openAddMenu() async {
+    await Get.to(() => const AddMenuScreen());
+    menuController.refreshMenus();
   }
 
   Future<void> pickImages() async {
@@ -177,6 +193,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               minPrice: minPriceCtrl.text.trim(),
                               description: descCtrl.text.trim(),
                               variationIds: selectedVariationIds,
+                              menuIds: selectedMenuIds,
                               isMonthlyPlan: planType == "MONTHLY",
                               isDailyPlan: planType == "DAILY",
                               //  imageFiles: selectedImages,
@@ -528,6 +545,134 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                           }).toList(),
                                     ),
                                   ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+
+                        SizedBox(height: 20.h),
+
+                        /// MENUS
+                        sectionCard(
+                          child: GetBuilder<MessMenuController>(
+                            builder: (menuCtrl) {
+                              final messMenus = menuCtrl.menus
+                                  .where((m) => m.isActive)
+                                  .toList();
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      title("Assign Menus"),
+                                      GestureDetector(
+                                        onTap: _openAddMenu,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.add_circle_outline,
+                                              size: 15.sp,
+                                              color: AppColors.primary,
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Text(
+                                              "Add Menu",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.primary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    "Optional — link one or more weekly menus to this plan",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11.sp,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                  SizedBox(height: 15.h),
+                                  if (menuCtrl.isLoading)
+                                    const Center(child: CircularProgressIndicator())
+                                  else if (messMenus.isEmpty)
+                                    Text(
+                                      "No menus created for this mess yet.",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12.sp,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    )
+                                  else
+                                    Wrap(
+                                      spacing: 10.w,
+                                      runSpacing: 10.h,
+                                      children: messMenus.map((menu) {
+                                        final isSelected = selectedMenuIds.contains(menu.id);
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              if (isSelected) {
+                                                selectedMenuIds.remove(menu.id);
+                                              } else {
+                                                selectedMenuIds.add(menu.id);
+                                              }
+                                            });
+                                          },
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 200),
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 16.w,
+                                              vertical: 10.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? AppColors.primary.withOpacity(0.1)
+                                                  : Colors.white,
+                                              borderRadius: BorderRadius.circular(10.r),
+                                              border: Border.all(
+                                                color: isSelected
+                                                    ? AppColors.primary
+                                                    : Colors.grey.shade300,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  isSelected
+                                                      ? Icons.check_circle
+                                                      : Icons.radio_button_unchecked,
+                                                  size: 16.sp,
+                                                  color: isSelected
+                                                      ? AppColors.primary
+                                                      : Colors.grey,
+                                                ),
+                                                SizedBox(width: 8.w),
+                                                Text(
+                                                  menu.name,
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 12.sp,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: isSelected
+                                                        ? AppColors.primary
+                                                        : Colors.black87,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
                                 ],
                               );
                             },

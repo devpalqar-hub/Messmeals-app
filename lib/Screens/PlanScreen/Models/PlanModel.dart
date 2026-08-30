@@ -7,6 +7,7 @@ class PlanModel {
   final String description;
   final List<PlanImage> images;
   final List<Variation> variations;
+  final List<MenuSummary> menus;
   final bool isMonthlyPlan;
 
   PlanModel({
@@ -17,6 +18,7 @@ class PlanModel {
     required this.description,
     required this.images,
     required this.variations,
+    required this.menus,
     required this.isMonthlyPlan,
   });
 
@@ -38,7 +40,24 @@ class PlanModel {
               ?.map((v) => Variation.fromJson(v))
               .toList() ??
           [],
+      menus:
+          (json['menus'] as List<dynamic>?)
+              ?.map((m) => MenuSummary.fromJson(m))
+              .toList() ??
+          [],
     );
+  }
+}
+
+/// Lightweight menu reference as returned inline on a Plan (id + name only).
+class MenuSummary {
+  final String id;
+  final String name;
+
+  MenuSummary({required this.id, required this.name});
+
+  factory MenuSummary.fromJson(Map<String, dynamic> json) {
+    return MenuSummary(id: json['id'] ?? '', name: json['name'] ?? '');
   }
 }
 
