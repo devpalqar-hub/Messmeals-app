@@ -21,13 +21,45 @@ class CustomerController extends GetxController {
   var isMoreLoading = false;
   var hasMore = true;
 
+  var summary = CustomerSummaryModel.empty();
+  var isSummaryLoading = false;
+
   int page = 1;
   int limit = 10;
+
+  /// 📊 Fetch summary stats (active subscriptions / ending soon / amount to collect)
+  Future<void> fetchCustomerSummary() async {
+    final messId = dashboardController.selectedMessId;
+    if (messId == null) return;
+
+    try {
+      isSummaryLoading = true;
+      update();
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/customer/summary?messId=$messId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        summary = CustomerSummaryModel.fromJson(json.decode(response.body));
+      }
+    } catch (e) {
+      debugPrint("❌ SUMMARY ERROR: $e");
+    } finally {
+      isSummaryLoading = false;
+      update();
+    }
+  }
 
   Future<void> fetchCustomers({
     bool refresh = false,
     String? search,
     String? planId,
+    String? subscriptionFilter,
   }) async {
     final messId = dashboardController.selectedMessId;
 
@@ -61,7 +93,8 @@ class CustomerController extends GetxController {
       final url =
           '$baseUrl/customer?page=$page&limit=$limit&messId=$messId'
           '${search != null && search.isNotEmpty ? '&search=$search' : ''}'
-          '${planId != null && planId.isNotEmpty ? '&planId=$planId' : ''}';
+          '${planId != null && planId.isNotEmpty ? '&planId=$planId' : ''}'
+          '${subscriptionFilter != null && subscriptionFilter.isNotEmpty ? '&subscriptionFilter=$subscriptionFilter' : ''}';
       debugPrint("--------url: $url");
 
       final response = await http.get(

@@ -5,10 +5,7 @@ import 'package:get/get.dart';
 class CustomAppBar extends StatelessWidget {
   final String title;
 
-  const CustomAppBar({
-    super.key,
-    required this.title,
-  });
+  const CustomAppBar({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +13,7 @@ class CustomAppBar extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: () => Get.back(),
-          child: Icon(
-            Icons.arrow_back,
-            size: 20.sp,
-            color: Colors.black,
-          ),
+          child: Icon(Icons.arrow_back, size: 20.sp, color: Colors.black),
         ),
 
         Expanded(

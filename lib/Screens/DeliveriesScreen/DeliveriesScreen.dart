@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -88,6 +89,11 @@ class DeliveriesController extends GetxController {
   int page = 1;
   int limit = 10;
 
+  // 📊 Summary counts for the current filters
+  bool isSummaryLoading = false;
+  int totalDeliveries = 0;
+  int pendingCount = 0;
+
   @override
   void onInit() {
     super.onInit();
@@ -120,6 +126,7 @@ class DeliveriesController extends GetxController {
     DateTime? date,
     String? status,
     String? variationId,
+    String? search,
     bool isLoadMore = false,
   }) async {
     if (isLoadMore) {
@@ -160,6 +167,10 @@ class DeliveriesController extends GetxController {
         queryParams['variationId'] = variationId;
       }
 
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+
       final uri = Uri.parse(
         '$baseUrl/deliveries',
       ).replace(queryParameters: queryParams);
@@ -196,6 +207,88 @@ class DeliveriesController extends GetxController {
       isLoading = false;
       isFetchingMore = false;
       update();
+    }
+  }
+
+  /// 📊 Fetch summary counts (pending / total) for the current filters
+  Future<void> fetchSummary({
+    DateTime? date,
+    String? status,
+    String? variationId,
+    String? search,
+  }) async {
+    final messId = dashboardController.selectedMessId;
+    if (messId == null) return;
+
+    try {
+      isSummaryLoading = true;
+      update();
+
+      final Map<String, String> queryParams = {'messId': messId};
+
+      if (date != null) {
+        queryParams['date'] = date.toIso8601String().split('T')[0];
+      }
+      if (status != null && status.trim().isNotEmpty) {
+        queryParams['status'] = status.toUpperCase();
+      }
+      if (variationId != null && variationId.trim().isNotEmpty) {
+        queryParams['variationId'] = variationId;
+      }
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+
+      final uri = Uri.parse(
+        '$baseUrl/deliveries/summary',
+      ).replace(queryParameters: queryParams);
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        totalDeliveries = jsonData['totalDeliveries'] ?? 0;
+        pendingCount = jsonData['pendingCount'] ?? 0;
+      }
+    } catch (e) {
+      debugPrint("Error fetching delivery summary: $e");
+    } finally {
+      isSummaryLoading = false;
+      update();
+    }
+  }
+
+  /// ❌ Cancel a delivery (whole day's food) — only for today/future, non-final deliveries
+  Future<bool> cancelDelivery(String deliveryId) async {
+    try {
+      final url = Uri.parse('$baseUrl/deliveries/$deliveryId/cancel');
+
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        AppToast.success('Delivery cancelled successfully');
+        await dashboardController.fetchDashboardStats();
+        return true;
+      } else {
+        final msg = json.decode(response.body)['message'] ?? 'Unknown error';
+        AppToast.error('Failed to cancel delivery: $msg');
+        return false;
+      }
+    } catch (e) {
+      AppToast.error('Error cancelling delivery');
+      return false;
     }
   }
 
@@ -280,21 +373,29 @@ class DeliveriesScreen extends StatefulWidget {
 class _DeliveriesScreenState extends State<DeliveriesScreen> {
   final DeliveriesController controller = Get.put(DeliveriesController());
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
 
   String selectedStatus = "All Status";
   String selectedVariationId = "All Meals";
-  DateTime? selectedDate;
+  String searchQuery = "";
+
+  // 📅 Default to today so the admin always sees today's deliveries first
+  DateTime? selectedDate = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    controller.fetchDeliveries();
+    controller.fetchDeliveries(date: selectedDate);
+    controller.fetchSummary(date: selectedDate);
     _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchCtrl.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -305,6 +406,14 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
     }
   }
 
+  void _onSearchChanged(String value) {
+    searchQuery = value;
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      _triggerFilterSearch();
+    });
+  }
+
   void _triggerFilterSearch() {
     controller.fetchDeliveries(
       date: selectedDate,
@@ -312,7 +421,16 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
           selectedStatus == "All Status" ? null : selectedStatus.toUpperCase(),
       variationId:
           selectedVariationId == "All Meals" ? null : selectedVariationId,
+      search: searchQuery,
       isLoadMore: false,
+    );
+    controller.fetchSummary(
+      date: selectedDate,
+      status:
+          selectedStatus == "All Status" ? null : selectedStatus.toUpperCase(),
+      variationId:
+          selectedVariationId == "All Meals" ? null : selectedVariationId,
+      search: searchQuery,
     );
   }
 
@@ -323,6 +441,7 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
           selectedStatus == "All Status" ? null : selectedStatus.toUpperCase(),
       variationId:
           selectedVariationId == "All Meals" ? null : selectedVariationId,
+      search: searchQuery,
       isLoadMore: true,
     );
   }
@@ -357,6 +476,12 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                     children: [TittleText(text: "Deliveries")],
                   ),
                   SizedBox(height: 14.h),
+
+                  _buildSummaryRow(controller),
+                  SizedBox(height: 12.h),
+
+                  _buildSearchField(),
+                  SizedBox(height: 10.h),
 
                   _buildFilterSystem(context),
                   SizedBox(height: 14.h),
@@ -414,6 +539,133 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
     );
   }
 
+  /// 📊 Pending / Total summary strip for the current filters
+  Widget _buildSummaryRow(DeliveriesController controller) {
+    return Row(
+      children: [
+        Expanded(
+          child: _summaryTile(
+            icon: Icons.pending_actions_outlined,
+            iconColor: _C.amber,
+            iconBg: _C.amberLight,
+            label: "Pending",
+            value:
+                controller.isSummaryLoading
+                    ? "-"
+                    : "${controller.pendingCount}",
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: _summaryTile(
+            icon: Icons.local_shipping_outlined,
+            iconColor: _C.green,
+            iconBg: _C.greenLight,
+            label: "Total Deliveries",
+            value:
+                controller.isSummaryLoading
+                    ? "-"
+                    : "${controller.totalDeliveries}",
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _summaryTile({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: _C.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 30.w,
+            width: 30.w,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(7.r),
+            ),
+            child: Icon(icon, color: iconColor, size: 16.sp),
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: _C.textPrimary,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 10.sp, color: _C.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 🔍 Search by customer name/phone
+  Widget _buildSearchField() {
+    return Container(
+      height: 44.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: _C.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.search, size: 18.sp, color: _C.textSecondary),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isCollapsed: true,
+                hintText: "Search by customer name or phone",
+                hintStyle: TextStyle(fontSize: 13.sp, color: _C.textTertiary),
+              ),
+              style: TextStyle(fontSize: 13.sp, color: _C.textPrimary),
+            ),
+          ),
+          if (searchQuery.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                _searchCtrl.clear();
+                _onSearchChanged("");
+              },
+              child: Icon(
+                Icons.close_rounded,
+                size: 16.sp,
+                color: _C.textTertiary,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFilterSystem(BuildContext context) {
     return Column(
       children: [
@@ -422,7 +674,13 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
             Expanded(
               child: _dropdown(
                 value: selectedStatus,
-                items: ["All Status", "Pending", "Delivered", "Completed"],
+                items: [
+                  "All Status",
+                  "Pending",
+                  "Delivered",
+                  "Completed",
+                  "Cancelled",
+                ],
                 onChanged: (v) {
                   setState(() => selectedStatus = v!);
                   _triggerFilterSearch();
@@ -568,25 +826,99 @@ class _OrderCardState extends State<OrderCard> {
     }
   }
 
+  // 🎨 3-color status theme: green = delivered/completed, orange = pending/in
+  // progress, red = cancelled/undelivered (nothing else needs its own hue).
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'DELIVERED':
+      case 'COMPLETED':
         return _C.green;
+      case 'PENDING':
       case 'PROGRESS':
         return _C.amber;
-      default:
+      case 'UNDELIVERED':
+      case 'CANCELLED':
         return _C.red;
+      default:
+        return _C.amber;
     }
   }
 
   Color _getStatusBg(String status) {
     switch (status.toUpperCase()) {
       case 'DELIVERED':
+      case 'COMPLETED':
         return _C.greenLight;
+      case 'PENDING':
       case 'PROGRESS':
         return _C.amberLight;
-      default:
+      case 'UNDELIVERED':
+      case 'CANCELLED':
         return _C.redLight;
+      default:
+        return _C.amberLight;
+    }
+  }
+
+  /// Parses the delivery's date (day-truncated) for the "today or later" cancel guard.
+  DateTime? get _deliveryDateOnly {
+    try {
+      final parsed = DateTime.parse(widget.delivery.date);
+      return DateTime(parsed.year, parsed.month, parsed.day);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool get _isCancelled => widget.delivery.status.toUpperCase() == 'CANCELLED';
+
+  /// Mirrors the backend's own cancel guard: today-or-future date, and not already
+  /// DELIVERED / COMPLETED / CANCELLED.
+  bool get _canCancel {
+    const finalStatuses = ['DELIVERED', 'COMPLETED', 'CANCELLED'];
+    if (finalStatuses.contains(widget.delivery.status.toUpperCase())) {
+      return false;
+    }
+    final deliveryDate = _deliveryDateOnly;
+    if (deliveryDate == null) return false;
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    return !deliveryDate.isBefore(todayOnly);
+  }
+
+  Future<void> _confirmCancel(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            title: const Text("Cancel Delivery"),
+            content: const Text(
+              "Are you sure you want to cancel this delivery? The food for this day will not be prepared.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text("No"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  "Yes, Cancel",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed == true) {
+      final success = await _controller.cancelDelivery(widget.delivery.id);
+      if (success) {
+        widget.onRefreshNeeded();
+      }
     }
   }
 
@@ -614,14 +946,16 @@ class _OrderCardState extends State<OrderCard> {
                   ),
                 ),
                 SizedBox(height: 12.h),
-                ...["PENDING", "DELIVERED", "UNDELIVERED"].map((status) {
+                ...["PENDING", "DELIVERED", "UNDELIVERED", "CANCELLED"].map((
+                  status,
+                ) {
                   final isCurrent =
                       deliveryVar.status.toString().toUpperCase() == status;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     title: Text(
-                      status,
+                      status == "CANCELLED" ? "Cancel this meal" : status,
                       style: TextStyle(
                         fontWeight:
                             isCurrent ? FontWeight.bold : FontWeight.normal,
@@ -638,6 +972,38 @@ class _OrderCardState extends State<OrderCard> {
                             : null,
                     onTap: () async {
                       Navigator.pop(context);
+
+                      // Cancelling a single meal is hard to undo — confirm first
+                      if (status == "CANCELLED") {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder:
+                              (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                title: const Text("Cancel this meal"),
+                                content: Text(
+                                  "Cancel ${deliveryVar.variation?.title ?? 'this meal'} for this delivery? It will not be prepared.",
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text("No"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text(
+                                      "Yes, Cancel",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        );
+                        if (confirmed != true) return;
+                      }
+
                       final success = await _controller.patchVariationStatus(
                         deliveryId: widget.delivery.id,
                         variationUuid: deliveryVar.variationId,
@@ -804,8 +1170,14 @@ class _OrderCardState extends State<OrderCard> {
                                 final vStatus =
                                     v.status.toString().toUpperCase();
                                 return InkWell(
+                                  // Whole day is cancelled — no point editing individual meals
                                   onTap:
-                                      () => _showStatusUpdateSheet(context, v),
+                                      _isCancelled
+                                          ? null
+                                          : () => _showStatusUpdateSheet(
+                                            context,
+                                            v,
+                                          ),
                                   borderRadius: BorderRadius.circular(20.r),
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
@@ -840,12 +1212,14 @@ class _OrderCardState extends State<OrderCard> {
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        SizedBox(width: 4.w),
-                                        Icon(
-                                          Icons.edit_outlined,
-                                          size: 10.sp,
-                                          color: _getStatusColor(vStatus),
-                                        ),
+                                        if (!_isCancelled) ...[
+                                          SizedBox(width: 4.w),
+                                          Icon(
+                                            Icons.edit_outlined,
+                                            size: 10.sp,
+                                            color: _getStatusColor(vStatus),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -875,6 +1249,17 @@ class _OrderCardState extends State<OrderCard> {
                                 _callNow,
                               ),
                             ),
+                            if (_canCancel) ...[
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: _actionButton(
+                                  Icons.cancel_outlined,
+                                  "Cancel",
+                                  _C.red,
+                                  () => _confirmCancel(context),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],

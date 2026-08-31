@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 import 'package:mess/Screens/Customer/Views/customer_card.dart';
+import 'package:mess/Screens/Customer/Views/customer_summary_card.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
@@ -25,6 +26,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   String selectedPlanId = "";
   String searchQuery = "";
+  String selectedSubscriptionFilter = "";
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
     planController.fetchPlans();
     customerController.fetchCustomers(refresh: true);
+    customerController.fetchCustomerSummary();
   }
 
   void _loadCustomers({bool reset = true}) {
@@ -39,6 +42,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
       refresh: reset,
       search: searchQuery.isEmpty ? null : searchQuery,
       planId: selectedPlanId.isEmpty ? null : selectedPlanId,
+      subscriptionFilter:
+          selectedSubscriptionFilter.isEmpty ? null : selectedSubscriptionFilter,
     );
   }
 
@@ -117,7 +122,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 ],
               ),
 
-              SizedBox(height: 20.h),
+              SizedBox(height: 16.h),
+
+              /// ================= SUMMARY CARD =================
+              GetBuilder<CustomerController>(
+                builder: (controller) {
+                  return CustomerSummaryCard(
+                    summary: controller.summary,
+                    isLoading: controller.isSummaryLoading,
+                  );
+                },
+              ),
+
+              SizedBox(height: 16.h),
 
               /// ================= SEARCH + FILTER =================
               Row(
@@ -198,7 +215,32 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 ],
               ),
 
-              SizedBox(height: 20.h),
+              SizedBox(height: 10.h),
+
+              /// ================= SUBSCRIPTION FILTER =================
+              Row(
+                children: [
+                  _subscriptionFilterChip(
+                    label: "All Customers",
+                    selected: selectedSubscriptionFilter.isEmpty,
+                    onTap: () {
+                      setState(() => selectedSubscriptionFilter = "");
+                      _loadCustomers(reset: true);
+                    },
+                  ),
+                  SizedBox(width: 8.w),
+                  _subscriptionFilterChip(
+                    label: "Ending in 7 Days",
+                    selected: selectedSubscriptionFilter == "ending_soon",
+                    onTap: () {
+                      setState(() => selectedSubscriptionFilter = "ending_soon");
+                      _loadCustomers(reset: true);
+                    },
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 16.h),
 
               /// ================= CUSTOMER LIST =================
               Expanded(
@@ -239,6 +281,34 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _subscriptionFilterChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary.withOpacity(0.12) : Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: selected ? AppColors.primary : Colors.grey.shade300,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected ? AppColors.primaryDark : Colors.grey.shade700,
           ),
         ),
       ),

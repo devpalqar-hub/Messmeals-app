@@ -77,6 +77,34 @@ class CustomerModel {
   }
 }
 
+/// Summary stats for the Customers page header — active subscriptions, how many are
+/// ending within 7 days, and the total amount owed back to the mess.
+class CustomerSummaryModel {
+  final int activeSubscriptionsCount;
+  final int endingSoonCount;
+  final num totalDue;
+
+  CustomerSummaryModel({
+    required this.activeSubscriptionsCount,
+    required this.endingSoonCount,
+    required this.totalDue,
+  });
+
+  factory CustomerSummaryModel.empty() => CustomerSummaryModel(
+        activeSubscriptionsCount: 0,
+        endingSoonCount: 0,
+        totalDue: 0,
+      );
+
+  factory CustomerSummaryModel.fromJson(Map<String, dynamic> json) {
+    return CustomerSummaryModel(
+      activeSubscriptionsCount: json['activeSubscriptionsCount'] ?? 0,
+      endingSoonCount: json['endingSoonCount'] ?? 0,
+      totalDue: json['totalDue'] ?? 0,
+    );
+  }
+}
+
 class ActiveSubscription {
   final String id;
   final DateTime startDate;
