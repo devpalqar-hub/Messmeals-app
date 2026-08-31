@@ -22,6 +22,7 @@ class HomeScreenController extends GetxController {
   UserModel? user;
   bool isLoading = false;
   bool isVariationLoading = false;
+  bool profileLoadFailed = false;
   DateTime selectedDate = DateTime.now();
   String authToken = "";
   final AuthController authController = Get.put(AuthController());
@@ -37,18 +38,34 @@ class HomeScreenController extends GetxController {
     fetchProfile();
   }
 
-  fetchProfile() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/users/profile'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': '$bearerToken',
-      },
-    );
-    print(response.body);
-    if (response.statusCode == 200) {
-      user = UserModel.fromJson(json.decode(response.body));
-      fetchMyMesses();
+  Future<void> fetchProfile() async {
+    profileLoadFailed = false;
+    update();
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/users/profile'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': '$bearerToken',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        user = UserModel.fromJson(json.decode(response.body));
+        fetchMyMesses();
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        await _handleLogout();
+      } else {
+        profileLoadFailed = true;
+        update();
+      }
+    } catch (e) {
+      debugPrint('FETCH PROFILE ERROR: $e');
+      profileLoadFailed = true;
+      update();
     }
   }
 

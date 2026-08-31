@@ -5,7 +5,7 @@ import 'package:mess/Screens/MenuScreen/Service/MenuController.dart';
 import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 
 import 'package:mess/Screens/MenuScreen/Views/AddMenuScreen.dart';
-import 'package:mess/Screens/MenuScreen/Views/MenuCard.dart';
+import 'package:mess/Screens/MenuScreen/Views/MenuTimetableCard.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
@@ -152,26 +152,30 @@ class MenuScreen extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: controller.refreshMenus,
-      child: ListView.separated(
-        itemCount: menus.length,
-        separatorBuilder: (_, __) => SizedBox(height: 0.h),
-        itemBuilder: (context, index) {
-          final menu = menus[index];
+      child: GetBuilder<VariationController>(
+        builder: (variationCtrl) {
+          return ListView.builder(
+            itemCount: menus.length,
+            itemBuilder: (context, index) {
+              final menu = menus[index];
 
-          return MenuCard(
-            menu: menu,
-            onDelete: () {
-              _showDeleteDialog(context, controller, menu.id);
-            },
-            onEdit: () {
-              Get.to(
-                () => AddMenuScreen(
-                  isEdit: true,
-                  menuId: menu.id,
-                  name: menu.name,
-                  isActive: menu.isActive,
-                  schedule: menu.schedule,
-                ),
+              return MenuTimetableCard(
+                menu: menu,
+                variations: variationCtrl.variations,
+                onDelete: () {
+                  _showDeleteDialog(context, controller, menu.id);
+                },
+                onEdit: () {
+                  Get.to(
+                    () => AddMenuScreen(
+                      isEdit: true,
+                      menuId: menu.id,
+                      name: menu.name,
+                      isActive: menu.isActive,
+                      schedule: menu.schedule,
+                    ),
+                  );
+                },
               );
             },
           );

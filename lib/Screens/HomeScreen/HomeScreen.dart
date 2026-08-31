@@ -62,12 +62,74 @@ class Homescreen extends StatelessWidget {
     }
   }
 
+  Widget _buildLoadErrorView(HomeScreenController ctrl) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.wifi_off_rounded,
+                size: 42.sp,
+                color: Colors.grey.shade400,
+              ),
+              SizedBox(height: 14.h),
+              Text(
+                "Couldn't load your dashboard",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF111827),
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                "Check your connection and try again.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.sp,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              ElevatedButton.icon(
+                onPressed: () => ctrl.fetchProfile(),
+                icon: Icon(Icons.refresh, size: 18.sp, color: Colors.white),
+                label: Text(
+                  "Retry",
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 13.h),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<HomeScreenController>(
       builder: (__) {
         return (ctrl.dashboardData == null)
-            ? HomeShimmerScreen()
+            ? (ctrl.profileLoadFailed
+                ? _buildLoadErrorView(ctrl)
+                : HomeShimmerScreen())
             : Scaffold(
               backgroundColor: Colors.white,
               appBar: AppBar(
