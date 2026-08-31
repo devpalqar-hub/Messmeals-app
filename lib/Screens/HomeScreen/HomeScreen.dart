@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
+import 'package:mess/Screens/ExpenseScreen/ExpenseScreen.dart';
 import 'package:mess/Screens/HomeScreen/HomeShimmerView.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/HomeScreen/Views/ProfileBottomSheet.dart';
@@ -433,6 +434,22 @@ class Homescreen extends StatelessWidget {
                                       icon: Icons.pie_chart_outline,
                                       iconColor: const Color(0xFFDC9E2C),
                                       iconBgColor: const Color(0xFFFEF5E5),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap:
+                                        () => Get.to(
+                                          () => const ExpenseScreen(),
+                                          transition: Transition.rightToLeft,
+                                        ),
+                                    child: QuickActionCard(
+                                      label: 'Expenses',
+                                      icon: Icons.receipt_long_outlined,
+                                      iconColor: const Color(0xFFC0392B),
+                                      iconBgColor: const Color(0xFFFBEAE8),
                                     ),
                                   ),
                                 ),
