@@ -1,13 +1,15 @@
 /// A single mess image, as returned by GET /mess/{id}.
 ///
 /// The API returns `images` as a flat list — items may just be plain URL
-/// strings, or objects like `{"url": "...", "type": "cover"}`. This model
-/// handles both shapes defensively.
+/// strings, or MessImages records like `{"id": "...", "url": "...", "isCover": true}`.
+/// This model handles both shapes defensively.
 class MessImageModel {
+  final String? id;
   final String url;
   final String? type;
+  final bool isCoverFlag;
 
-  MessImageModel({required this.url, this.type});
+  MessImageModel({this.id, required this.url, this.type, this.isCoverFlag = false});
 
   factory MessImageModel.fromJson(dynamic json) {
     if (json is String) {
@@ -15,15 +17,34 @@ class MessImageModel {
     }
 
     if (json is Map) {
+      final id = json['id']?.toString();
       final url = (json['url'] ?? json['image'] ?? '').toString();
       final type = (json['type'] ?? json['category'])?.toString();
-      return MessImageModel(url: url, type: type);
+      final isCoverFlag = json['isCover'] == true;
+      return MessImageModel(id: id, url: url, type: type, isCoverFlag: isCoverFlag);
     }
 
     return MessImageModel(url: '');
   }
 
-  bool get isCover => (type ?? '').toLowerCase().contains('cover');
+  bool get isCover =>
+      isCoverFlag || (type ?? '').toLowerCase().contains('cover');
+}
+
+/// Extracts a flat `List<String>` from an API list whose items may either
+/// already be plain strings, or relation objects like
+/// `{"id": "...", "messId": "...", "foodType": "VEG"}` /
+/// `{"id": "...", "messId": "...", "tag": "FIXED_MENU"}` — GET /mess and
+/// GET /mess/{id} return the latter shape for `foodTypes` and `tags`.
+List<String> _stringListFrom(List list, {required String key}) {
+  return list
+      .map((e) {
+        if (e is String) return e;
+        if (e is Map) return (e[key] ?? '').toString();
+        return e.toString();
+      })
+      .where((s) => s.isNotEmpty)
+      .toList();
 }
 
 class MessModel {
@@ -38,6 +59,8 @@ class MessModel {
   bool? isVerified;
   String? location;
   String? districtId;
+  /// Optional icon/logo URL for the mess.
+  String? icon;
   Map<String, String> openingHours;
   List<String> foodTypes;
   List<String> tags;
@@ -56,6 +79,7 @@ class MessModel {
     this.isVerified,
     this.location,
     this.districtId,
+    this.icon,
     Map<String, String>? openingHours,
     List<String>? foodTypes,
     List<String>? tags,
@@ -80,6 +104,7 @@ class MessModel {
       isVerified: json['is_verified'] is bool ? json['is_verified'] : null,
       location: json['location']?.toString(),
       districtId: json['districtId']?.toString(),
+      icon: json['icon']?.toString(),
       openingHours:
           json['openingHours'] is Map
               ? Map<String, String>.from(
@@ -90,15 +115,11 @@ class MessModel {
               : {},
       foodTypes:
           json['foodTypes'] is List
-              ? List<String>.from(
-                (json['foodTypes'] as List).map((e) => e.toString()),
-              )
+              ? _stringListFrom(json['foodTypes'] as List, key: 'foodType')
               : [],
       tags:
           json['tags'] is List
-              ? List<String>.from(
-                (json['tags'] as List).map((e) => e.toString()),
-              )
+              ? _stringListFrom(json['tags'] as List, key: 'tag')
               : [],
       features:
           json['features'] is List
@@ -128,6 +149,7 @@ class MessModel {
       'is_verified': isVerified,
       'location': location,
       'districtId': districtId,
+      'icon': icon,
       'openingHours': openingHours,
       'foodTypes': foodTypes,
       'tags': tags,

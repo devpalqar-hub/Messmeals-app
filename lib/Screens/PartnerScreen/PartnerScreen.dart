@@ -5,6 +5,7 @@ import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerCard.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
+import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
 
 class PartnerScreen extends StatefulWidget {
@@ -22,6 +23,13 @@ class _PartnerScreenState extends State<PartnerScreen> {
   void initState() {
     super.initState();
     controller.fetchPartners();
+  }
+
+  Future<void> _openAddPartner() async {
+    final result = await Get.to(() => const AddPartnerScreen());
+    if (result == true) {
+      await controller.fetchPartners();
+    }
   }
 
   @override
@@ -57,14 +65,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                     children: [
                       const TittleText(text: "Partners"),
                       ElevatedButton.icon(
-                        onPressed: () async {
-                          final result = await Get.to(
-                            () => const AddPartnerScreen(),
-                          );
-                          if (result == true) {
-                            await controller.fetchPartners();
-                          }
-                        },
+                        onPressed: _openAddPartner,
                         icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
                         label: Text(
                           "Add",
@@ -74,7 +75,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:Color(0xff07A4A5),
+                          backgroundColor:Color(0xFF7ED321),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -153,7 +154,13 @@ class _PartnerScreenState extends State<PartnerScreen> {
   Widget _buildPartnerList(List filteredList, PartnerController controller) {
     // No partners at all
     if (controller.partners.isEmpty && !controller.isLoading) {
-      return const Center(child: Text("No partners found"));
+      return EmptyStateAddButton(
+        icon: Icons.local_shipping_outlined,
+        title: "No partners yet",
+        subtitle: "Add your first delivery partner to get started",
+        buttonLabel: "Add Partner",
+        onAdd: _openAddPartner,
+      );
     }
 
     // BUG #2411 — Search returned no results

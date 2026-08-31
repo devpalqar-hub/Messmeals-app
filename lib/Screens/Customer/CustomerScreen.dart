@@ -7,6 +7,7 @@ import 'package:mess/Screens/Customer/Views/customer_card.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -47,6 +48,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
     super.dispose();
   }
 
+  void _openAddCustomer() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddCustomerScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,14 +89,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   ),
 
                   GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AddCustomerScreen(),
-                        ),
-                      );
-                    },
+                    onTap: _openAddCustomer,
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 12.w,
@@ -208,7 +209,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     }
 
                     if (controller.customers.isEmpty) {
-                      return const Center(child: Text("No customers found"));
+                      return EmptyStateAddButton(
+                        icon: Icons.group_outlined,
+                        title: "No customers yet",
+                        subtitle: "Add your first customer to get started",
+                        buttonLabel: "Add Customer",
+                        onAdd: _openAddCustomer,
+                      );
                     }
 
                     return ListView.separated(

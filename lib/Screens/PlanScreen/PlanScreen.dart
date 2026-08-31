@@ -8,11 +8,17 @@ import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 import 'package:mess/Screens/PlanScreen/Views/AddPlanScreen.dart';
 import 'package:mess/Screens/PlanScreen/Views/PlanCard.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
 import 'package:mess/main.dart';
 
 class PlanScreen extends StatelessWidget {
   const PlanScreen({super.key});
+
+  Future<void> _openAddPlan(PlanController controller) async {
+    await Get.to(() => AddPlanScreen());
+    controller.refreshPlans();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,11 +48,7 @@ class PlanScreen extends StatelessWidget {
                     children: [
                       const TittleText(text: "Plans"),
                       ElevatedButton.icon(
-                        onPressed: () async {
-                          await Get.to(() => AddPlanScreen());
-
-                          controller.refreshPlans();
-                        },
+                        onPressed: () => _openAddPlan(controller),
                         icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
                         label: Text(
                           "Add Plan",
@@ -140,6 +142,16 @@ class PlanScreen extends StatelessWidget {
 
     final plans = controller.filteredPlans;
 
+    if (controller.plans.isEmpty) {
+      return EmptyStateAddButton(
+        icon: Icons.assignment_outlined,
+        title: "No plans yet",
+        subtitle: "Create your first mess plan to get started",
+        buttonLabel: "Add Plan",
+        onAdd: () => _openAddPlan(controller),
+      );
+    }
+
     if (plans.isEmpty) {
       return Center(
         child: Text("No matching plans", style: TextStyle(fontSize: 14.sp)),
@@ -190,6 +202,7 @@ class PlanScreen extends StatelessWidget {
                   imageUrl: imageUrls,
                   planType: plan.isMonthlyPlan ? "MONTHLY" : "DAILY",
                   selectedVariations: plan.variations.map((v) => v.id).toList(),
+                  selectedMenus: plan.menus.map((m) => m.id).toList(),
                 ),
               );
             },

@@ -77,70 +77,228 @@ class SignupController extends GetxController {
     update();
   }
 
-  // ================== SEND OTP ==================
-  Future<bool> sendOtp({
-    required String name,
-    required String ownerName,
-    required String phone,
-    required String email,
-    required String address,
-    required String messName,
-    required String zipcode,
-  }) async {
+ // ================== SEND OTP ==================
+Future<bool> sendOtp({
+  required String name,
+  required String ownerName,
+  required String phone,
+  required String email,
+  required String address,
+  required String messName,
+  required String zipcode,
+}) async {
+  try {
+    otpLoading = true;
+    update();
+
+    final url = Uri.parse("$baseUrl/auth/mess-owner/send-otp");
+
+    final requestBody = {
+      "name": name,
+      "ownerName": ownerName,
+      "phone": phone,
+      "email": email,
+      "address": address,
+      //"district": district,
+      "postcode": zipcode,
+      "messName": messName,
+    };
+
+    // =========================================================
+    // REQUEST DEBUG
+    // =========================================================
+
+    print("\n");
+    print("==================================================");
+    print("🚀 SEND OTP API REQUEST");
+    print("==================================================");
+
+    print("🌐 BASE URL       : $baseUrl");
+    print("🔗 ENDPOINT       : /auth/mess-owner/send-otp");
+    print("➡️ FULL URL       : $url");
+    print("📡 METHOD         : POST");
+
+    print("--------------------------------------------------");
+    print("📋 REQUEST HEADERS");
+    print("--------------------------------------------------");
+
+    final requestHeaders = {
+      "Content-Type": "application/json",
+    };
+
+    requestHeaders.forEach((key, value) {
+      print("   $key : $value");
+    });
+
+    print("--------------------------------------------------");
+    print("📦 REQUEST BODY");
+    print("--------------------------------------------------");
+
+    print("   name      : $name");
+    print("   ownerName : $ownerName");
+    print("   phone     : $phone");
+    print("   email     : $email");
+    print("   address   : $address");
+    print("   postcode  : $zipcode");
+    print("   messName  : $messName");
+
+    print("--------------------------------------------------");
+    print("📤 JSON BODY");
+    print("--------------------------------------------------");
+
+    print(jsonEncode(requestBody));
+
+    print("==================================================");
+    print("⏳ SENDING REQUEST...");
+    print("==================================================");
+
+    // =========================================================
+    // API REQUEST
+    // =========================================================
+
+    final response = await http.post(
+      url,
+      headers: requestHeaders,
+      body: jsonEncode(requestBody),
+    );
+
+    // =========================================================
+    // RESPONSE DEBUG
+    // =========================================================
+
+    print("\n");
+    print("==================================================");
+    print("📥 SEND OTP API RESPONSE");
+    print("==================================================");
+
+    print("🔢 STATUS CODE    : ${response.statusCode}");
+    print("📊 CONTENT LENGTH : ${response.contentLength}");
+    print("🔗 REQUEST URL    : ${response.request?.url}");
+
+    print("--------------------------------------------------");
+    print("📋 RESPONSE HEADERS");
+    print("--------------------------------------------------");
+
+    response.headers.forEach((key, value) {
+      print("   $key : $value");
+    });
+
+    print("--------------------------------------------------");
+    print("📄 RAW RESPONSE BODY");
+    print("--------------------------------------------------");
+
+    print(response.body);
+
+    print("==================================================");
+
+    // =========================================================
+    // PARSE RESPONSE
+    // =========================================================
+
+    dynamic data;
+
     try {
-      otpLoading = true;
-      update();
+      data = jsonDecode(response.body);
 
-      final url = Uri.parse("$baseUrl/auth/mess-owner/send-otp");
+      print("--------------------------------------------------");
+      print("🧩 PARSED RESPONSE");
+      print("--------------------------------------------------");
 
-      final requestBody = {
-        "name": name,
-        "ownerName": ownerName,
-        "phone": phone,
-        "email": email,
-        "address": address,
-        //"district": district,
-        "postcode": zipcode,
-        "messName": messName,
-      };
+      print(data);
 
-      // ================= DEBUG REQUEST =================
-      print("🚀 ===== SEND OTP REQUEST =====");
-      print("➡️ URL: $url");
-      print("➡️ BODY: ${jsonEncode(requestBody)}");
-
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(requestBody),
-      );
-
-      // ================= DEBUG RESPONSE =================
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppToast.success(data["message"] ?? "OTP sent");
-
-        print("🎉 OTP SENT SUCCESSFULLY");
-        print("📦 Parsed Response: $data");
-
-        return true;
-      } else {
-        AppToast.success(data["message"] ?? "OTP sent");
-
-        return false;
+      if (data is Map) {
+        data.forEach((key, value) {
+          print("   $key : $value");
+        });
       }
     } catch (e) {
-      print("🔥 ===== SEND OTP EXCEPTION =====");
-      AppToast.error(e.toString());
-      return false;
-    } finally {
-      otpLoading = false;
-      update();
+      print("⚠️ RESPONSE IS NOT VALID JSON");
+      print("❌ JSON PARSE ERROR: $e");
     }
-  }
 
+    // =========================================================
+    // SUCCESS
+    // =========================================================
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print("\n");
+      print("==================================================");
+      print("🎉 OTP SENT SUCCESSFULLY");
+      print("==================================================");
+
+      if (data is Map) {
+        print("✅ Message : ${data["message"]}");
+      }
+
+      print("==================================================");
+
+      AppToast.success(
+        data is Map
+            ? (data["message"] ?? "OTP sent")
+            : "OTP sent",
+      );
+
+      return true;
+    }
+
+    // =========================================================
+    // API ERROR
+    // =========================================================
+
+    print("\n");
+    print("==================================================");
+    print("❌ SEND OTP API FAILED");
+    print("==================================================");
+
+    print("🔴 Status Code : ${response.statusCode}");
+    print("🔴 Response    : ${response.body}");
+
+    if (data is Map) {
+      print("🔴 Error       : ${data["error"]}");
+      print("🔴 Message     : ${data["message"]}");
+      print("🔴 Status      : ${data["status"]}");
+    }
+
+    print("==================================================");
+
+    AppToast.error(
+      data is Map
+          ? (data["message"] ?? "Failed to send OTP")
+          : "Failed to send OTP",
+    );
+
+    return false;
+  } catch (e, stackTrace) {
+    // =========================================================
+    // EXCEPTION DEBUG
+    // =========================================================
+
+    print("\n");
+    print("==================================================");
+    print("🔥 SEND OTP EXCEPTION");
+    print("==================================================");
+
+    print("❌ ERROR TYPE : ${e.runtimeType}");
+    print("❌ ERROR      : $e");
+
+    print("--------------------------------------------------");
+    print("📚 STACK TRACE");
+    print("--------------------------------------------------");
+
+    print(stackTrace);
+
+    print("==================================================");
+
+    AppToast.error(e.toString());
+
+    return false;
+  } finally {
+    otpLoading = false;
+    update();
+
+    print("🔄 OTP LOADING : $otpLoading");
+  }
+}
   // ================== SIGNUP ==================
   Future<bool> signup({
     required String name,

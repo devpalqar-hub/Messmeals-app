@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/HomeScreen/Views/AddMessBottomSheet.dart';
-import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
 
 class SelectMessBottomsheet extends StatefulWidget {
@@ -27,7 +26,8 @@ class _SelectMessBottomsheetState extends State<SelectMessBottomsheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SafeArea(
+      child: Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -42,63 +42,6 @@ class _SelectMessBottomsheetState extends State<SelectMessBottomsheet> {
             style: GoogleFonts.poppins(
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 10.h),
-          // List of available Messes
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: ctrl.messes.length,
-              itemBuilder: (context, index) {
-                final mess = ctrl.messes[index];
-                return RadioListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: PrimaryColor,
-                  title: Text(
-                    mess.name ?? "Unnamed Mess",
-                    style: GoogleFonts.poppins(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  value: mess.id,
-                  groupValue: tempSelectedId,
-                  onChanged: (value) {
-                    setState(() {
-                      tempSelectedId = value;
-                    });
-                  },
-                );
-              },
-            ),
-          ),
-          Divider(color: Colors.grey.withOpacity(0.3)),
-          // Add Mess Button
-          InkWell(
-            onTap: () {
-              Get.back();
-              Get.to(
-                () => const MessProfileSettingsScreen(forceCreate: true),
-                transition: Transition.rightToLeft,
-              );
-            },
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 12.h),
-              child: Row(
-                children: [
-                  Icon(Icons.add_circle_outline, color: PrimaryColor),
-                  SizedBox(width: 10.w),
-                  Text(
-                    "Add New Mess",
-                    style: GoogleFonts.poppins(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                      color: PrimaryColor,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
           SizedBox(height: 10.h),
@@ -186,6 +129,7 @@ class _SelectMessBottomsheetState extends State<SelectMessBottomsheet> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
