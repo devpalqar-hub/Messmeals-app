@@ -8,6 +8,7 @@ import 'package:mess/Screens/PartnerScreen/PartnerScreen.dart';
 import 'package:mess/Screens/DeliveriesScreen/DeliveriesScreen.dart';
 import 'package:mess/Screens/PlanScreen/PlanScreen.dart';
 import 'package:mess/Screens/MenuScreen/MenuScreen.dart';
+import 'package:mess/Screens/ExpenseScreen/ExpenseScreen.dart';
 import 'package:mess/Screens/OnboardingScreen/onboarding_screen.dart';
 import 'package:mess/Screens/SplashScreen/SplashScreen.dart';
 
@@ -21,6 +22,7 @@ class AppRoutes {
   static const deliveries = '/deliveries';
   static const plans = '/plans';
   static const menus = '/menus';
+  static const expenses = '/expenses';
 
   // ✅ THIS is what you are missing / misnamed
   static final List<GetPage> routes = [
@@ -33,5 +35,6 @@ class AppRoutes {
     GetPage(name: deliveries, page: () => DeliveriesScreen()),
     GetPage(name: plans, page: () => PlanScreen()),
     GetPage(name: menus, page: () => const MenuScreen()),
+    GetPage(name: expenses, page: () => const ExpenseScreen()),
   ];
 }
