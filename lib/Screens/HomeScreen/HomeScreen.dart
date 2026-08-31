@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 import 'package:mess/Screens/ExpenseScreen/ExpenseScreen.dart';
+import 'package:mess/Screens/ExpenseScreen/Service/ExpenseController.dart';
 import 'package:mess/Screens/HomeScreen/HomeShimmerView.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/HomeScreen/Views/ProfileBottomSheet.dart';
@@ -25,6 +26,7 @@ class Homescreen extends StatelessWidget {
   Homescreen({super.key, required this.onNavigateToTab});
 
   final HomeScreenController ctrl = Get.put(HomeScreenController());
+  final ExpenseController expenseController = Get.put(ExpenseController());
 
   // BUG #2427 — Logout function: clears prefs and navigates to login
   Future<void> _logout(BuildContext context) async {
@@ -357,14 +359,18 @@ class Homescreen extends StatelessWidget {
                                 ),
                                 SizedBox(width: 10.w),
                                 Expanded(
-                                  child: _kpiCard(
-                                    icon: Icons.account_balance_wallet_outlined,
-                                    iconColor: const Color(0xFF8A59F8),
-                                    iconBgColor: const Color(0xFFEAE5FA),
-                                    label: 'Avg/Customer',
-                                    // BUG #2435 — round to integer to prevent ₹13066.6666666666
-                                    value:
-                                        '₹${_formatAmount(ctrl.dashboardData!.avgPerCustomer ?? 0)}',
+                                  child: GetBuilder<ExpenseController>(
+                                    builder: (expenseCtrl) {
+                                      return _kpiCard(
+                                        onTap: () => Get.to(() => const ExpenseScreen()),
+                                        icon: Icons.receipt_long_outlined,
+                                        iconColor: const Color(0xFFC0392B),
+                                        iconBgColor: const Color(0xFFFBEAE8),
+                                        label: 'Expenses',
+                                        value:
+                                            '₹${_formatAmount(expenseCtrl.listSummary.total.amount)}',
+                                      );
+                                    },
                                   ),
                                 ),
                               ],
