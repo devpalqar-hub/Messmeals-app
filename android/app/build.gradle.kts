@@ -57,9 +57,17 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-             signingConfig = signingConfigs.getByName("release")
+            // The "release" signingConfig above only has real keyAlias/storeFile/passwords
+            // when android/keys.properties exists — without it those fields are null, and
+            // AGP's bundle signer throws a bare NullPointerException in signReleaseBundle.
+            // Fall back to the debug keys in that case so local/CI release builds still work;
+            // add android/keys.properties (see keys.properties.example) to produce a build
+            // that's actually signed for Play Store upload.
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

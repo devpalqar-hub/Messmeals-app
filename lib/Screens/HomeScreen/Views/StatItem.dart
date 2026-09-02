@@ -97,10 +97,11 @@ class RevenueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 10.w),
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 14.0),
       decoration: BoxDecoration(
         color: cardBgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF1F3F5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -179,16 +180,17 @@ class QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 8.0),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF1F3F5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
-            blurRadius: 12,
+            blurRadius: 10,
             spreadRadius: 0,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -197,15 +199,15 @@ class QuickActionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            height: 40.w,
-            width: 40.w,
+            height: 38.w,
+            width: 38.w,
             decoration: BoxDecoration(
               color: iconBgColor,
               borderRadius: BorderRadius.circular(8), // Soft rounded inner box
             ),
             child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Text(
             label,
             textAlign: TextAlign.center,

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
+import 'package:mess/Screens/MenuScreen/Service/MenuController.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
@@ -13,6 +14,7 @@ class AppBindings extends Bindings {
 
     Get.lazyPut<HomeScreenController>(() => HomeScreenController());
     Get.lazyPut<PlanController>(() => PlanController());
+    Get.lazyPut<MessMenuController>(() => MessMenuController());
     Get.lazyPut<PartnerController>(() => PartnerController());
     Get.lazyPut<CustomerController>(() => CustomerController());
   }

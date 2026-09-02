@@ -2,281 +2,155 @@ import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/LoginScreen/OtScreen.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/LoginScreen/SignUpScreen.dart';
+import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
 
+/// Simple, minimal sign-in screen: a plain white background, a small brand
+/// mark, and a single phone-number field — no imagery, gradients, or
+/// decorative chrome.
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
 
   final AuthController authCtrl = Get.put(AuthController());
-  final Color primaryGreen = const Color(0xFF5BA43A);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
-      body: GetBuilder<AuthController>(
-        builder: (_) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      children: [
-                        /// TOP HEADER SECTION (IMAGE + GRADIENT)
-                        Container(
-                          width: double.infinity,
-                          decoration: const BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage("assets/Firefly.png"),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          child: Container(
-                            /// Gradient overlay for text readability
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.black.withOpacity(0.6),
-                                  Colors.black.withOpacity(0.2),
-                                  Colors.transparent,
-                                ],
-                                stops: const [0.0, 0.5, 1.0],
-                              ),
-                            ),
-                            child: SafeArea(
-                              bottom: false,
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24.w,
-                                  vertical: 40.h,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    /// LOGO + BRAND NAME
-                                    Row(
-                                      children: [
-                                        Container(
-                                          height: 54.h,
-                                          width: 54.w,
-                                          decoration: const BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.white,
-                                          ),
-                                          child: Icon(
-                                            Icons.restaurant,
-                                            size: 28.sp,
-                                            color: primaryGreen,
-                                          ),
-                                        ),
-                                        SizedBox(width: 14.w),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            RichText(
-                                              text: TextSpan(
-                                                children: [
-                                                  TextSpan(
-                                                    text: "Super",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 24.sp,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      letterSpacing: -0.5,
-                                                    ),
-                                                  ),
-                                                  TextSpan(
-                                                    text: "Meals",
-                                                    style: TextStyle(
-                                                      color: primaryGreen,
-                                                      fontSize: 24.sp,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      letterSpacing: -0.5,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Text(
-                                              "ADMIN",
-                                              style: TextStyle(
-                                                color: Colors.white.withOpacity(
-                                                  0.9,
-                                                ),
-                                                fontSize: 12.sp,
-                                                fontWeight: FontWeight.w600,
-                                                letterSpacing: 4,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+      body: SafeArea(
+        child: GetBuilder<AuthController>(
+          builder: (_) {
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 56.h),
 
-                                    SizedBox(height: 50.h),
+                  /// BRAND WORDMARK
+                  Text(
+                    "Messmeals",
+                    style: GoogleFonts.poppins(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    "ADMIN PORTAL",
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
 
-                                    /// WELCOME TEXT
-                                    Text(
-                                      "Welcome Back",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 28.sp,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                    SizedBox(height: 6.h),
-                                    Text(
-                                      "Sign in to continue to your account",
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 15.sp,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 40.h,
-                                    ), // Space before white card
-                                  ],
-                                ),
-                              ),
-                            ),
+                  SizedBox(height: 48.h),
+
+                  /// WELCOME TEXT
+                  Text(
+                    "Welcome back",
+                    style: GoogleFonts.poppins(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    "Sign in with your phone number to continue",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+
+                  SizedBox(height: 32.h),
+
+                  Text(
+                    "Phone Number",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF374151),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+
+                  /// PHONE INPUT FIELD
+                  _buildPhoneInputField(),
+
+                  SizedBox(height: 24.h),
+
+                  /// SEND OTP BUTTON
+                  _buildSendOtpButton(context),
+
+                  SizedBox(height: 28.h),
+
+                  /// DIVIDER
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey.shade200)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14.w),
+                        child: Text(
+                          "or",
+                          style: GoogleFonts.poppins(
+                            color: Colors.grey.shade500,
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade200)),
+                    ],
+                  ),
 
-                        /// BOTTOM WHITE CARD (Expands to fill remaining screen)
-                        Expanded(
-                          child: Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 24.w,
-                              vertical: 32.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(30.r),
-                                topRight: Radius.circular(30.r),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, -5),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Phone Number",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF374151),
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
+                  SizedBox(height: 24.h),
 
-                                /// STYLED PHONE INPUT FIELD
-                                _buildPhoneInputField(),
-
-                                SizedBox(height: 32.h),
-
-                                /// SEND OTP BUTTON
-                                _buildSendOtpButton(context),
-
-                                SizedBox(height: 32.h),
-
-                                /// DIVIDER
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Divider(
-                                        color: Colors.grey.shade200,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 16.w,
-                                      ),
-                                      child: Text(
-                                        "or",
-                                        style: TextStyle(
-                                          color: Colors.grey.shade500,
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Divider(
-                                        color: Colors.grey.shade200,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                SizedBox(height: 32.h),
-
-                                /// SIGN UP REDIRECT
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Don't have an account? ",
-                                      style: TextStyle(
-                                        fontSize: 15.sp,
-                                        color: Colors.grey.shade600,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () => Get.to(() => SignUpScreen()),
-                                      child: Text(
-                                        "Sign Up",
-                                        style: TextStyle(
-                                          color: primaryGreen,
-                                          fontSize: 15.sp,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                /// Extra padding at the bottom for completely safe scrolling
-                                SizedBox(
-                                  height:
-                                      MediaQuery.of(context).padding.bottom +
-                                      20.h,
-                                ),
-                              ],
+                  /// SIGN UP REDIRECT
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Don't have an account? ",
+                          style: GoogleFonts.poppins(
+                            fontSize: 13.5.sp,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Get.to(() => SignUpScreen()),
+                          child: Text(
+                            "Sign Up",
+                            style: GoogleFonts.poppins(
+                              color: AppColors.primaryDark,
+                              fontSize: 13.5.sp,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              );
-            },
-          );
-        },
+
+                  SizedBox(height: 40.h),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -284,24 +158,25 @@ class LoginScreen extends StatelessWidget {
   /// Extracted Phone Input Field Widget
   Widget _buildPhoneInputField() {
     return Container(
-      height: 56.h,
+      height: 52.h,
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(14.r),
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         children: [
           /// COUNTRY PICKER
           Container(
-            width: 100.w,
+            width: 92.w,
             alignment: Alignment.center,
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: authCtrl.selectedCountry,
                 icon: Icon(
                   Icons.keyboard_arrow_down,
-                  color: Colors.grey.shade600,
+                  color: Colors.grey.shade500,
+                  size: 20.sp,
                 ),
                 isDense: true,
                 items:
@@ -324,9 +199,10 @@ class LoginScreen extends StatelessWidget {
                                 SizedBox(width: 8.w),
                                 Text(
                                   "+${CountryPickerUtils.getCountryByIsoCode(item).phoneCode}",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13.5.sp,
                                     fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF111827),
                                   ),
                                 ),
                               ],
@@ -345,20 +221,23 @@ class LoginScreen extends StatelessWidget {
           ),
 
           /// VERTICAL DIVIDER
-          Container(height: 24.h, width: 1, color: Colors.grey.shade300),
+          Container(height: 22.h, width: 1, color: Colors.grey.shade200),
 
           /// TEXT FIELD
           Expanded(
             child: TextField(
               controller: authCtrl.phoneController,
               keyboardType: TextInputType.phone,
-              style: TextStyle(fontSize: 15.sp, color: Colors.black87),
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                color: const Color(0xFF111827),
+              ),
               decoration: InputDecoration(
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+                contentPadding: EdgeInsets.symmetric(horizontal: 14.w),
                 hintText: "Enter phone number",
-                hintStyle: TextStyle(
-                  fontSize: 14.sp,
+                hintStyle: GoogleFonts.poppins(
+                  fontSize: 13.5.sp,
                   color: Colors.grey.shade400,
                 ),
               ),
@@ -373,14 +252,13 @@ class LoginScreen extends StatelessWidget {
   Widget _buildSendOtpButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 56.h,
+      height: 52.h,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryGreen,
-          elevation: 2,
-          shadowColor: primaryGreen.withOpacity(0.4),
+          backgroundColor: AppColors.primary,
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(12.r),
           ),
         ),
         onPressed:
@@ -415,32 +293,20 @@ class LoginScreen extends StatelessWidget {
         child:
             authCtrl.isLoading
                 ? const SizedBox(
-                  height: 24,
-                  width: 24,
+                  height: 22,
+                  width: 22,
                   child: CircularProgressIndicator(
                     color: Colors.white,
                     strokeWidth: 2.5,
                   ),
                 )
-                : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Send OTP",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.white,
-                      size: 20.sp,
-                    ),
-                  ],
+                : Text(
+                  "Send OTP",
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
       ),
     );
@@ -458,172 +324,156 @@ class LoginScreen extends StatelessWidget {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.fromLTRB(
-              24.w,
-              14.h,
-              24.w,
-              MediaQuery.of(sheetContext).padding.bottom + 24.h,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                /// DRAG HANDLE
-                Container(
-                  width: 44.w,
-                  height: 5.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(10.r),
+          child: SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(24.w, 14.h, 24.w, 24.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  /// DRAG HANDLE
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
                   ),
-                ),
-                SizedBox(height: 24.h),
+                  SizedBox(height: 22.h),
 
-                /// ICON
-                Container(
-                  height: 72.h,
-                  width: 72.w,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFFDECEC),
+                  /// ICON
+                  Container(
+                    height: 64.h,
+                    width: 64.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFFDECEC),
+                    ),
+                    child: Icon(
+                      Icons.person_search_rounded,
+                      color: const Color(0xFFE05353),
+                      size: 32.sp,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.person_search_rounded,
-                    color: const Color(0xFFE05353),
-                    size: 36.sp,
-                  ),
-                ),
-                SizedBox(height: 20.h),
+                  SizedBox(height: 18.h),
 
-                /// TITLE
-                Text(
-                  "Account Not Found",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1F2937),
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                SizedBox(height: 10.h),
-
-                /// MESSAGE
-                Text(
-                  "We couldn't find an account for",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-
-                /// PHONE NUMBER CHIP
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    border: Border.all(color: Colors.grey.shade200),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Text(
-                    "${authCtrl.countryCode} $phone",
-                    style: TextStyle(
-                      fontSize: 15.sp,
+                  /// TITLE
+                  Text(
+                    "Account Not Found",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF374151),
+                      color: const Color(0xFF1F2937),
                     ),
                   ),
-                ),
-                SizedBox(height: 10.h),
+                  SizedBox(height: 8.h),
 
-                Text(
-                  "Please check your number is correct, or create a new account to get started.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey.shade500,
-                    height: 1.4,
-                  ),
-                ),
-                SizedBox(height: 28.h),
-
-                /// SIGN UP BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  height: 54.h,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryGreen,
-                      elevation: 2,
-                      shadowColor: primaryGreen.withOpacity(0.4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
-                    ),
-                    onPressed: () {
-                      Get.back();
-                      Get.to(() => SignUpScreen());
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Create New Account",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          color: Colors.white,
-                          size: 20.sp,
-                        ),
-                      ],
+                  /// MESSAGE
+                  Text(
+                    "We couldn't find an account for",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey.shade600,
                     ),
                   ),
-                ),
-                SizedBox(height: 12.h),
+                  SizedBox(height: 8.h),
 
-                /// CHECK NUMBER AGAIN BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  height: 54.h,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey.shade300),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
+                  /// PHONE NUMBER CHIP
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
                     ),
-                    onPressed: () => Get.back(),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      border: Border.all(color: Colors.grey.shade200),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
                     child: Text(
-                      "Check Number Again",
-                      style: TextStyle(
+                      "${authCtrl.countryCode} $phone",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
                         color: const Color(0xFF374151),
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 10.h),
+
+                  Text(
+                    "Please check your number is correct, or create a new account to get started.",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey.shade500,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 26.h),
+
+                  /// SIGN UP BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50.h,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      onPressed: () {
+                        Get.back();
+                        Get.to(() => SignUpScreen());
+                      },
+                      child: Text(
+                        "Create New Account",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  /// CHECK NUMBER AGAIN BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50.h,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        "Check Number Again",
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF374151),
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

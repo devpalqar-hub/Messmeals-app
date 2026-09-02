@@ -93,6 +93,7 @@ class PlanController extends GetxController {
     required String minPrice,
     required String description,
     required List<String> variationIds,
+    List<String>? menuIds,
     required bool isMonthlyPlan,
     required bool isDailyPlan,
     List<File>? imageFiles,
@@ -187,6 +188,8 @@ class PlanController extends GetxController {
         "messId": dashboardController.selectedMessId,
 
         "variationIds": variationIds,
+
+        if (menuIds != null) "menuIds": menuIds,
 
         "isMonthlyPlan": isMonthlyPlan,
 

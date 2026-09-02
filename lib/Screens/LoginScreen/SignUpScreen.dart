@@ -474,7 +474,9 @@ class SignUpScreen extends StatelessWidget {
     });
 
     Get.bottomSheet(
-      Container(
+      SafeArea(
+        top: false,
+        child: Container(
         height: 500.h,
         padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
         decoration: BoxDecoration(
@@ -555,6 +557,7 @@ class SignUpScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
       isScrollControlled: true,

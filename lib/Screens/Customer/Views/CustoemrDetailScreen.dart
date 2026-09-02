@@ -17,7 +17,7 @@ import 'package:mess/main.dart';
 class _C {
   static const surface = Colors.white;
   static const border = Color(0xFFEEEEF0);
-  static const primary = Color(0xff07A4A5);
+  static const primary = Color(0xFF7ED321);
   static const primaryLight = Color.fromARGB(255, 228, 249, 249);
   static const primaryMid = Color.fromARGB(79, 7, 165, 165);
   static const amber = Color(0xFF854F0B);

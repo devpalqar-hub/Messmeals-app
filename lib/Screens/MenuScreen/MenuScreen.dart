@@ -1,43 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
-import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
+import 'package:mess/Screens/MenuScreen/Service/MenuController.dart';
 import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 
-import 'package:mess/Screens/PlanScreen/Views/AddPlanScreen.dart';
-import 'package:mess/Screens/PlanScreen/Views/PlanCard.dart';
+import 'package:mess/Screens/MenuScreen/Views/AddMenuScreen.dart';
+import 'package:mess/Screens/MenuScreen/Views/MenuCard.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
-import 'package:mess/main.dart';
 
-class PlanScreen extends StatelessWidget {
-  const PlanScreen({super.key});
+class MenuScreen extends StatelessWidget {
+  const MenuScreen({super.key});
 
-  Future<void> _openAddPlan(PlanController controller) async {
-    await Get.to(() => AddPlanScreen());
-    controller.refreshPlans();
+  Future<void> _openAddMenu(MessMenuController controller) async {
+    await Get.to(() => const AddMenuScreen());
+    controller.refreshMenus();
   }
 
   @override
   Widget build(BuildContext context) {
-    final PlanController planController = Get.put(PlanController());
+    final MessMenuController menuController = Get.put(MessMenuController());
     final VariationController variationController = Get.put(
       VariationController(),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      planController.fetchPlans(page: 1);
+      menuController.fetchMenus(page: 1);
+      variationController.ensureLoaded();
     });
 
     return Scaffold(
-      //     backgroundColor: const Color(0xffF7F9FB),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16.w),
-          child: GetBuilder<PlanController>(
+          child: GetBuilder<MessMenuController>(
             builder: (controller) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,12 +44,12 @@ class PlanScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const TittleText(text: "Plans"),
+                      const TittleText(text: "Menus"),
                       ElevatedButton.icon(
-                        onPressed: () => _openAddPlan(controller),
+                        onPressed: () => _openAddMenu(controller),
                         icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
                         label: Text(
-                          "Add Plan",
+                          "Add Menu",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 14.sp,
@@ -76,7 +74,7 @@ class PlanScreen extends StatelessWidget {
 
                   /// ---------- COUNT ----------
                   Text(
-                    "${controller.plans.length} Plans added",
+                    "${controller.menus.length} Menus added",
                     style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
                   ),
 
@@ -84,12 +82,9 @@ class PlanScreen extends StatelessWidget {
 
                   /// ---------- SEARCH ----------
                   TextField(
-                    onChanged: (value) {
-                      controller.searchQuery = value;
-                      controller.update(); // 🔥 rebuild list
-                    },
+                    onChanged: (value) => controller.updateSearch(value),
                     decoration: InputDecoration(
-                      hintText: "Search plans...",
+                      hintText: "Search menus...",
                       hintStyle: TextStyle(fontSize: 14.sp),
                       prefixIcon: Icon(Icons.search, size: 20.sp),
                       contentPadding: EdgeInsets.symmetric(
@@ -108,10 +103,7 @@ class PlanScreen extends StatelessWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
-                        borderSide: BorderSide(
-                          color: Colors.grey,
-                          width: 1.5.w,
-                        ),
+                        borderSide: BorderSide(color: Colors.grey, width: 1.5.w),
                       ),
                     ),
                   ),
@@ -119,7 +111,7 @@ class PlanScreen extends StatelessWidget {
                   SizedBox(height: 16.h),
 
                   /// ---------- LIST ----------
-                  Expanded(child: _buildPlanList(controller)),
+                  Expanded(child: _buildMenuList(context, controller)),
                 ],
               );
             },
@@ -129,7 +121,7 @@ class PlanScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPlanList(PlanController controller) {
+  Widget _buildMenuList(BuildContext context, MessMenuController controller) {
     if (controller.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -140,69 +132,45 @@ class PlanScreen extends StatelessWidget {
       );
     }
 
-    final plans = controller.filteredPlans;
+    final menus = controller.filteredMenus;
 
-    if (controller.plans.isEmpty) {
+    if (controller.menus.isEmpty) {
       return EmptyStateAddButton(
-        icon: Icons.assignment_outlined,
-        title: "No plans yet",
-        subtitle: "Create your first mess plan to get started",
-        buttonLabel: "Add Plan",
-        onAdd: () => _openAddPlan(controller),
+        icon: Icons.restaurant_menu_outlined,
+        title: "No menus yet",
+        subtitle: "Create your first weekly menu to get started",
+        buttonLabel: "Add Menu",
+        onAdd: () => _openAddMenu(controller),
       );
     }
 
-    if (plans.isEmpty) {
+    if (menus.isEmpty) {
       return Center(
-        child: Text("No matching plans", style: TextStyle(fontSize: 14.sp)),
+        child: Text("No matching menus", style: TextStyle(fontSize: 14.sp)),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: controller.refreshPlans,
+      onRefresh: controller.refreshMenus,
       child: ListView.separated(
-        itemCount: plans.length,
+        itemCount: menus.length,
         separatorBuilder: (_, __) => SizedBox(height: 0.h),
         itemBuilder: (context, index) {
-          final plan = plans[index];
+          final menu = menus[index];
 
-          final List<String> imageUrls =
-              plan.images.map((img) {
-                final rawUrl = img.url;
-                final cleanUrl = rawUrl.replaceAll("\\", "/");
-
-                if (cleanUrl.startsWith("http")) return cleanUrl;
-
-                return "$baseUrl/$cleanUrl".replaceAll("//uploads", "/uploads");
-              }).toList();
-
-          final imageUrl =
-              imageUrls.isNotEmpty
-                  ? imageUrls.first
-                  : "https://via.placeholder.com/60";
-          ;
-
-          return PlanCard(
-            title: plan.planName,
-            price: double.tryParse(plan.price) ?? 0,
-            minPrice: double.tryParse(plan.minPrice) ?? 0,
-            meals: plan.variations.map((v) => v.title).toList(),
+          return MenuCard(
+            menu: menu,
             onDelete: () {
-              _showDeleteDialog(context, controller, plan.id);
+              _showDeleteDialog(context, controller, menu.id);
             },
             onEdit: () {
               Get.to(
-                () => AddPlanScreen(
+                () => AddMenuScreen(
                   isEdit: true,
-                  planId: plan.id,
-                  planName: plan.planName,
-                  price: plan.price,
-                  minPrice: plan.minPrice,
-                  description: plan.description,
-                  imageUrl: imageUrls,
-                  planType: plan.isMonthlyPlan ? "MONTHLY" : "DAILY",
-                  selectedVariations: plan.variations.map((v) => v.id).toList(),
-                  selectedMenus: plan.menus.map((m) => m.id).toList(),
+                  menuId: menu.id,
+                  name: menu.name,
+                  isActive: menu.isActive,
+                  schedule: menu.schedule,
                 ),
               );
             },
@@ -215,13 +183,12 @@ class PlanScreen extends StatelessWidget {
 
 void _showDeleteDialog(
   BuildContext context,
-  PlanController controller,
-  String planId,
+  MessMenuController controller,
+  String menuId,
 ) {
   showDialog(
     context: context,
     barrierDismissible: false,
-
     builder: (BuildContext ctx) {
       return Dialog(
         backgroundColor: Colors.white,
@@ -240,12 +207,12 @@ void _showDeleteDialog(
               ),
               SizedBox(height: 12.h),
               Text(
-                "Delete Plan?",
+                "Delete Menu?",
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18.sp),
               ),
               SizedBox(height: 8.h),
               Text(
-                "Are you sure you want to delete this plan?",
+                "Are you sure you want to delete this menu? Plans linked to it will lose this menu.",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14.sp),
               ),
@@ -254,9 +221,7 @@ void _showDeleteDialog(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                      },
+                      onPressed: () => Navigator.pop(ctx),
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
                         side: BorderSide(color: Colors.grey.shade300),
@@ -275,9 +240,9 @@ void _showDeleteDialog(
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        Navigator.pop(ctx); // ✅ FIX (close dialog first)
-                        await controller.deletePlan(planId);
-                        await controller.refreshPlans();
+                        Navigator.pop(ctx);
+                        await controller.deleteMenu(menuId);
+                        await controller.refreshMenus();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,

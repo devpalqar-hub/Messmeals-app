@@ -8,6 +8,7 @@ import 'package:mess/Screens/HomeScreen/HomeScreen.dart';
 import 'package:mess/Screens/PartnerScreen/PartnerScreen.dart';
 import 'package:mess/Screens/DeliveriesScreen/DeliveriesScreen.dart';
 import 'package:mess/Screens/PlanScreen/PlanScreen.dart';
+import 'package:mess/Screens/MenuScreen/MenuScreen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -33,6 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       PartnerScreen(),
       DeliveriesScreen(),
       PlanScreen(),
+      MenuScreen(),
     ];
   }
 
