@@ -80,7 +80,9 @@ class AuthController extends GetxController {
           data["sessionId"] != null) {
         sessionId = data["sessionId"];
         if (!silent) {
-          Fluttertoast.showToast(msg: data["message"] ?? "OTP sent successfully");
+          Fluttertoast.showToast(
+            msg: (data["message"] ?? "OTP sent successfully").toString(),
+          );
         }
         return true;
       }
@@ -135,7 +137,7 @@ class AuthController extends GetxController {
         await _onLoginSuccess(data);
         return true;
       } else {
-        safeSnack("Error", data["message"] ?? "Invalid OTP");
+        safeSnack("Error", (data["message"] ?? "Invalid OTP").toString());
         return false;
       }
     } catch (e) {

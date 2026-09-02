@@ -233,7 +233,7 @@ class Homescreen extends StatelessWidget {
                                         color: Colors.white,
                                       ),
                                     ),
-                                    SizedBox(height: 6.h),
+                                    SizedBox(height: 4.h),
                                     Text(
                                       "Overall earnings",
                                       style: GoogleFonts.poppins(

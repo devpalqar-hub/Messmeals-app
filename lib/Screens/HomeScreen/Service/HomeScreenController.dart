@@ -33,19 +33,32 @@ class HomeScreenController extends GetxController {
 
     // Initial fetch if messId exists
 
-    // fetchMyMesses();
+    //  fetchMyMesses();
     fetchProfile();
   }
 
   fetchProfile() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/users/profile'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': '$bearerToken',
-      },
-    );
-    print(response.body);
+    final url = Uri.parse('$baseUrl/users/profile');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': '$bearerToken',
+    };
+
+    debugPrint('==================================================');
+    debugPrint('🚀 GET /users/profile REQUEST');
+    debugPrint('==================================================');
+    debugPrint('➡️ URL     : $url');
+    debugPrint('📋 HEADERS : $headers');
+
+    final response = await http.get(url, headers: headers);
+
+    debugPrint('==================================================');
+    debugPrint('📥 GET /users/profile RESPONSE');
+    debugPrint('==================================================');
+    debugPrint('🔢 STATUS  : ${response.statusCode}');
+    debugPrint('📄 BODY    : ${response.body}');
+    debugPrint('==================================================');
+
     if (response.statusCode == 200) {
       user = UserModel.fromJson(json.decode(response.body));
       fetchMyMesses();
@@ -56,16 +69,27 @@ class HomeScreenController extends GetxController {
     try {
       authToken = await _getToken() ?? "";
       messes.clear();
-      final response = await http.get(
-        Uri.parse('$baseUrl/customer/owners/messes'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $authToken',
-        },
-      );
 
-      debugPrint('MY MESSES: ${response.statusCode}');
-      debugPrint(response.body);
+      final url = Uri.parse('$baseUrl/customer/owners/messes');
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      };
+
+      debugPrint('==================================================');
+      debugPrint('🚀 GET /customer/owners/messes REQUEST');
+      debugPrint('==================================================');
+      debugPrint('➡️ URL     : $url');
+      debugPrint('📋 HEADERS : $headers');
+
+      final response = await http.get(url, headers: headers);
+
+      debugPrint('==================================================');
+      debugPrint('📥 GET /customer/owners/messes RESPONSE');
+      debugPrint('==================================================');
+      debugPrint('🔢 STATUS  : ${response.statusCode}');
+      debugPrint('📄 BODY    : ${response.body}');
+      debugPrint('==================================================');
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);

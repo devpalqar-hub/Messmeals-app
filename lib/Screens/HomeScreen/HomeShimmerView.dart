@@ -85,7 +85,7 @@ class HomeShimmerScreen extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(height: 20.h),
+                SizedBox(height: 10.h),
 
                 // 2. Stats Row Shimmer (Orders, Customers, Partners, Avg)
                 Container(
@@ -110,7 +110,7 @@ class HomeShimmerScreen extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(height: 12.sp),
+                SizedBox(height: 10.sp),
 
                 // 3. Revenue Summary Title Shimmer
                 Padding(

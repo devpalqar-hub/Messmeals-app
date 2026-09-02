@@ -12,7 +12,7 @@ import 'package:mess/Screens/Utils/AppToast.dart';
 class SignUpScreen extends StatelessWidget {
   SignUpScreen({super.key});
 
-  final AuthController authCtrl = Get.find<AuthController>();
+  final AuthController authCtrl = Get.put(AuthController());
   final SignupController signupCtrl = Get.put(SignupController());
 
   final TextEditingController nameController = TextEditingController();

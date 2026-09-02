@@ -76,10 +76,8 @@ class ProfileBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     // Extract user details with fallbacks
     final String name = ctrl.user?.name ?? "Unknown User";
-    final String email =
-        "user@example.com"; // Replace with ctrl.user?.email if available
-    final String phone =
-        "+91 9876543210"; // Replace with ctrl.user?.phone if available
+    final String email = ctrl.user?.email ?? "";
+    final String phone = ctrl.user?.phone ?? "";
     final String initial = name.isNotEmpty ? name[0].toUpperCase() : "U";
 
     return SafeArea(
@@ -151,23 +149,26 @@ class ProfileBottomSheet extends StatelessWidget {
                             color: Colors.black87,
                           ),
                         ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          phone,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey[700],
+                        if (phone.isNotEmpty) ...[
+                          SizedBox(height: 2.h),
+                          Text(
+                            phone,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.grey[700],
+                            ),
                           ),
-                        ),
-                        Text(
-                          email,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey[700],
+                        ],
+                        if (email.isNotEmpty)
+                          Text(
+                            email,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.grey[700],
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),

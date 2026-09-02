@@ -8,6 +8,18 @@ import 'package:mess/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupController extends GetxController {
+  // Backend error/message fields sometimes come back as a String, but on
+  // validation failures some endpoints return a List or Map instead. Casting
+  // those directly to String throws "type 'X' is not a subtype of type
+  // 'String'", which is what was crashing the Create Account screen.
+  String _extractMessage(dynamic value, String fallback) {
+    if (value == null) return fallback;
+    if (value is String) return value;
+    if (value is List) return value.map((e) => e.toString()).join('\n');
+    return value.toString();
+  }
+
+
   // ================== DISTRICTS ==================
   List<DistrictModel> districtList = [];
   DistrictModel? selectedDistrict;
@@ -234,7 +246,7 @@ Future<bool> sendOtp({
 
       AppToast.success(
         data is Map
-            ? (data["message"] ?? "OTP sent")
+            ? _extractMessage(data["message"], "OTP sent")
             : "OTP sent",
       );
 
@@ -263,7 +275,7 @@ Future<bool> sendOtp({
 
     AppToast.error(
       data is Map
-          ? (data["message"] ?? "Failed to send OTP")
+          ? _extractMessage(data["message"], "Failed to send OTP")
           : "Failed to send OTP",
     );
 
@@ -333,16 +345,20 @@ Future<bool> sendOtp({
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        AppToast.success(data["message"] ?? "Success");
+        AppToast.success(_extractMessage(data["message"], "Success"));
 
-        // You can store token here later
-        bearerToken = "Bearer " + data["accessToken"];
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("token", data["accessToken"]);
-        await prefs.setString("LOGIN", "IN");
+        // Some signup responses don't include a token (e.g. pending
+        // approval), so only store it when it's actually a String.
+        final token = data["accessToken"];
+        if (token is String && token.isNotEmpty) {
+          bearerToken = "Bearer $token";
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString("token", token);
+          await prefs.setString("LOGIN", "IN");
+        }
         return true;
       } else {
-        AppToast.error(data["message"] ?? "Signup failed");
+        AppToast.error(_extractMessage(data["message"], "Signup failed"));
         return false;
       }
     } catch (e) {
