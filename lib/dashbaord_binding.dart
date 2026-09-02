@@ -12,7 +12,7 @@ import 'package:mess/Screens/ExpenseCategoryScreen/Service/ExpenseCategoryContro
 class AppBindings extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<AuthController>(() => AuthController(),);
+    Get.lazyPut<AuthController>(() => AuthController());
 
     Get.lazyPut<HomeScreenController>(() => HomeScreenController());
     Get.lazyPut<PlanController>(() => PlanController());
