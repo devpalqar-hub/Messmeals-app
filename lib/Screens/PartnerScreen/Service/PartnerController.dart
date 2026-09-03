@@ -25,6 +25,17 @@ class PartnerController extends GetxController {
 
   String errorMessage = '';
 
+  // Backend error responses sometimes carry "message" as a List/Map
+  // (e.g. class-validator style field errors) instead of a plain String.
+  // Passing that straight to _showToast crashes with "type '...' is not
+  // a subtype of type 'String'" — this coerces it safely first.
+  String _extractMessage(dynamic value, String fallback) {
+    if (value == null) return fallback;
+    if (value is String) return value;
+    if (value is List) return value.map((e) => e.toString()).join('\n');
+    return value.toString();
+  }
+
   void _showToast(String message, {bool isError = false}) {
     Fluttertoast.showToast(
       msg: message,
@@ -125,6 +136,7 @@ class PartnerController extends GetxController {
     required String phone,
     required String email,
     required String address,
+    required String region,
   }) async {
     try {
       isLoading = true;
@@ -157,6 +169,11 @@ class PartnerController extends GetxController {
           "phone": phone,
           "address": address,
           "messId": messId,
+          // Required by the backend DTO (400s with "deliverAgentRegion
+          // must be a string, is_active must be a boolean value" without
+          // these) — a new partner is active by default.
+          "deliverAgentRegion": region,
+          "is_active": true,
         }),
       );
 
@@ -167,7 +184,10 @@ class PartnerController extends GetxController {
         return true;
       } else {
         final err = json.decode(response.body);
-        _showToast(err['message'] ?? "Failed to add partner", isError: true);
+        _showToast(
+          _extractMessage(err['message'], "Failed to add partner"),
+          isError: true,
+        );
         return false;
       }
     } catch (e) {
@@ -220,7 +240,10 @@ class PartnerController extends GetxController {
         return true;
       } else {
         final err = json.decode(response.body);
-        _showToast(err['message'] ?? "Failed to update partner", isError: true);
+        _showToast(
+          _extractMessage(err['message'], "Failed to update partner"),
+          isError: true,
+        );
         return false;
       }
     } catch (e) {
@@ -262,7 +285,10 @@ class PartnerController extends GetxController {
         }
       } else {
         final err = json.decode(response.body);
-        _showToast(err['message'] ?? "Failed to delete partner", isError: true);
+        _showToast(
+          _extractMessage(err['message'], "Failed to delete partner"),
+          isError: true,
+        );
       }
     } catch (e) {
       _showToast(e.toString(), isError: true);

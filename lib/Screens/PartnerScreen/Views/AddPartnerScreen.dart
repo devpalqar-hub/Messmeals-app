@@ -24,6 +24,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
   final addressController = TextEditingController();
+  final regionController = TextEditingController();
 
   String status = 'Active';
 
@@ -36,6 +37,8 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
       phoneController.text = partner.phone;
       emailController.text = partner.email;
       addressController.text = partner.deliveryPartnerProfile?.address ?? "";
+      regionController.text =
+          partner.deliveryPartnerProfile?.deliveryRegion ?? "";
       status = partner.isActive ? "Active" : "Inactive";
     }
   }
@@ -116,6 +119,7 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                           phone: phoneController.text.trim(),
                           email: emailController.text.trim(),
                           address: addressController.text.trim(),
+                          region: regionController.text.trim(),
                         );
                       }
 
@@ -208,6 +212,23 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                                   r'^\d{10}$',
                                 ).hasMatch(value.trim())) {
                                   return "Enter a valid 10-digit phone number";
+                                }
+                                return null;
+                              },
+                            ),
+                            SizedBox(height: 14.h),
+
+                            // Required by the backend when creating a
+                            // partner ("deliverAgentRegion must be a
+                            // string").
+                            _buildTextField(
+                              label: "Delivery Region",
+                              hint: "e.g. Edappally, Kochi",
+                              controller: regionController,
+                              isRequired: true,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Delivery region is required";
                                 }
                                 return null;
                               },

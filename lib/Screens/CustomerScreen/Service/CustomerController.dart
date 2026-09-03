@@ -24,6 +24,17 @@ class CustomerController extends GetxController {
   int page = 1;
   int limit = 10;
 
+  // Backend error responses sometimes carry "message" as a List/Map
+  // (e.g. class-validator style field errors) instead of a plain String.
+  // Passing that straight to AppToast crashes with "type '...' is not a
+  // subtype of type 'String'" — this coerces it safely first.
+  String _extractMessage(dynamic value, String fallback) {
+    if (value == null) return fallback;
+    if (value is String) return value;
+    if (value is List) return value.map((e) => e.toString()).join('\n');
+    return value.toString();
+  }
+
   Future<void> fetchCustomers({
     bool refresh = false,
     String? search,
@@ -187,7 +198,10 @@ class CustomerController extends GetxController {
       if (response.statusCode == 400 || response.statusCode == 409) {
         try {
           final error = jsonDecode(response.body);
-          final msg = error['message'] ?? "Failed: ${response.statusCode}";
+          final msg = _extractMessage(
+            error['message'],
+            "Failed: ${response.statusCode}",
+          );
           Fluttertoast.showToast(msg: msg);
         } catch (_) {
           Fluttertoast.showToast(msg: "Failed: ${response.statusCode}");
@@ -248,7 +262,9 @@ class CustomerController extends GetxController {
         final data = jsonDecode(response.body);
         await dashboardController.fetchDashboardStats();
         await refreshCustomers();
-        AppToast.success(data['message'] ?? "Customer updated successfully");
+        AppToast.success(
+          _extractMessage(data['message'], "Customer updated successfully"),
+        );
         await Future.delayed(const Duration(milliseconds: 500));
         if (Get.isOverlaysOpen) {
           Get.back(closeOverlays: true);
@@ -257,7 +273,9 @@ class CustomerController extends GetxController {
         }
       } else {
         final error = jsonDecode(response.body);
-        AppToast.error(error['message'] ?? "Failed to update customer");
+        AppToast.error(
+          _extractMessage(error['message'], "Failed to update customer"),
+        );
       }
     } catch (e, stack) {
       debugPrint("❌ UPDATE CUSTOMER ERROR: $e\n$stack");
@@ -348,7 +366,9 @@ class CustomerController extends GetxController {
         return true;
       } else {
         final error = jsonDecode(response.body);
-        AppToast.error(error['message'] ?? "Failed to renew subscription");
+        AppToast.error(
+          _extractMessage(error['message'], "Failed to renew subscription"),
+        );
         return false;
       }
     } catch (e) {
@@ -399,7 +419,9 @@ class CustomerController extends GetxController {
         await fetchCustomerDetails(customerProfileId);
       } else {
         final error = jsonDecode(response.body);
-        AppToast.error(error['message'] ?? "Failed to pause order");
+        AppToast.error(
+          _extractMessage(error['message'], "Failed to pause order"),
+        );
       }
     } catch (e) {
       debugPrint("❌ EXCEPTION: $e");
@@ -449,7 +471,9 @@ class CustomerController extends GetxController {
         return true;
       } else {
         final error = jsonDecode(response.body);
-        AppToast.error(error['message'] ?? "Cancel subscription failed");
+        AppToast.error(
+          _extractMessage(error['message'], "Cancel subscription failed"),
+        );
         return false;
       }
     } catch (e) {
@@ -503,7 +527,9 @@ class CustomerController extends GetxController {
         }
       } else {
         final error = jsonDecode(response.body);
-        AppToast.error(error['message'] ?? "Failed to update wallet");
+        AppToast.error(
+          _extractMessage(error['message'], "Failed to update wallet"),
+        );
       }
     } catch (e) {
       debugPrint("❌ EXCEPTION: $e");

@@ -9,7 +9,7 @@ import 'package:mess/Screens/Utils/routes.dart';
 import 'package:mess/dashbaord_binding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-String baseUrl = "https://api.messmeals.com";
+String baseUrl = "https://staging-api.messmeals.com";
 
 String? login;
 bool onboardingSeen = false;
