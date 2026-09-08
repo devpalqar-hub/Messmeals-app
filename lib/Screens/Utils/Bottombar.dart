@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mess/Screens/Utils/TiffinBoxIcon.dart';
 
 class BottomBar extends StatelessWidget {
   final int selectedIndex;
@@ -14,12 +15,34 @@ class BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      {'icon': Icons.home_outlined, 'label': 'Home'},
-      {'icon': Icons.group_outlined, 'label': 'Customers'},
-      {'icon': Icons.local_shipping_outlined, 'label': 'Partners'},
-      {'icon': Icons.inventory_2_outlined, 'label': 'Deliveries'},
-      {'icon': Icons.assignment_outlined, 'label': 'Plans'},
-      {'icon': Icons.restaurant_menu_outlined, 'label': 'Menu'},
+      {
+        'icon': (Color c, double s) => Icon(Icons.home_outlined, color: c, size: s),
+        'label': 'Home',
+      },
+      {
+        'icon': (Color c, double s) => Icon(Icons.group_outlined, color: c, size: s),
+        'label': 'Customers',
+      },
+      {
+        'icon':
+            (Color c, double s) =>
+                Icon(Icons.delivery_dining_outlined, color: c, size: s),
+        'label': 'Partners',
+      },
+      {
+        'icon': (Color c, double s) => TiffinBoxIcon(color: c, size: s),
+        'label': 'Deliveries',
+      },
+      {
+        'icon': (Color c, double s) => Icon(Icons.assignment_outlined, color: c, size: s),
+        'label': 'Plans',
+      },
+      {
+        'icon':
+            (Color c, double s) =>
+                Icon(Icons.restaurant_menu_outlined, color: c, size: s),
+        'label': 'Menu',
+      },
     ];
 
     return Container(
@@ -39,10 +62,9 @@ class BottomBar extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center, // ✅ center items
               children: [
-                Icon(
-                  item['icon'] as IconData,
-                  color: isSelected ? Color(0xFF7ED321) : Colors.grey,
-                  size: 20, // ✅ FIX 2 → smaller icon
+                (item['icon'] as Widget Function(Color, double))(
+                  isSelected ? const Color(0xFF7ED321) : Colors.grey,
+                  20, // ✅ FIX 2 → smaller icon
                 ),
                 const SizedBox(height: 2), // ✅ less gap
                 Text(

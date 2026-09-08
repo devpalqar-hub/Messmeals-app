@@ -1,4 +1,28 @@
 // lib/models/plan_model.dart
+
+/// The plan's own weekly schedule. EVERYDAY = no day restriction, CUSTOM =
+/// restricted to [PlanModel.availableDays]. Matches the backend's
+/// `scheduleType` enum on CreatePlanDto/UpdatePlanDto exactly.
+const List<String> kPlanWeekDays = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+];
+
+const Map<String, String> kPlanWeekDayLabels = {
+  'MONDAY': 'Mon',
+  'TUESDAY': 'Tue',
+  'WEDNESDAY': 'Wed',
+  'THURSDAY': 'Thu',
+  'FRIDAY': 'Fri',
+  'SATURDAY': 'Sat',
+  'SUNDAY': 'Sun',
+};
+
 class PlanModel {
   final String id;
   final String planName;
@@ -9,6 +33,8 @@ class PlanModel {
   final List<Variation> variations;
   final List<MenuSummary> menus;
   final bool isMonthlyPlan;
+  final String scheduleType;
+  final List<String> availableDays;
 
   PlanModel({
     required this.id,
@@ -20,6 +46,8 @@ class PlanModel {
     required this.variations,
     required this.menus,
     required this.isMonthlyPlan,
+    required this.scheduleType,
+    required this.availableDays,
   });
 
   factory PlanModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +58,12 @@ class PlanModel {
       minPrice: json['minPrice'] ?? '',
       description: json['description'] ?? '',
       isMonthlyPlan: json["isMonthlyPlan"],
+      scheduleType: (json['scheduleType'] ?? 'EVERYDAY').toString(),
+      availableDays:
+          (json['availableDays'] as List<dynamic>?)
+              ?.map((d) => d.toString())
+              .toList() ??
+          [],
       images:
           (json['images'] as List<dynamic>?)
               ?.map((img) => PlanImage.fromJson(img))

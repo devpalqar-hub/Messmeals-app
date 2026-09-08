@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 import 'package:mess/Screens/MenuScreen/Service/MenuController.dart';
@@ -25,6 +26,8 @@ class AddPlanScreen extends StatefulWidget {
   final List<String>? selectedVariations;
   final List<String>? selectedMenus;
   final String? planType;
+  final String? scheduleType;
+  final List<String>? availableDays;
 
   const AddPlanScreen({
     super.key,
@@ -38,6 +41,8 @@ class AddPlanScreen extends StatefulWidget {
     this.selectedVariations,
     this.selectedMenus,
     this.planType,
+    this.scheduleType,
+    this.availableDays,
   });
 
   @override
@@ -62,6 +67,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   List<String> selectedMenuIds = [];
 
   String planType = "MONTHLY";
+  String scheduleType = "EVERYDAY";
+  List<String> selectedDays = [];
 
   @override
   void initState() {
@@ -75,6 +82,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
     priceCtrl.text = widget.price ?? '';
     minPriceCtrl.text = widget.minPrice ?? '';
     planType = widget.planType ?? "MONTHLY";
+    scheduleType = widget.scheduleType ?? "EVERYDAY";
+    selectedDays = List<String>.from(widget.availableDays ?? []);
 
     if (widget.selectedVariations != null) {
       selectedVariationIds = List<String>.from(widget.selectedVariations!);
@@ -186,6 +195,14 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               return;
                             }
 
+                            if (scheduleType == "CUSTOM" &&
+                                selectedDays.isEmpty) {
+                              Fluttertoast.showToast(
+                                msg: "Please select at least one available day",
+                              );
+                              return;
+                            }
+
                             final success = await controller.savePlan(
                               id: widget.isEdit ? widget.planId : null,
                               planName: nameCtrl.text.trim(),
@@ -196,6 +213,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               menuIds: selectedMenuIds,
                               isMonthlyPlan: planType == "MONTHLY",
                               isDailyPlan: planType == "DAILY",
+                              scheduleType: scheduleType,
+                              availableDays: selectedDays,
                               //  imageFiles: selectedImages,
                               // existingImage: existingImages,
                             );
@@ -702,6 +721,103 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                             ],
                           ),
                         ),
+
+                        SizedBox(height: 20.h),
+
+                        /// AVAILABLE DAYS
+                        sectionCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              title("Available Days *"),
+                              SizedBox(height: 4.h),
+                              Text(
+                                "Choose which days customers can get this plan",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11.sp,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _scheduleTypeTile(
+                                      title: "Every Day",
+                                      value: "EVERYDAY",
+                                    ),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Expanded(
+                                    child: _scheduleTypeTile(
+                                      title: "Custom Days",
+                                      value: "CUSTOM",
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (scheduleType == "CUSTOM") ...[
+                                SizedBox(height: 14.h),
+                                Wrap(
+                                  spacing: 8.w,
+                                  runSpacing: 8.h,
+                                  children:
+                                      kPlanWeekDays.map((day) {
+                                        final isSelected = selectedDays
+                                            .contains(day);
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              if (isSelected) {
+                                                selectedDays.remove(day);
+                                              } else {
+                                                selectedDays.add(day);
+                                              }
+                                            });
+                                          },
+                                          child: AnimatedContainer(
+                                            duration: const Duration(
+                                              milliseconds: 200,
+                                            ),
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 14.w,
+                                              vertical: 9.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  isSelected
+                                                      ? AppColors.primary
+                                                      : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(20.r),
+                                              border: Border.all(
+                                                color:
+                                                    isSelected
+                                                        ? AppColors.primary
+                                                        : Colors
+                                                            .grey
+                                                            .shade300,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              kPlanWeekDayLabels[day]!,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                    isSelected
+                                                        ? Colors.white
+                                                        : Colors.black87,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -711,6 +827,47 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _scheduleTypeTile({required String title, required String value}) {
+    final selected = scheduleType == value;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() => scheduleType = value);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary.withOpacity(0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: selected ? AppColors.primary : Colors.grey.shade300,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: selected ? AppColors.primary : Colors.grey.shade400,
+              size: 18.sp,
+            ),
+            SizedBox(width: 8.w),
+            Flexible(
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w500,
+                  color: selected ? AppColors.primary : const Color(0xFF111827),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

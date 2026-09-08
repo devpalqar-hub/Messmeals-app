@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
 class PlanCard extends StatelessWidget {
@@ -8,6 +9,8 @@ class PlanCard extends StatelessWidget {
   final double price;
   final double minPrice;
   final List<String> meals;
+  final String scheduleType;
+  final List<String> availableDays;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -17,6 +20,8 @@ class PlanCard extends StatelessWidget {
     required this.price,
     required this.minPrice,
     required this.meals,
+    this.scheduleType = 'EVERYDAY',
+    this.availableDays = const [],
     required this.onEdit,
     required this.onDelete,
   });
@@ -146,6 +151,36 @@ class PlanCard extends StatelessWidget {
                     ),
                   );
                 }).toList(),
+          ),
+
+          SizedBox(height: 8.h),
+
+          /// AVAILABLE DAYS
+          Row(
+            children: [
+              Icon(
+                Icons.event_available_outlined,
+                size: 13.sp,
+                color: Colors.grey.shade500,
+              ),
+              SizedBox(width: 5.w),
+              Expanded(
+                child: Text(
+                  scheduleType == 'CUSTOM' && availableDays.isNotEmpty
+                      ? availableDays
+                          .map((d) => kPlanWeekDayLabels[d] ?? d)
+                          .join(', ')
+                      : 'Every day',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

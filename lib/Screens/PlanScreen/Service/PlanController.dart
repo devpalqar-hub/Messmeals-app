@@ -96,6 +96,8 @@ class PlanController extends GetxController {
     List<String>? menuIds,
     required bool isMonthlyPlan,
     required bool isDailyPlan,
+    required String scheduleType,
+    List<String> availableDays = const [],
     List<File>? imageFiles,
     List<String>? existingImage,
   }) async {
@@ -194,6 +196,10 @@ class PlanController extends GetxController {
         "isMonthlyPlan": isMonthlyPlan,
 
         "isDailyPlan": isDailyPlan,
+
+        "scheduleType": scheduleType,
+
+        if (scheduleType == "CUSTOM") "availableDays": availableDays,
 
         //  "images": uploadedImages,
       };

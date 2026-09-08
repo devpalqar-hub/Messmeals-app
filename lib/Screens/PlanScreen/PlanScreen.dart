@@ -187,6 +187,8 @@ class PlanScreen extends StatelessWidget {
             price: double.tryParse(plan.price) ?? 0,
             minPrice: double.tryParse(plan.minPrice) ?? 0,
             meals: plan.variations.map((v) => v.title).toList(),
+            scheduleType: plan.scheduleType,
+            availableDays: plan.availableDays,
             onDelete: () {
               _showDeleteDialog(context, controller, plan.id);
             },
@@ -203,6 +205,8 @@ class PlanScreen extends StatelessWidget {
                   planType: plan.isMonthlyPlan ? "MONTHLY" : "DAILY",
                   selectedVariations: plan.variations.map((v) => v.id).toList(),
                   selectedMenus: plan.menus.map((m) => m.id).toList(),
+                  scheduleType: plan.scheduleType,
+                  availableDays: plan.availableDays,
                 ),
               );
             },

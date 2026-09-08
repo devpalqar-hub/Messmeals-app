@@ -117,6 +117,16 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     OverlayEntry? entry;
 
     try {
+      // Pre-load and decode the logo before capturing — otherwise the
+      // asset is still mid-decode when the screenshot is taken and the
+      // badge renders blank.
+      if (mounted) {
+        await precacheImage(
+          const AssetImage('assets/app_launcher_icon.png'),
+          context,
+        );
+      }
+
       final overlayState = Overlay.of(context, rootOverlay: true);
 
       entry = OverlayEntry(
@@ -533,9 +543,9 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
               children: [
                 Row(
                   children: [
-                    // A neutral fork/knife badge — the bundled app logo carries an
-                    // "Admin Portal" wordmark that isn't meant for this customer-
-                    // facing shared poster.
+                    // The real MessMeals app icon (not `appLogo.png`, which
+                    // carries an "Admin Portal" wordmark not meant for this
+                    // customer-facing shared poster).
                     Container(
                       height: 38.w,
                       width: 38.w,
@@ -544,10 +554,13 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
-                      child: Icon(
-                        Icons.restaurant_rounded,
-                        color: AppColors.primaryDark,
-                        size: 19.sp,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/app_launcher_icon.png',
+                          height: 38.w,
+                          width: 38.w,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     SizedBox(width: 10.w),
@@ -620,30 +633,58 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
 
           /// ---------- MESSMEALS BRANDING FOOTER ----------
           Container(
-            padding: EdgeInsets.symmetric(vertical: 12.h),
+            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.primaryDark, AppColors.primary],
               ),
             ),
-            alignment: Alignment.center,
-            child: Row(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.restaurant_rounded,
-                  size: 13.sp,
-                  color: Colors.white,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.event_available_rounded,
+                      size: 14.sp,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      "Book this through MessMeals App",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 6.w),
-                Text(
-                  "Powered by MessMeals",
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    letterSpacing: 0.3,
-                  ),
+                SizedBox(height: 5.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ClipOval(
+                      child: Image.asset(
+                        'assets/app_launcher_icon.png',
+                        height: 13.sp,
+                        width: 13.sp,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      "Powered by MessMeals",
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.85),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
