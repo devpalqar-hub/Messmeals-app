@@ -15,10 +15,12 @@ import 'package:mess/Screens/MenuScreen/Models/MenuModel.dart';
 import 'package:mess/Screens/PlanScreen/Models/VariationModel.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
-const double _kLabelColWidth = 66;
-const double _kDayColWidth = 108;
-const double _kDayHeaderHeight = 30;
-const double _kMealRowHeight = 72;
+// On-screen grid: days run down the left (frozen) column, meal types run
+// across the top, scrollable horizontally if there are more than fit.
+const double _kDayLabelColWidth = 58;
+const double _kMealColWidth = 110;
+const double _kMealHeaderHeight = 46;
+const double _kDayRowHeight = 76;
 
 // Share-poster grid sizing. `Table` (used by `_shareGrid`) needs a *finite*
 // incoming width to lay out at all — it can't size itself the way a Row/
@@ -26,14 +28,14 @@ const double _kMealRowHeight = 72;
 // hands down. So the poster is wrapped in a SizedBox using exactly this
 // width (see `_buildShareTemplate`), keeping the Table happy and making
 // sure nothing is clipped.
-const double _kShareLabelColWidth = 64;
-const double _kShareDayColWidth = 90;
+const double _kShareDayLabelColWidth = 56;
+const double _kShareMealColWidth = 118;
 const double _kSharePosterHPadding = 14;
 
-/// Full weekly timetable for one menu — sized to its own content so every
-/// meal row is always fully visible (no clipping), with a share/edit/delete
-/// toolbar and a horizontally-scrollable day grid frozen to the meal-type
-/// label column.
+/// Full weekly timetable for one menu — days run down the left as rows,
+/// meal types (Breakfast/Lunch/Dinner, from the mess's own Variations) run
+/// across the top as columns — sized to its own content so every row is
+/// always fully visible, with a share/edit/delete toolbar.
 class MenuTimetableCard extends StatefulWidget {
   final MenuModel menu;
   final List<VariationModel> variations;
@@ -67,7 +69,7 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     return Icons.restaurant_outlined;
   }
 
-  /// A distinct accent color per meal type — gives the shared poster a
+  /// A distinct accent color per meal type — gives the grid and poster a
   /// colorful, "one glance tells you the meal" feel instead of one flat hue.
   Color _colorForVariation(String title) {
     final t = title.toLowerCase();
@@ -207,22 +209,54 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     );
   }
 
-  Widget _dayHeaderCell(String day, String todayKey) {
-    final isToday = day == todayKey;
+  // ================= ON-SCREEN GRID (days = rows, meals = columns) =================
+
+  Widget _mealHeaderCell(VariationModel v) {
+    final color = _colorForVariation(v.title);
     return SizedBox(
-      width: _kDayColWidth.w,
+      width: _kMealColWidth.w,
+      height: _kMealHeaderHeight.h,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(4.w),
+            decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
+            child: Icon(_iconForVariation(v.title), size: 13.sp, color: color),
+          ),
+          SizedBox(height: 3.h),
+          Text(
+            v.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 9.5.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF111827),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dayLabelCell(String day, bool isToday) {
+    return SizedBox(
+      height: _kDayRowHeight.h,
+      width: _kDayLabelColWidth.w,
       child: Center(
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
           decoration: BoxDecoration(
             color: isToday ? AppColors.primary : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(20.r),
+            borderRadius: BorderRadius.circular(10.r),
           ),
           child: Text(
             kMenuWeekDayLabels[day]!.substring(0, 3),
+            textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               fontSize: 10.sp,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: isToday ? Colors.white : Colors.grey.shade700,
             ),
           ),
@@ -231,17 +265,15 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     );
   }
 
-  Widget _dayCell(String day, VariationModel variation, String todayKey, bool isEvenRow) {
-    final isToday = day == todayKey;
+  Widget _cell(String day, VariationModel variation, bool isToday) {
     final entry = _entryFor(day, variation.id);
+    final tint = _colorForVariation(variation.title);
     return Container(
-      width: _kDayColWidth.w,
+      width: _kMealColWidth.w,
+      height: _kDayRowHeight.h,
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color:
-            isToday
-                ? AppColors.primary.withOpacity(0.06)
-                : (isEvenRow ? Colors.grey.shade50 : Colors.white),
+        color: isToday ? AppColors.primary.withOpacity(0.07) : tint.withOpacity(0.035),
         border: Border.all(color: Colors.grey.shade100),
       ),
       alignment: Alignment.center,
@@ -265,67 +297,42 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     );
   }
 
-  Widget _labelColumn() {
+  Widget _dayLabelColumn(String todayKey) {
     return SizedBox(
-      width: _kLabelColWidth.w,
+      width: _kDayLabelColWidth.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(height: _kDayHeaderHeight.h),
-          ...widget.variations.map((v) {
-            return SizedBox(
-              height: _kMealRowHeight.h,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(_iconForVariation(v.title), size: 16.sp, color: AppColors.primary),
-                  SizedBox(height: 3.h),
-                  Text(
-                    v.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 9.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
+          SizedBox(height: _kMealHeaderHeight.h),
+          ...kMenuWeekDays.map((day) => _dayLabelCell(day, day == todayKey)),
         ],
       ),
     );
   }
 
-  /// The day-header row + all meal rows, at their full natural width
-  /// (label column width + one column per weekday).
-  Widget _gridBody(String todayKey) {
+  /// The meal-header row + all day rows, at their full natural width
+  /// (one column per variation).
+  Widget _mealGridBody(String todayKey) {
     return SizedBox(
-      width: _kDayColWidth.w * kMenuWeekDays.length,
+      width: _kMealColWidth.w * widget.variations.length,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: _kDayHeaderHeight.h,
+            height: _kMealHeaderHeight.h,
             child: Row(
-              children:
-                  kMenuWeekDays.map((day) => _dayHeaderCell(day, todayKey)).toList(),
+              children: widget.variations.map(_mealHeaderCell).toList(),
             ),
           ),
-          ...widget.variations.asMap().entries.map((mapEntry) {
-            final rowIndex = mapEntry.key;
-            final variation = mapEntry.value;
-            final isEvenRow = rowIndex % 2 == 0;
+          ...kMenuWeekDays.map((day) {
+            final isToday = day == todayKey;
             return SizedBox(
-              height: _kMealRowHeight.h,
+              height: _kDayRowHeight.h,
               child: Row(
                 children:
-                    kMenuWeekDays
-                        .map((day) => _dayCell(day, variation, todayKey, isEvenRow))
+                    widget.variations
+                        .map((v) => _cell(day, v, isToday))
                         .toList(),
               ),
             );
@@ -335,8 +342,8 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     );
   }
 
-  /// The normal on-screen version — horizontally scrollable when the grid
-  /// doesn't fit the card's width.
+  /// The normal on-screen version — horizontally scrollable if there are
+  /// more meal-type columns than fit the card's width.
   Widget _buildTimetableContent() {
     final todayKey = kMenuWeekDays[(DateTime.now().weekday - 1) % 7];
     final activeDays =
@@ -363,11 +370,11 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _labelColumn(),
+              _dayLabelColumn(todayKey),
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: _gridBody(todayKey),
+                  child: _mealGridBody(todayKey),
                 ),
               ),
             ],
@@ -377,91 +384,28 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     );
   }
 
-  /// A simple, fully-visible bordered grid for the shared poster — a real
-  /// `Table` (not the fixed-height/ellipsis on-screen grid) so every row
-  /// grows to fit its content instead of clipping or truncating long meal
-  /// lists, and column widths are fixed so nothing needs horizontal
-  /// scrolling to be seen.
-  Widget _shareGrid(String todayKey) {
-    final borderSide = BorderSide(color: Colors.grey.shade200);
+  // ================= SHARE POSTER (days = rows, meals = columns) =================
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12.r),
-      child: Table(
-        border: TableBorder(
-          horizontalInside: borderSide,
-          verticalInside: borderSide,
-          top: borderSide,
-          bottom: borderSide,
-          left: borderSide,
-          right: borderSide,
-        ),
-        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-        columnWidths: {
-          0: FixedColumnWidth(_kShareLabelColWidth.w),
-          for (var i = 0; i < kMenuWeekDays.length; i++)
-            i + 1: FixedColumnWidth(_kShareDayColWidth.w),
-        },
-        children: [
-          TableRow(
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.08)),
-            children: [
-              const SizedBox.shrink(),
-              ...kMenuWeekDays.map((day) => _shareDayHeaderCell(day, todayKey)),
-            ],
-          ),
-          ...widget.variations.asMap().entries.map((mapEntry) {
-            final isEvenRow = mapEntry.key % 2 == 0;
-            final variation = mapEntry.value;
-            return TableRow(
-              decoration: BoxDecoration(
-                color: isEvenRow ? Colors.grey.shade50 : Colors.white,
-              ),
-              children: [
-                _shareMealLabelCell(variation),
-                ...kMenuWeekDays.map(
-                  (day) => _shareDayCell(day, variation, todayKey),
-                ),
-              ],
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _shareDayHeaderCell(String day, String todayKey) {
-    final isToday = day == todayKey;
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
-      alignment: Alignment.center,
-      color: isToday ? AppColors.primary : null,
-      child: Text(
-        kMenuWeekDayLabels[day]!.substring(0, 3),
-        style: GoogleFonts.poppins(
-          fontSize: 10.5.sp,
-          fontWeight: FontWeight.w700,
-          color: isToday ? Colors.white : const Color(0xFF111827),
-        ),
-      ),
-    );
-  }
-
-  Widget _shareMealLabelCell(VariationModel v) {
+  Widget _shareMealHeaderCell(VariationModel v) {
     final color = _colorForVariation(v.title);
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w),
+      color: color.withOpacity(0.12),
+      padding: EdgeInsets.symmetric(vertical: 9.h, horizontal: 4.w),
       alignment: Alignment.center,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_iconForVariation(v.title), size: 14.sp, color: color),
-          SizedBox(height: 3.h),
+          Container(
+            padding: EdgeInsets.all(5.w),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: Icon(_iconForVariation(v.title), size: 13.sp, color: Colors.white),
+          ),
+          SizedBox(height: 4.h),
           Text(
             v.title,
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              fontSize: 8.5.sp,
+              fontSize: 9.sp,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF111827),
             ),
@@ -471,13 +415,52 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     );
   }
 
-  Widget _shareDayCell(String day, VariationModel variation, String todayKey) {
-    final isToday = day == todayKey;
+  Widget _shareDayLabelCell(String day, bool isToday) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
+            decoration: BoxDecoration(
+              color: isToday ? AppColors.primary : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Text(
+              kMenuWeekDayLabels[day]!.substring(0, 3),
+              style: GoogleFonts.poppins(
+                fontSize: 10.5.sp,
+                fontWeight: FontWeight.w700,
+                color: isToday ? Colors.white : const Color(0xFF111827),
+              ),
+            ),
+          ),
+          if (isToday) ...[
+            SizedBox(height: 3.h),
+            Text(
+              "★ TODAY",
+              style: GoogleFonts.poppins(
+                fontSize: 6.5.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _shareCell(String day, VariationModel variation, bool isToday) {
     final entry = _entryFor(day, variation.id);
+    final tint = _colorForVariation(variation.title);
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
       alignment: Alignment.center,
-      color: isToday ? AppColors.primary.withOpacity(0.05) : null,
+      color: isToday ? AppColors.primary.withOpacity(0.07) : tint.withOpacity(0.045),
       child:
           entry == null || entry.items.isEmpty
               ? Text(
@@ -498,9 +481,61 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     );
   }
 
+  /// A colorful, fully-visible bordered grid for the shared poster — a real
+  /// `Table` (not the fixed-height/ellipsis on-screen grid) so every row
+  /// grows to fit its content instead of clipping or truncating long meal
+  /// lists. Days run down the rows, meal types across the columns.
+  Widget _shareGrid(String todayKey) {
+    final borderSide = BorderSide(color: Colors.grey.shade200);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12.r),
+      child: Table(
+        border: TableBorder(
+          horizontalInside: borderSide,
+          verticalInside: borderSide,
+          top: borderSide,
+          bottom: borderSide,
+          left: borderSide,
+          right: borderSide,
+        ),
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        columnWidths: {
+          0: FixedColumnWidth(_kShareDayLabelColWidth.w),
+          for (var i = 0; i < widget.variations.length; i++)
+            i + 1: FixedColumnWidth(_kShareMealColWidth.w),
+        },
+        children: [
+          TableRow(
+            decoration: BoxDecoration(color: Colors.grey.shade50),
+            children: [
+              const SizedBox.shrink(),
+              ...widget.variations.map(_shareMealHeaderCell),
+            ],
+          ),
+          ...kMenuWeekDays.map((day) {
+            final isToday = day == todayKey;
+            return TableRow(
+              decoration: BoxDecoration(
+                color: isToday ? AppColors.primary.withOpacity(0.04) : Colors.white,
+              ),
+              children: [
+                _shareDayLabelCell(day, isToday),
+                ...widget.variations.map(
+                  (v) => _shareCell(day, v, isToday),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   /// The professional, colorful, MessMeals-branded poster captured for
-  /// sharing — a gradient header with the mess's own branding, the weekly
-  /// grid with color-coded meal types, and a "Powered by MessMeals" footer.
+  /// sharing — a wavy gradient header with the mess's own branding, the
+  /// weekly grid with color-coded meal columns, and a "Powered by
+  /// MessMeals" footer.
   Widget _buildShareTemplate() {
     final todayKey = kMenuWeekDays[(DateTime.now().weekday - 1) % 7];
     final activeDays =
@@ -508,16 +543,17 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
             .where((d) => (widget.menu.schedule[d]?.isNotEmpty ?? false))
             .length;
 
-    // Explicit width, sized to fit the grid exactly (label column + 7 fixed
-    // day columns + the grid's own horizontal padding). Two things depend on
-    // this being a real, finite number rather than left unbounded:
+    // Explicit width, sized to fit the grid exactly (day-label column + one
+    // fixed column per variation + the grid's own horizontal padding). Two
+    // things depend on this being a real, finite number rather than left
+    // unbounded:
     // • `Table` (inside `_shareGrid`) can't lay out at all under the
     //   unbounded width the off-screen capture overlay hands down otherwise.
     // • Matching it exactly to the grid's real width is what keeps the
     //   poster from clipping content on the right.
     final posterWidth =
-        (_kShareLabelColWidth +
-                _kShareDayColWidth * kMenuWeekDays.length +
+        (_kShareDayLabelColWidth +
+                _kShareMealColWidth * widget.variations.length +
                 _kSharePosterHPadding * 2)
             .w;
 
@@ -528,95 +564,98 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          /// ---------- BRANDED HEADER ----------
-          Container(
-            padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 18.h),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: AppColors.primaryGradient,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          /// ---------- BRANDED HEADER (wavy bottom edge) ----------
+          ClipPath(
+            clipper: _WaveClipper(),
+            child: Container(
+              padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 34.h),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: AppColors.primaryGradient,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    // The real MessMeals app icon (not `appLogo.png`, which
-                    // carries an "Admin Portal" wordmark not meant for this
-                    // customer-facing shared poster).
-                    Container(
-                      height: 38.w,
-                      width: 38.w,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/app_launcher_icon.png',
-                          height: 38.w,
-                          width: 38.w,
-                          fit: BoxFit.cover,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      // The real MessMeals app icon (not `appLogo.png`, which
+                      // carries an "Admin Portal" wordmark not meant for this
+                      // customer-facing shared poster).
+                      Container(
+                        height: 38.w,
+                        width: 38.w,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/app_launcher_icon.png',
+                            height: 38.w,
+                            width: 38.w,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _messName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              "🍽️ Weekly Food Menu",
+                              style: GoogleFonts.poppins(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withOpacity(0.85),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 14.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(20.r),
                     ),
-                    SizedBox(width: 10.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _messName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            "Weekly Food Menu",
-                            style: GoogleFonts.poppins(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withOpacity(0.85),
-                            ),
-                          ),
-                        ],
+                    child: Text(
+                      widget.menu.name,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(height: 14.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(20.r),
                   ),
-                  child: Text(
-                    widget.menu.name,
+                  SizedBox(height: 6.h),
+                  Text(
+                    "$activeDays day(s) scheduled · ${widget.menu.totalEntries} items",
                     style: GoogleFonts.poppins(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      fontSize: 10.5.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.9),
                     ),
                   ),
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  "$activeDays day(s) scheduled · ${widget.menu.totalEntries} items",
-                  style: GoogleFonts.poppins(
-                    fontSize: 10.5.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -624,7 +663,7 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
           Padding(
             padding: EdgeInsets.fromLTRB(
               _kSharePosterHPadding.w,
-              14.h,
+              4.h,
               _kSharePosterHPadding.w,
               10.h,
             ),
@@ -785,4 +824,38 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
       ),
     );
   }
+}
+
+/// A single gentle S-wave cut across the bottom edge — used to give the
+/// shared poster's header a "menu card" feel instead of a hard rectangle.
+class _WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()..lineTo(0, size.height - 18);
+
+    final firstControlPoint = Offset(size.width * 0.25, size.height);
+    final firstEndPoint = Offset(size.width * 0.5, size.height - 12);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    final secondControlPoint = Offset(size.width * 0.75, size.height - 24);
+    final secondEndPoint = Offset(size.width, size.height - 6);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
