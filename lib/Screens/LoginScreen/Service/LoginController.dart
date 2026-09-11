@@ -8,9 +8,11 @@ import 'package:http/http.dart' as http;
 import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mess/main.dart';
+// import 'package:mess/Screens/DeliveryPartner/DeliveryDashboardScreen.dart'; // delivery-partner module disabled
 import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
+// import 'package:mess/Screens/Utils/Roles.dart'; // delivery-partner module disabled
 
 String bearerToken = "";
 
@@ -41,6 +43,13 @@ class AuthController extends GetxController {
   bool lastLoginUserNotFound = false;
   String lastErrorMessage = "";
 
+  /// The exact phone string the last successful `sendOtp` call used —
+  /// may be the country-coded number, or the bare-digit fallback (see
+  /// `sendOtp`). `verifyOtp` must be called with this exact value, since
+  /// the backend's OTP session is tied to whichever phone format it
+  /// actually matched an account on.
+  String lastUsedPhone = "";
+
   void log(String msg) => print("AUTH_LOG → $msg");
 
   void _refreshUI() => update();
@@ -50,6 +59,52 @@ class AuthController extends GetxController {
   }
 
   // --- Auth Methods ---
+
+  /// One raw attempt against `send-login-otp` for exactly the phone string
+  /// given. Sets `lastLoginUserNotFound`/`lastErrorMessage` on failure and
+  /// `lastUsedPhone`/`sessionId` on success. No toast — callers decide.
+  Future<bool> _attemptSendOtp(String phone) async {
+    final url = Uri.parse("$baseUrl/auth/send-login-otp");
+    final requestBody = {"phone": phone};
+
+    debugPrint(" SEND OTP API");
+    debugPrint(" URL: $url");
+    debugPrint(" BODY: ${jsonEncode(requestBody)}");
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(requestBody),
+    );
+
+    debugPrint("✅ STATUS: ${response.statusCode}");
+    debugPrint("✅ RESPONSE: ${response.body}");
+
+    final data = jsonDecode(response.body);
+
+    if ((response.statusCode == 200 || response.statusCode == 201) &&
+        data["sessionId"] != null) {
+      sessionId = data["sessionId"];
+      lastUsedPhone = phone;
+      return true;
+    }
+
+    final message = (data["message"] ?? "User not registered").toString();
+    lastErrorMessage = message;
+
+    final lowerMsg = message.toLowerCase();
+    lastLoginUserNotFound =
+        response.statusCode == 404 ||
+        lowerMsg.contains("not regist") ||
+        lowerMsg.contains("not found") ||
+        lowerMsg.contains("no account") ||
+        lowerMsg.contains("does not exist") ||
+        lowerMsg.contains("doesn't exist") ||
+        lowerMsg.contains("no user");
+
+    return false;
+  }
+
   Future<bool> sendOtp(String phone, {bool silent = false}) async {
     try {
       isLoading = true;
@@ -57,48 +112,25 @@ class AuthController extends GetxController {
       lastErrorMessage = "";
       _refreshUI();
 
-      final url = Uri.parse("$baseUrl/auth/send-login-otp");
-
-      final requestBody = {"phone": phone};
-
-      debugPrint("🚀 SEND OTP API");
-      debugPrint("➡️ URL: $url");
-      debugPrint("➡️ BODY: ${jsonEncode(requestBody)}");
-
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(requestBody),
-      );
-
-      debugPrint("✅ STATUS: ${response.statusCode}");
-      debugPrint("✅ RESPONSE: ${response.body}");
-
-      final data = jsonDecode(response.body);
-
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          data["sessionId"] != null) {
-        sessionId = data["sessionId"];
-        if (!silent) {
-          Fluttertoast.showToast(msg: data["message"] ?? "OTP sent successfully");
-        }
+      if (await _attemptSendOtp(phone)) {
+        if (!silent) Fluttertoast.showToast(msg: "OTP sent successfully");
         return true;
       }
 
-      final message = (data["message"] ?? "User not registered").toString();
-      lastErrorMessage = message;
+      // Some accounts were created before phone numbers were consistently
+      // stored with a country code, so the backend has them saved as bare
+      // digits. If the country-coded number 404s, retry once with the
+      // code stripped before telling the user no account exists.
+      if (lastLoginUserNotFound && phone.startsWith(countryCode)) {
+        final bareDigits = phone.substring(countryCode.length);
+        if (bareDigits.isNotEmpty && await _attemptSendOtp(bareDigits)) {
+          lastLoginUserNotFound = false;
+          if (!silent) Fluttertoast.showToast(msg: "OTP sent successfully");
+          return true;
+        }
+      }
 
-      final lowerMsg = message.toLowerCase();
-      lastLoginUserNotFound =
-          response.statusCode == 404 ||
-          lowerMsg.contains("not regist") ||
-          lowerMsg.contains("not found") ||
-          lowerMsg.contains("no account") ||
-          lowerMsg.contains("does not exist") ||
-          lowerMsg.contains("doesn't exist") ||
-          lowerMsg.contains("no user");
-
-      if (!silent) Fluttertoast.showToast(msg: message);
+      if (!silent) Fluttertoast.showToast(msg: lastErrorMessage);
       return false;
     } catch (e) {
       debugPrint("❌ SEND OTP ERROR: $e");
@@ -152,19 +184,28 @@ class AuthController extends GetxController {
 
     token = data["accessToken"];
     bearerToken = "Bearer $token";
+    // debugPrint("🐛 RAW LOGIN user OBJECT: ${jsonEncode(data["user"])}"); // delivery-partner role debug
     currentUser = UserModel.fromJson(data["user"]);
+    // debugPrint("🐛 PARSED role = '${currentUser?.role}'"); // delivery-partner role debug
     isLoggedIn = true;
     tokenExpiry = _decodeTokenExpiry(token);
 
     await prefs.setString("token", token);
     await prefs.setString("LOGIN", "IN");
+    // await prefs.setString("userRole", currentUser?.role ?? ""); // delivery-partner module disabled
     if (tokenExpiry != null) {
       await prefs.setString("tokenExpiry", tokenExpiry!.toIso8601String());
     }
 
     _startAutoLogoutTimer();
     _refreshUI();
+
+    // Delivery-partner module disabled — admin dashboard only for now.
+    // if (isDeliveryAgentRole(currentUser?.role)) {
+    //   Get.offAll(() => const DeliveryDashboardScreen());
+    // } else {
     Get.offAll(() => DashboardScreen());
+    // }
   }
 
   // --- Logic Methods ---
@@ -201,6 +242,13 @@ class AuthController extends GetxController {
   Future<void> logout({bool showMessage = true}) async {
     await _clearSessionData();
     _refreshUI();
+
+    // Wipes every registered GetX controller (admin's HomeScreenController,
+    // CustomerController, etc. AND the delivery-partner ones registered
+    // permanent:true) so the next login — whichever account type — starts
+    // completely fresh instead of picking up the previous account's stale
+    // data or landing on the wrong dashboard.
+    await Get.deleteAll(force: true);
 
     if (Get.context != null) {
       Get.offAll(() => LoginScreen());

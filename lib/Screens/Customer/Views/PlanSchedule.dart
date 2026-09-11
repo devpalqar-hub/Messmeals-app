@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/PlanScreen/Views/AddPlanScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
@@ -92,6 +93,28 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
       widget.onEndDateChanged(selectedEndDate!);
     }
   }
+
+  PlanModel? get _selectedPlanModel {
+    for (final p in planController.plans) {
+      if (p.id == widget.selectedPlanId) return p;
+    }
+    return null;
+  }
+
+  /// Days the currently-selected plan can actually be delivered on. A
+  /// CUSTOM-schedule plan (e.g. weekdays-only) restricts this to its own
+  /// `availableDays`; everything else (EVERYDAY plans, or no plan picked
+  /// yet) falls back to the full week so the field still works.
+  List<String> _availableDaysFor(PlanModel? plan) {
+    if (plan != null &&
+        plan.scheduleType.toUpperCase() == 'CUSTOM' &&
+        plan.availableDays.isNotEmpty) {
+      return days.where((d) => plan.availableDays.contains(d)).toList();
+    }
+    return days;
+  }
+
+  List<String> get _planAvailableDays => _availableDaysFor(_selectedPlanModel);
 
   Future<void> _openAddPlan() async {
     await Get.to(() => AddPlanScreen());
@@ -229,20 +252,46 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
                     onChanged: (val) {
                       widget.onPlanChanged(val);
 
-                      // Check if the newly selected plan is monthly
-                      final newlySelectedIsMonthly = planController.plans.any(
-                        (p) => p.id == val && p.isMonthlyPlan,
-                      );
+                      PlanModel? newlySelectedPlan;
+                      for (final p in planController.plans) {
+                        if (p.id == val) {
+                          newlySelectedPlan = p;
+                          break;
+                        }
+                      }
+                      final newPlanDays = _availableDaysFor(newlySelectedPlan);
 
-                      if (newlySelectedIsMonthly) {
+                      if (newlySelectedPlan?.isMonthlyPlan == true) {
                         _updateMonthlyEndDate();
 
                         // Automatically set to Everyday and select all days if Monthly
                         widget.onTypeChanged("Everyday");
-                        widget.onDaysChanged(List.from(days));
+                        widget.onDaysChanged(List.from(newPlanDays));
+                      } else {
+                        // Drop any days selected under the previous plan that
+                        // this plan doesn't run on (e.g. switching from an
+                        // everyday plan to a weekdays-only one).
+                        final keptDays =
+                            widget.selectedDays
+                                .where(newPlanDays.contains)
+                                .toList();
+                        widget.onDaysChanged(keptDays);
                       }
                     },
                   ),
+                  if (_selectedPlanModel != null &&
+                      _selectedPlanModel!.scheduleType.toUpperCase() ==
+                          'CUSTOM' &&
+                      _selectedPlanModel!.availableDays.isNotEmpty) ...[
+                    SizedBox(height: 6.h),
+                    Text(
+                      "This plan runs on: ${_selectedPlanModel!.availableDays.map((d) => kPlanWeekDayLabels[d] ?? d).join(', ')}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.sp,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                   SizedBox(height: 16.h),
 
                   /// DATES & DURATION ROW
@@ -373,6 +422,7 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
                     names:
                         partnerController.partners.map((e) => e.name).toList(),
                     onChanged: widget.onPartnerChanged,
+                    clearable: true,
                   ),
                   SizedBox(height: 24.h),
 
@@ -405,7 +455,7 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
                             onChanged: (value) {
                               widget.onTypeChanged(value);
                               if (value == "Everyday") {
-                                widget.onDaysChanged(List.from(days));
+                                widget.onDaysChanged(List.from(_planAvailableDays));
                               } else {
                                 widget.onDaysChanged([]);
                               }
@@ -414,14 +464,18 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
                           ),
                           SizedBox(height: 16.h),
 
-                          /// DAYS (ONLY FOR CUSTOM)
+                          /// DAYS (ONLY FOR CUSTOM) — limited to the days the
+                          /// selected plan actually runs on.
                           if (!isEveryday) ...[
                             title("Select Delivery Days *"),
                             SizedBox(height: 10.h),
                             Wrap(
                               spacing: 8.w,
                               runSpacing: 8.h,
-                              children: days.map((e) => dayChip(e)).toList(),
+                              children:
+                                  _planAvailableDays
+                                      .map((e) => dayChip(e))
+                                      .toList(),
                             ),
                             SizedBox(height: 16.h),
                           ],
@@ -563,7 +617,12 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
     required List<String> ids,
     required List<String> names,
     required Function(String?) onChanged,
+    // When true, shows a small "x" next to the dropdown once something is
+    // selected, letting the user go back to no selection — the dropdown
+    // itself has no built-in way to pick "none" once a value is chosen.
+    bool clearable = false,
   }) {
+    final hasSelection = ids.contains(selectedId);
     return Container(
       height: 48.h,
       padding: EdgeInsets.symmetric(horizontal: 14.w),
@@ -572,35 +631,58 @@ class _PlanScheduleWidgetState extends State<PlanScheduleWidget> {
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: ids.contains(selectedId) ? selectedId : null,
-          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
-          hint: Text(
-            hint,
-            style: GoogleFonts.poppins(
-              color: Colors.grey.shade400,
-              fontSize: 14.sp,
+      child: Row(
+        children: [
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: hasSelection ? selectedId : null,
+                icon: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.grey.shade600,
+                ),
+                hint: Text(
+                  hint,
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey.shade400,
+                    fontSize: 14.sp,
+                  ),
+                ),
+                items: List.generate(ids.length, (index) {
+                  return DropdownMenuItem<String>(
+                    value: ids[index],
+                    child: Text(
+                      names[index],
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                  );
+                }),
+                onChanged: (value) {
+                  onChanged(value);
+                  setState(() {});
+                },
+              ),
             ),
           ),
-          items: List.generate(ids.length, (index) {
-            return DropdownMenuItem<String>(
-              value: ids[index],
-              child: Text(
-                names[index],
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: const Color(0xFF111827),
-                ),
+          if (clearable && hasSelection) ...[
+            SizedBox(width: 8.w),
+            GestureDetector(
+              onTap: () {
+                onChanged(null);
+                setState(() {});
+              },
+              child: Icon(
+                Icons.close_rounded,
+                size: 18.sp,
+                color: Colors.grey.shade500,
               ),
-            );
-          }),
-          onChanged: (value) {
-            onChanged(value);
-            setState(() {});
-          },
-        ),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -136,6 +136,19 @@ class MessModel {
     );
   }
 
+  /// The mess's cover photo — the first image flagged `isCover`, falling
+  /// back to the first image in the list if none is explicitly flagged
+  /// (mirrors `MessProfileSettingsScreen._applyImages`).
+  String? get coverImageUrl {
+    for (final img in images) {
+      if (img.isCover && img.url.isNotEmpty) return img.url;
+    }
+    for (final img in images) {
+      if (img.url.isNotEmpty) return img.url;
+    }
+    return null;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

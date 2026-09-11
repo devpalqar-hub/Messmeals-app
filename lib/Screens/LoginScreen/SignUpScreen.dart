@@ -12,7 +12,7 @@ import 'package:mess/Screens/Utils/AppToast.dart';
 class SignUpScreen extends StatelessWidget {
   SignUpScreen({super.key});
 
-  final AuthController authCtrl = Get.find<AuthController>();
+  final AuthController authCtrl = Get.put(AuthController());
   final SignupController signupCtrl = Get.put(SignupController());
 
   final TextEditingController nameController = TextEditingController();
@@ -210,6 +210,9 @@ class SignUpScreen extends StatelessWidget {
   /// SUBMIT LOGIC HANDLER
   void _handleSignup() async {
     final phone = authCtrl.phoneController.text.trim();
+    // Same fix as the login screen — the API needs the country code
+    // (e.g. "+91") prepended, not just the bare digits.
+    final fullPhone = "${authCtrl.countryCode}$phone";
 
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
@@ -235,7 +238,7 @@ class SignUpScreen extends StatelessWidget {
     final success = await signupCtrl.sendOtp(
       name: signupCtrl.name,
       ownerName: signupCtrl.ownerName,
-      phone: phone,
+      phone: fullPhone,
       email: signupCtrl.email,
       address: signupCtrl.address,
       messName: signupCtrl.messName,
@@ -244,7 +247,7 @@ class SignUpScreen extends StatelessWidget {
     );
 
     if (success) {
-      Get.to(() => OtpVerificationScreen(phoneNumber: phone, isSignup: true));
+      Get.to(() => OtpVerificationScreen(phoneNumber: fullPhone, isSignup: true));
     }
   }
 

@@ -26,7 +26,7 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final AuthController authCtrl = Get.find<AuthController>();
+  final AuthController authCtrl = Get.put(AuthController());
 
   final List<TextEditingController> _otpCtrl = List.generate(
     6,

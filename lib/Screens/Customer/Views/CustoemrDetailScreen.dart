@@ -82,6 +82,250 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
+  bool isNameSaving = false;
+  Future<void> _updateCustomerName(String newName) async {
+    setState(() => isNameSaving = true);
+    try {
+      final response = await patch(
+        Uri.parse('$baseUrl/customer/${customer.customerProfileId}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+        body: json.encode({"name": newName}),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await _fetchCustomer();
+        _showSnack('Saved', 'Customer name updated successfully', _C.green);
+      } else {
+        _showSnack(
+          "Error",
+          json.decode(response.body)["message"] ?? 'Failed to update name',
+          _C.red,
+        );
+      }
+    } catch (e) {
+      _showSnack('Error', 'An error occurred: $e', _C.red);
+    } finally {
+      if (mounted) setState(() => isNameSaving = false);
+    }
+  }
+
+  void _showEditNameSheet() {
+    final ctrl = TextEditingController(text: customer.name ?? '');
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            title: Text(
+              'Edit Name',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+            content: TextField(
+              controller: ctrl,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Enter full name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final newName = ctrl.text.trim();
+                  if (newName.isEmpty) return;
+                  Navigator.pop(ctx);
+                  _updateCustomerName(newName);
+                },
+                child: Text(
+                  'Save',
+                  style: TextStyle(
+                    color: _C.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  bool isPhoneSaving = false;
+  Future<void> _updateCustomerPhone(String newPhone) async {
+    setState(() => isPhoneSaving = true);
+    try {
+      final response = await patch(
+        Uri.parse('$baseUrl/customer/${customer.customerProfileId}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+        body: json.encode({"phone": newPhone}),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await _fetchCustomer();
+        _showSnack('Saved', 'Phone number updated successfully', _C.green);
+      } else {
+        _showSnack(
+          "Error",
+          json.decode(response.body)["message"] ?? 'Failed to update phone number',
+          _C.red,
+        );
+      }
+    } catch (e) {
+      _showSnack('Error', 'An error occurred: $e', _C.red);
+    } finally {
+      if (mounted) setState(() => isPhoneSaving = false);
+    }
+  }
+
+  void _showEditPhoneSheet() {
+    final ctrl = TextEditingController(text: customer.phone ?? '');
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            title: Text(
+              'Edit Phone Number',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+            content: TextField(
+              controller: ctrl,
+              autofocus: true,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+              decoration: InputDecoration(
+                hintText: 'Enter 10-digit phone number',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final newPhone = ctrl.text.trim();
+                  if (!RegExp(r'^\d{10}$').hasMatch(newPhone)) {
+                    _showSnack(
+                      'Invalid',
+                      'Please enter a valid 10-digit phone number',
+                      _C.red,
+                    );
+                    return;
+                  }
+                  Navigator.pop(ctx);
+                  _updateCustomerPhone(newPhone);
+                },
+                child: Text(
+                  'Save',
+                  style: TextStyle(
+                    color: _C.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  bool isAddressSaving = false;
+  Future<void> _updateCustomerAddress(String newAddress) async {
+    setState(() => isAddressSaving = true);
+    try {
+      final response = await patch(
+        Uri.parse('$baseUrl/customer/${customer.customerProfileId}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+        body: json.encode({"address": newAddress}),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await _fetchCustomer();
+        _showSnack('Saved', 'Address updated successfully', _C.green);
+      } else {
+        _showSnack(
+          "Error",
+          json.decode(response.body)["message"] ?? 'Failed to update address',
+          _C.red,
+        );
+      }
+    } catch (e) {
+      _showSnack('Error', 'An error occurred: $e', _C.red);
+    } finally {
+      if (mounted) setState(() => isAddressSaving = false);
+    }
+  }
+
+  void _showEditAddressSheet() {
+    final ctrl = TextEditingController(text: customer.address ?? '');
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            title: Text(
+              'Edit Address',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+            content: TextField(
+              controller: ctrl,
+              autofocus: true,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Enter address',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final newAddress = ctrl.text.trim();
+                  if (newAddress.isEmpty) return;
+                  Navigator.pop(ctx);
+                  _updateCustomerAddress(newAddress);
+                },
+                child: Text(
+                  'Save',
+                  style: TextStyle(
+                    color: _C.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
   bool isWalletLoading = false;
   Future<void> updateWalletBalance(int amount) async {
     final response = await patch(
@@ -395,16 +639,48 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                customer.name ?? 'N/A',
-                style: GoogleFonts.poppins(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: _C.textPrimary,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      customer.name ?? 'N/A',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        color: _C.textPrimary,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: isNameSaving ? null : _showEditNameSheet,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 6.w),
+                      child:
+                          isNameSaving
+                              ? SizedBox(
+                                height: 14.sp,
+                                width: 14.sp,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: _C.primary,
+                                ),
+                              )
+                              : Icon(
+                                Icons.edit_outlined,
+                                size: 16.sp,
+                                color: _C.textSecondary,
+                              ),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 7.h),
-              _infoRow(Icons.phone_outlined, customer.phone ?? 'N/A'),
+              _infoRow(
+                Icons.phone_outlined,
+                customer.phone ?? 'N/A',
+                onEdit: _showEditPhoneSheet,
+                isSaving: isPhoneSaving,
+              ),
               if (customer.email?.isNotEmpty ?? false) ...[
                 SizedBox(height: 5.h),
                 _infoRow(Icons.email_outlined, customer.email!),
@@ -415,6 +691,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 (customer.address?.isNotEmpty ?? false)
                     ? customer.address!
                     : 'No address provided',
+                onEdit: _showEditAddressSheet,
+                isSaving: isAddressSaving,
               ),
               SizedBox(height: 10.h),
               _statusBadge(),
@@ -861,7 +1139,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     child: child,
   );
 
-  Widget _infoRow(IconData icon, String text) => Row(
+  Widget _infoRow(
+    IconData icon,
+    String text, {
+    VoidCallback? onEdit,
+    bool isSaving = false,
+  }) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Icon(icon, size: 13.sp, color: _C.textTertiary),
@@ -872,6 +1155,28 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           style: GoogleFonts.poppins(fontSize: 12.sp, color: _C.textSecondary),
         ),
       ),
+      if (onEdit != null)
+        GestureDetector(
+          onTap: isSaving ? null : onEdit,
+          child: Padding(
+            padding: EdgeInsets.only(left: 6.w),
+            child:
+                isSaving
+                    ? SizedBox(
+                      height: 12.sp,
+                      width: 12.sp,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _C.primary,
+                      ),
+                    )
+                    : Icon(
+                      Icons.edit_outlined,
+                      size: 13.sp,
+                      color: _C.textSecondary,
+                    ),
+          ),
+        ),
     ],
   );
 
@@ -1158,13 +1463,21 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               }
 
               Future<void> pickDate(bool isStart) async {
+                final now = DateTime.now();
+                // Start date can be backdated (e.g. a plan that actually
+                // started before it was entered into the system); end date
+                // still can't be before the chosen start date.
+                final firstSelectableDate =
+                    isStart
+                        ? DateTime(now.year - 2)
+                        : (startDate ?? DateTime(now.year, now.month, now.day));
                 final picked = await showDatePicker(
                   context: context,
                   initialDate:
                       isStart
-                          ? (startDate ?? DateTime.now())
-                          : (endDate ?? startDate ?? DateTime.now()),
-                  firstDate: DateTime.now(),
+                          ? (startDate ?? now)
+                          : (endDate ?? startDate ?? firstSelectableDate),
+                  firstDate: firstSelectableDate,
                   lastDate: DateTime(2035),
                   builder:
                       (context, child) => Theme(

@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
+import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileBottomSheet extends StatelessWidget {
   ProfileBottomSheet({super.key});
@@ -211,13 +210,7 @@ class ProfileBottomSheet extends StatelessWidget {
                   confirmText: "Logout",
                   confirmColor: PrimaryColor,
                   onConfirm: () async {
-                    SharedPreferences pref =
-                        await SharedPreferences.getInstance();
-                    pref.clear();
-                    Get.offAll(
-                      LoginScreen(),
-                      transition: Transition.rightToLeft,
-                    );
+                    await Get.put(AuthController()).logout(showMessage: false);
                   },
                 );
               },
@@ -257,13 +250,7 @@ class ProfileBottomSheet extends StatelessWidget {
                   confirmColor: Colors.red,
                   onConfirm: () async {
                     // TODO: Implement Delete Account Logic
-                    SharedPreferences pref =
-                        await SharedPreferences.getInstance();
-                    pref.clear();
-                    Get.offAll(
-                      LoginScreen(),
-                      transition: Transition.rightToLeft,
-                    );
+                    await Get.put(AuthController()).logout(showMessage: false);
                   },
                 );
               },

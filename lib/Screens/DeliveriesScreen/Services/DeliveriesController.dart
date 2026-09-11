@@ -8,7 +8,7 @@ import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart';
 
 class DeliveriesController extends GetxController {
-  final AuthController authController = Get.find<AuthController>();
+  final AuthController authController = Get.put(AuthController());
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 

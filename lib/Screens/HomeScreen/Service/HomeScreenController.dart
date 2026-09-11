@@ -7,7 +7,6 @@ import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 import 'package:mess/Screens/HomeScreen/Model/DashboardModel.dart';
 import 'package:mess/Screens/HomeScreen/Model/MessModel.dart';
 import 'package:mess/Screens/HomeScreen/Model/VariationCountModel.dart';
-import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
 import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
@@ -344,10 +343,7 @@ class HomeScreenController extends GetxController {
   }
 
   Future<void> _handleLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    Get.deleteAll();
-    Get.offAll(() => LoginScreen());
+    await authController.logout(showMessage: false);
   }
 
   /// Create a new mess

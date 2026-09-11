@@ -75,7 +75,7 @@ class VariationModel {
 /// 🎮 DELIVERIES STATE CONTROLLER
 /// =========================================================================
 class DeliveriesController extends GetxController {
-  final AuthController authController = Get.find<AuthController>();
+  final AuthController authController = Get.put(AuthController());
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 

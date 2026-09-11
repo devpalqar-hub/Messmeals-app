@@ -9,7 +9,7 @@ import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/main.dart';
 
 class PartnerController extends GetxController {
-  final AuthController authController = Get.find<AuthController>();
+  final AuthController authController = Get.put(AuthController());
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 
@@ -34,6 +34,23 @@ class PartnerController extends GetxController {
       textColor: Colors.white,
       fontSize: 14.0,
     );
+  }
+
+  /// The backend's error `message` field isn't always a plain string (e.g.
+  /// NestJS validation errors return a list, or a field-keyed map) — this
+  /// turns whatever shape comes back into something safe to show in a toast.
+  String _errorMessage(dynamic decoded, String fallback) {
+    if (decoded is! Map) return fallback;
+    final message = decoded['message'];
+    if (message == null) return fallback;
+    if (message is String && message.isNotEmpty) return message;
+    if (message is List) {
+      return message.map((e) => e.toString()).join(', ');
+    }
+    if (message is Map) {
+      return message.values.map((e) => e.toString()).join(', ');
+    }
+    return fallback;
   }
 
   Future<void> ensureLoaded() async {
@@ -157,6 +174,10 @@ class PartnerController extends GetxController {
           "phone": phone,
           "address": address,
           "messId": messId,
+          // Required by the backend but not yet collected in this form —
+          // defaulted so partner creation doesn't fail validation.
+          "deliverAgentRegion": address.isNotEmpty ? address : "General",
+          "is_active": true,
         }),
       );
 
@@ -167,7 +188,7 @@ class PartnerController extends GetxController {
         return true;
       } else {
         final err = json.decode(response.body);
-        _showToast(err['message'] ?? "Failed to add partner", isError: true);
+        _showToast(_errorMessage(err, "Failed to add partner"), isError: true);
         return false;
       }
     } catch (e) {
@@ -220,7 +241,7 @@ class PartnerController extends GetxController {
         return true;
       } else {
         final err = json.decode(response.body);
-        _showToast(err['message'] ?? "Failed to update partner", isError: true);
+        _showToast(_errorMessage(err, "Failed to update partner"), isError: true);
         return false;
       }
     } catch (e) {
@@ -262,7 +283,7 @@ class PartnerController extends GetxController {
         }
       } else {
         final err = json.decode(response.body);
-        _showToast(err['message'] ?? "Failed to delete partner", isError: true);
+        _showToast(_errorMessage(err, "Failed to delete partner"), isError: true);
       }
     } catch (e) {
       _showToast(e.toString(), isError: true);

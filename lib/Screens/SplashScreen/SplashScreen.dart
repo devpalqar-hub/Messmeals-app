@@ -3,10 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// import 'package:mess/Screens/DeliveryPartner/DeliveryDashboardScreen.dart'; // delivery-partner module disabled
 import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
 import 'package:mess/Screens/OnboardingScreen/onboarding_screen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+// import 'package:mess/Screens/Utils/Roles.dart'; // delivery-partner module disabled
 import 'package:mess/main.dart';
 
 /// SPLASH SCREEN
@@ -60,7 +62,12 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (login == "IN") {
+      // Delivery-partner module disabled — admin dashboard only for now.
+      // if (isDeliveryAgentRole(userRole)) {
+      //   Get.offAll(() => const DeliveryDashboardScreen());
+      // } else {
       Get.offAll(() => DashboardScreen());
+      // }
     } else if (!onboardingSeen) {
       Get.offAll(() => OnboardingScreen());
     } else {

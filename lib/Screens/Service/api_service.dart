@@ -11,7 +11,7 @@ class ApiService {
 
     // 🔥 AUTO LOGOUT ON 401
     if (response.statusCode == 401) {
-      final auth = Get.find<AuthController>();
+      final auth = Get.put(AuthController());
       auth.logout();
     }
 

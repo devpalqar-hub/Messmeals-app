@@ -12,6 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 String baseUrl = "https://api.messmeals.com";
 //String baseUrl = "https://staging-api.messmeals.com";
 String? login;
+// Delivery-partner module disabled — role no longer read/used.
+// String? userRole;
 bool onboardingSeen = false;
 
 Future<void> main() async {
@@ -20,8 +22,8 @@ Future<void> main() async {
   Get.put(AuthController());
   SharedPreferences pref = await SharedPreferences.getInstance();
   bearerToken = "Bearer " + (pref.getString("token") ?? "");
-  print('TOKEN: ${pref.getString("token")}');
   login = pref.getString("LOGIN");
+  // userRole = pref.getString("userRole"); // delivery-partner module disabled
   onboardingSeen = pref.getBool(onboardingSeenKey) ?? false;
   runApp(const MessMeals());
 }

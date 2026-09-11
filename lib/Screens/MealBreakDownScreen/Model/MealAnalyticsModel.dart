@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/main.dart';
 
 // --- MODELS ---
 class AnalyticsModel {
@@ -123,24 +125,25 @@ class MealsAnalyticsController extends GetxController {
 
     // Construct URL with same fromDate and toDate
     String url =
-        'https://staging-api.messmeals.com/deliveries/analytics/variation-counts'
+        '$baseUrl/deliveries/analytics/variation-counts'
         '?messId=$messId'
         '&fromDate=$formattedDate'
         '&toDate=$formattedDate';
 
     try {
-      // Replace with your actual API call / headers
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Authorization': bearerToken},
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         analyticsData = AnalyticsModel.fromJson(data);
       } else {
-        // Handle Error
-        print("Error fetching data");
+        debugPrint("Error fetching analytics: ${response.statusCode}");
       }
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
     } finally {
       isLoading = false;
       update();

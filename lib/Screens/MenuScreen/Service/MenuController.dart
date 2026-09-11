@@ -9,7 +9,7 @@ import 'package:mess/Screens/MenuScreen/Models/MenuModel.dart';
 import 'package:mess/main.dart';
 
 class MessMenuController extends GetxController {
-  final AuthController authController = Get.find<AuthController>();
+  final AuthController authController = Get.put(AuthController());
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 

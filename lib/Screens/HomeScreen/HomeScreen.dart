@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 import 'package:mess/Screens/ExpenseScreen/ExpenseScreen.dart';
@@ -14,12 +13,12 @@ import 'package:mess/Screens/HomeScreen/Views/ProfileBottomSheet.dart';
 // import 'package:mess/Screens/HomeScreen/Service/dashbaord_controller.dart'; // Adjust if needed
 import 'package:mess/Screens/HomeScreen/Views/SelectMessBottomSheet.dart';
 import 'package:mess/Screens/HomeScreen/Views/StatItem.dart';
+import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/MealBreakDownScreen/MealBreakDownScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
-import 'package:mess/Screens/Utils/routes.dart';
 
 class Homescreen extends StatelessWidget {
   final Function(int) onNavigateToTab;
@@ -56,13 +55,11 @@ class Homescreen extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      Get.offAllNamed(AppRoutes.login);
+      await Get.put(AuthController()).logout(showMessage: false);
     }
   }
 
-  Widget _buildLoadErrorView(HomeScreenController ctrl) {
+  Widget _buildLoadErrorView(BuildContext context, HomeScreenController ctrl) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -115,6 +112,19 @@ class Homescreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 13.h),
                 ),
               ),
+              SizedBox(height: 12.h),
+              TextButton.icon(
+                onPressed: () => _logout(context),
+                icon: Icon(Icons.logout, size: 16.sp, color: Colors.red),
+                label: Text(
+                  "Logout",
+                  style: GoogleFonts.poppins(
+                    color: Colors.red,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -128,7 +138,7 @@ class Homescreen extends StatelessWidget {
       builder: (__) {
         return (ctrl.dashboardData == null)
             ? (ctrl.profileLoadFailed
-                ? _buildLoadErrorView(ctrl)
+                ? _buildLoadErrorView(context, ctrl)
                 : HomeShimmerScreen())
             : Scaffold(
               backgroundColor: Colors.white,
@@ -244,7 +254,6 @@ class Homescreen extends StatelessWidget {
                           // TOP REVENUE CARD
                           Container(
                             width: double.infinity,
-                            height: 122.h,
                             margin: EdgeInsets.symmetric(horizontal: 10.w),
                             padding: EdgeInsets.symmetric(
                               horizontal: 22.w,
@@ -483,7 +492,7 @@ class Homescreen extends StatelessWidget {
                                         ),
                                     child: QuickActionCard(
                                       label: 'Add Partner',
-                                      icon: Icons.group_outlined,
+                                      icon: Icons.delivery_dining,
                                       iconColor: const Color(0xFF7D39D3),
                                       iconBgColor: const Color(0xFFEFE8FB),
                                     ),

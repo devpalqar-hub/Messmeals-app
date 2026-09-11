@@ -11,7 +11,7 @@ import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
 import 'package:mess/main.dart';
 
 class PlanController extends GetxController {
-  final AuthController authController = Get.find<AuthController>();
+  final AuthController authController = Get.put(AuthController());
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 

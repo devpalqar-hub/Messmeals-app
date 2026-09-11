@@ -98,6 +98,68 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     }
   }
 
+  /// Caches the resolved cover-photo URL per mess so the on-screen card(s)
+  /// and the share poster don't each fire their own `GET /mess/{id}` call
+  /// — every `MenuTimetableCard` for the same mess shares one lookup.
+  static final Map<String, Future<String?>> _coverImageCache = {};
+
+  /// The selected mess's own cover photo. Null if the mess hasn't set one
+  /// — callers fall back to a plain decorative header in that case.
+  ///
+  /// Has to hit `GET /mess/{id}` (`fetchMessDetails`) rather than read off
+  /// `HomeScreenController.messes` — that list comes from
+  /// `/customer/owners/messes`, which only returns a handful of summary
+  /// fields and never includes `images`.
+  Future<String?> _resolveMessCoverImageUrl() {
+    try {
+      final home = Get.find<HomeScreenController>();
+      final messId = home.selectedMessId;
+      if (messId == null) return Future.value(null);
+      return _coverImageCache.putIfAbsent(messId, () async {
+        try {
+          final details = await home.fetchMessDetails(messId);
+          return details?.coverImageUrl;
+        } catch (_) {
+          return null;
+        }
+      });
+    } catch (_) {
+      return Future.value(null);
+    }
+  }
+
+  /// Full-width, on-screen cover-photo banner for the card. Sized to the
+  /// photo's own aspect ratio (`BoxFit.fitWidth`) rather than cropped into
+  /// a fixed-height strip, so the whole cover image is visible. Falls back
+  /// to a short decorative gradient strip when the mess hasn't set one.
+  Widget _coverBanner() {
+    return FutureBuilder<String?>(
+      future: _resolveMessCoverImageUrl(),
+      builder: (context, snapshot) {
+        final coverUrl = snapshot.data;
+        if (coverUrl == null || coverUrl.isEmpty) {
+          return Container(
+            height: 46.h,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: AppColors.primaryGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          );
+        }
+        return Image.network(
+          coverUrl,
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+          errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+        );
+      },
+    );
+  }
+
   MenuDayEntry? _entryFor(String day, String variationId) {
     final entries = widget.menu.schedule[day];
     if (entries == null) return null;
@@ -129,6 +191,18 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
         );
       }
 
+      // Only include the mess's cover photo if it actually finishes loading
+      // — an unreachable/broken URL should silently fall back to no photo
+      // rather than capturing a broken-image icon into the shared PNG.
+      String? coverImageUrl = await _resolveMessCoverImageUrl();
+      if (coverImageUrl != null && coverImageUrl.isNotEmpty && mounted) {
+        try {
+          await precacheImage(NetworkImage(coverImageUrl), context);
+        } catch (_) {
+          coverImageUrl = null;
+        }
+      }
+
       final overlayState = Overlay.of(context, rootOverlay: true);
 
       entry = OverlayEntry(
@@ -140,7 +214,7 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
                 type: MaterialType.transparency,
                 child: RepaintBoundary(
                   key: captureKey,
-                  child: _buildShareTemplate(),
+                  child: _buildShareTemplate(coverImageUrl: coverImageUrl),
                 ),
               ),
             ),
@@ -166,10 +240,9 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
       );
       await file.writeAsBytes(bytes);
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: "${widget.menu.name} — $_messName\nPowered by MessMeals 🍽️",
-      );
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: "${widget.menu.name} — $_messName\nPowered by MessMeals 🍽️");
     } catch (e) {
       Fluttertoast.showToast(msg: "Failed to share menu");
     } finally {
@@ -221,7 +294,10 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
         children: [
           Container(
             padding: EdgeInsets.all(4.w),
-            decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
             child: Icon(_iconForVariation(v.title), size: 13.sp, color: color),
           ),
           SizedBox(height: 3.h),
@@ -273,7 +349,10 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
       height: _kDayRowHeight.h,
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: isToday ? AppColors.primary.withOpacity(0.07) : tint.withOpacity(0.035),
+        color:
+            isToday
+                ? AppColors.primary.withOpacity(0.07)
+                : tint.withOpacity(0.035),
         border: Border.all(color: Colors.grey.shade100),
       ),
       alignment: Alignment.center,
@@ -398,7 +477,11 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
           Container(
             padding: EdgeInsets.all(5.w),
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Icon(_iconForVariation(v.title), size: 13.sp, color: Colors.white),
+            child: Icon(
+              _iconForVariation(v.title),
+              size: 13.sp,
+              color: Colors.white,
+            ),
           ),
           SizedBox(height: 4.h),
           Text(
@@ -460,7 +543,10 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
       alignment: Alignment.center,
-      color: isToday ? AppColors.primary.withOpacity(0.07) : tint.withOpacity(0.045),
+      color:
+          isToday
+              ? AppColors.primary.withOpacity(0.07)
+              : tint.withOpacity(0.045),
       child:
           entry == null || entry.items.isEmpty
               ? Text(
@@ -517,13 +603,14 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
             final isToday = day == todayKey;
             return TableRow(
               decoration: BoxDecoration(
-                color: isToday ? AppColors.primary.withOpacity(0.04) : Colors.white,
+                color:
+                    isToday
+                        ? AppColors.primary.withOpacity(0.04)
+                        : Colors.white,
               ),
               children: [
                 _shareDayLabelCell(day, isToday),
-                ...widget.variations.map(
-                  (v) => _shareCell(day, v, isToday),
-                ),
+                ...widget.variations.map((v) => _shareCell(day, v, isToday)),
               ],
             );
           }),
@@ -536,12 +623,8 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
   /// sharing — a wavy gradient header with the mess's own branding, the
   /// weekly grid with color-coded meal columns, and a "Powered by
   /// MessMeals" footer.
-  Widget _buildShareTemplate() {
+  Widget _buildShareTemplate({String? coverImageUrl}) {
     final todayKey = kMenuWeekDays[(DateTime.now().weekday - 1) % 7];
-    final activeDays =
-        kMenuWeekDays
-            .where((d) => (widget.menu.schedule[d]?.isNotEmpty ?? false))
-            .length;
 
     // Explicit width, sized to fit the grid exactly (day-label column + one
     // fixed column per variation + the grid's own horizontal padding). Two
@@ -564,100 +647,82 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          /// ---------- BRANDED HEADER (wavy bottom edge) ----------
-          ClipPath(
-            clipper: _WaveClipper(),
-            child: Container(
-              padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 34.h),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: AppColors.primaryGradient,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          /// ---------- HEADER ----------
+          /// If the mess has uploaded its own cover photo, show it exactly
+          /// as uploaded — full width, untouched, no tint or text laid over
+          /// it, and no cropping (BoxFit.fitWidth keeps its own aspect
+          /// ratio so the whole design is visible). Only fall back to our
+          /// own branded gradient header when there's no cover photo to show.
+          if (coverImageUrl != null && coverImageUrl.isNotEmpty)
+            Image.network(
+              coverImageUrl,
+              width: posterWidth,
+              fit: BoxFit.fitWidth,
+            )
+          else
+            ClipPath(
+              clipper: _WaveClipper(),
+              child: Container(
+                padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 34.h),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: AppColors.primaryGradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // The real MessMeals app icon (not `appLogo.png`, which
+                    // carries an "Admin Portal" wordmark not meant for this
+                    // customer-facing shared poster).
+                    Container(
+                      height: 38.w,
+                      width: 38.w,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/app_launcher_icon.png',
+                          height: 38.w,
+                          width: 38.w,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _messName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "🍽️ Weekly Food Menu",
+                            style: GoogleFonts.poppins(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withOpacity(0.85),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      // The real MessMeals app icon (not `appLogo.png`, which
-                      // carries an "Admin Portal" wordmark not meant for this
-                      // customer-facing shared poster).
-                      Container(
-                        height: 38.w,
-                        width: 38.w,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/app_launcher_icon.png',
-                            height: 38.w,
-                            width: 38.w,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _messName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "🍽️ Weekly Food Menu",
-                              style: GoogleFonts.poppins(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.85),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 14.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Text(
-                      widget.menu.name,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    "$activeDays day(s) scheduled · ${widget.menu.totalEntries} items",
-                    style: GoogleFonts.poppins(
-                      fontSize: 10.5.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ),
 
           /// ---------- GRID ----------
           Padding(
@@ -754,6 +819,9 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /// ---------- MESS COVER PHOTO ----------
+          _coverBanner(),
+
           /// ---------- TOOLBAR ----------
           Padding(
             padding: EdgeInsets.fromLTRB(14.w, 10.h, 10.w, 6.h),
@@ -777,7 +845,10 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
                       if (!widget.menu.isActive) ...[
                         SizedBox(width: 6.w),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(4.r),

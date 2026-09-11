@@ -23,6 +23,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   final PlanController planController = Get.put(PlanController());
 
   final TextEditingController searchCtrl = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   String selectedPlanId = "";
   String searchQuery = "";
@@ -35,6 +36,20 @@ class _CustomersScreenState extends State<CustomersScreen> {
     planController.fetchPlans();
     customerController.fetchCustomers(refresh: true);
     customerController.fetchCustomerSummary();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final nearBottom =
+        _scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200;
+    if (nearBottom &&
+        customerController.hasMore &&
+        !customerController.isLoading &&
+        !customerController.isMoreLoading) {
+      _loadCustomers(reset: false);
+    }
   }
 
   void _loadCustomers({bool reset = true}) {
@@ -50,6 +65,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   void dispose() {
     searchCtrl.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -260,10 +277,28 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       );
                     }
 
+                    final showLoadingFooter = controller.isMoreLoading;
+                    final itemCount =
+                        controller.customers.length + (showLoadingFooter ? 1 : 0);
+
                     return ListView.separated(
-                      itemCount: controller.customers.length,
+                      controller: _scrollController,
+                      itemCount: itemCount,
                       separatorBuilder: (_, __) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
+                        if (index >= controller.customers.length) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            child: const Center(
+                              child: SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.2),
+                              ),
+                            ),
+                          );
+                        }
+
                         final customer = controller.customers[index];
 
                         return CustomerCard(

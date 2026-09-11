@@ -275,10 +275,24 @@ class LoginScreen extends StatelessWidget {
                     return;
                   }
 
-                  bool success = await authCtrl.sendOtp(phone, silent: true);
+                  // BUG FIX — the country code (e.g. "+91") was never being
+                  // prepended before hitting the API, so the backend always
+                  // looked up a bare 10-digit number it has no record of.
+                  final fullPhone = "${authCtrl.countryCode}$phone";
+
+                  bool success = await authCtrl.sendOtp(fullPhone, silent: true);
                   if (success) {
-                    Get.to(() => OtpVerificationScreen(phoneNumber: phone));
+                    // Not always fullPhone — sendOtp may have fallen back to
+                    // the bare digits for an older account stored without a
+                    // country code. verifyOtp must use whichever matched.
+                    Get.to(
+                      () => OtpVerificationScreen(
+                        phoneNumber: authCtrl.lastUsedPhone,
+                      ),
+                    );
                   } else if (authCtrl.lastLoginUserNotFound) {
+                    // Raw digits here, not fullPhone — this sheet prepends
+                    // the country code itself for display.
                     _showUserNotFoundSheet(context, phone);
                   } else {
                     AppToast.show(
