@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -155,18 +154,7 @@ class CustomerController extends GetxController {
     required String preferredTime,
     required List<String> deliveryDays,
   }) async {
-    // BUG #2409 — prevent duplicate phone number among existing customers
-    final isDuplicate = customers.any((c) => c.phone.trim() == phone.trim());
-    if (isDuplicate) {
-      Fluttertoast.showToast(
-        msg: "A customer with this phone number already exists",
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
-      return false;
-    }
-
-   try {
+    try {
       final messId = dashboardController.selectedMessId;
       if (messId == null) {
         Fluttertoast.showToast(

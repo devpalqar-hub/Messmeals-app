@@ -82,9 +82,13 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
   }
 
-  bool isNameSaving = false;
-  Future<void> _updateCustomerName(String newName) async {
-    setState(() => isNameSaving = true);
+  bool isProfileSaving = false;
+  Future<void> _updateCustomerProfile({
+    required String name,
+    required String phone,
+    required String address,
+  }) async {
+    setState(() => isProfileSaving = true);
     try {
       final response = await patch(
         Uri.parse('$baseUrl/customer/${customer.customerProfileId}'),
@@ -92,236 +96,216 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
-        body: json.encode({"name": newName}),
+        body: json.encode({"name": name, "phone": phone, "address": address}),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         await _fetchCustomer();
-        _showSnack('Saved', 'Customer name updated successfully', _C.green);
+        _showSnack('Saved', 'Customer details updated successfully', _C.green);
       } else {
         _showSnack(
           "Error",
-          json.decode(response.body)["message"] ?? 'Failed to update name',
+          json.decode(response.body)["message"] ?? 'Failed to update details',
           _C.red,
         );
       }
     } catch (e) {
       _showSnack('Error', 'An error occurred: $e', _C.red);
     } finally {
-      if (mounted) setState(() => isNameSaving = false);
+      if (mounted) setState(() => isProfileSaving = false);
     }
   }
 
-  void _showEditNameSheet() {
-    final ctrl = TextEditingController(text: customer.name ?? '');
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-            title: Text(
-              'Edit Name',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-            content: TextField(
-              controller: ctrl,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'Enter full name',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final newName = ctrl.text.trim();
-                  if (newName.isEmpty) return;
-                  Navigator.pop(ctx);
-                  _updateCustomerName(newName);
-                },
-                child: Text(
-                  'Save',
-                  style: TextStyle(
-                    color: _C.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+  /// One combined sheet for name, phone and address — replaces the previous
+  /// per-field edit icons so updating a customer's details is a single
+  /// action instead of three separate ones.
+  void _showEditProfileSheet() {
+    final nameCtrl = TextEditingController(text: customer.name ?? '');
+    final phoneCtrl = TextEditingController(text: customer.phone ?? '');
+    final addressCtrl = TextEditingController(text: customer.address ?? '');
+
+    Widget fieldLabel(String text) => Text(
+      text,
+      style: GoogleFonts.poppins(
+        fontSize: 12.5.sp,
+        fontWeight: FontWeight.w600,
+        color: _C.textSecondary,
+      ),
     );
-  }
 
-  bool isPhoneSaving = false;
-  Future<void> _updateCustomerPhone(String newPhone) async {
-    setState(() => isPhoneSaving = true);
-    try {
-      final response = await patch(
-        Uri.parse('$baseUrl/customer/${customer.customerProfileId}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': bearerToken,
-        },
-        body: json.encode({"phone": newPhone}),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await _fetchCustomer();
-        _showSnack('Saved', 'Phone number updated successfully', _C.green);
-      } else {
-        _showSnack(
-          "Error",
-          json.decode(response.body)["message"] ?? 'Failed to update phone number',
-          _C.red,
-        );
-      }
-    } catch (e) {
-      _showSnack('Error', 'An error occurred: $e', _C.red);
-    } finally {
-      if (mounted) setState(() => isPhoneSaving = false);
-    }
-  }
-
-  void _showEditPhoneSheet() {
-    final ctrl = TextEditingController(text: customer.phone ?? '');
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-            title: Text(
-              'Edit Phone Number',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-            content: TextField(
-              controller: ctrl,
-              autofocus: true,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(10),
-              ],
-              decoration: InputDecoration(
-                hintText: 'Enter 10-digit phone number',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final newPhone = ctrl.text.trim();
-                  if (!RegExp(r'^\d{10}$').hasMatch(newPhone)) {
-                    _showSnack(
-                      'Invalid',
-                      'Please enter a valid 10-digit phone number',
-                      _C.red,
-                    );
-                    return;
-                  }
-                  Navigator.pop(ctx);
-                  _updateCustomerPhone(newPhone);
-                },
-                child: Text(
-                  'Save',
-                  style: TextStyle(
-                    color: _C.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+    InputDecoration fieldDecoration(String hint) => InputDecoration(
+      hintText: hint,
+      hintStyle: GoogleFonts.poppins(fontSize: 13.sp, color: _C.textTertiary),
+      contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10.r),
+        borderSide: BorderSide(color: _C.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10.r),
+        borderSide: BorderSide(color: _C.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10.r),
+        borderSide: const BorderSide(color: _C.primary, width: 1.5),
+      ),
     );
-  }
 
-  bool isAddressSaving = false;
-  Future<void> _updateCustomerAddress(String newAddress) async {
-    setState(() => isAddressSaving = true);
-    try {
-      final response = await patch(
-        Uri.parse('$baseUrl/customer/${customer.customerProfileId}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': bearerToken,
-        },
-        body: json.encode({"address": newAddress}),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await _fetchCustomer();
-        _showSnack('Saved', 'Address updated successfully', _C.green);
-      } else {
-        _showSnack(
-          "Error",
-          json.decode(response.body)["message"] ?? 'Failed to update address',
-          _C.red,
-        );
-      }
-    } catch (e) {
-      _showSnack('Error', 'An error occurred: $e', _C.red);
-    } finally {
-      if (mounted) setState(() => isAddressSaving = false);
-    }
-  }
-
-  void _showEditAddressSheet() {
-    final ctrl = TextEditingController(text: customer.address ?? '');
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14.r),
+          (ctx) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
             ),
-            title: Text(
-              'Edit Address',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-            content: TextField(
-              controller: ctrl,
-              autofocus: true,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Enter address',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final newAddress = ctrl.text.trim();
-                  if (newAddress.isEmpty) return;
-                  Navigator.pop(ctx);
-                  _updateCustomerAddress(newAddress);
-                },
-                child: Text(
-                  'Save',
-                  style: TextStyle(
-                    color: _C.primary,
-                    fontWeight: FontWeight.w600,
+            child: SafeArea(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _C.surface,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(20.r),
                   ),
                 ),
+                padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        margin: EdgeInsets.only(bottom: 16.h),
+                        decoration: BoxDecoration(
+                          color: _C.border,
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Edit Customer Details',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: _C.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 18.h),
+                    fieldLabel('Name'),
+                    SizedBox(height: 6.h),
+                    TextField(
+                      controller: nameCtrl,
+                      autofocus: true,
+                      decoration: fieldDecoration('Enter full name'),
+                    ),
+                    SizedBox(height: 14.h),
+                    fieldLabel('Phone Number'),
+                    SizedBox(height: 6.h),
+                    TextField(
+                      controller: phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      decoration: fieldDecoration(
+                        'Enter 10-digit phone number',
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    fieldLabel('Address'),
+                    SizedBox(height: 6.h),
+                    TextField(
+                      controller: addressCtrl,
+                      maxLines: 3,
+                      decoration: fieldDecoration('Enter address'),
+                    ),
+                    SizedBox(height: 22.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 13.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                                side: BorderSide(color: _C.border),
+                              ),
+                            ),
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                color: _C.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _C.primary,
+                              padding: EdgeInsets.symmetric(vertical: 13.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: () {
+                              final newName = nameCtrl.text.trim();
+                              final newPhone = phoneCtrl.text.trim();
+                              final newAddress = addressCtrl.text.trim();
+
+                              if (newName.isEmpty) {
+                                _showSnack(
+                                  'Invalid',
+                                  'Please enter a name',
+                                  _C.red,
+                                );
+                                return;
+                              }
+                              if (!RegExp(r'^\d{10}$').hasMatch(newPhone)) {
+                                _showSnack(
+                                  'Invalid',
+                                  'Please enter a valid 10-digit phone number',
+                                  _C.red,
+                                );
+                                return;
+                              }
+                              if (newAddress.isEmpty) {
+                                _showSnack(
+                                  'Invalid',
+                                  'Please enter an address',
+                                  _C.red,
+                                );
+                                return;
+                              }
+
+                              Navigator.pop(ctx);
+                              _updateCustomerProfile(
+                                name: newName,
+                                phone: newPhone,
+                                address: newAddress,
+                              );
+                            },
+                            child: Text(
+                              'Save',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
     );
   }
@@ -639,48 +623,16 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      customer.name ?? 'N/A',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                        color: _C.textPrimary,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: isNameSaving ? null : _showEditNameSheet,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 6.w),
-                      child:
-                          isNameSaving
-                              ? SizedBox(
-                                height: 14.sp,
-                                width: 14.sp,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: _C.primary,
-                                ),
-                              )
-                              : Icon(
-                                Icons.edit_outlined,
-                                size: 16.sp,
-                                color: _C.textSecondary,
-                              ),
-                    ),
-                  ),
-                ],
+              Text(
+                customer.name ?? 'N/A',
+                style: GoogleFonts.poppins(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: _C.textPrimary,
+                ),
               ),
               SizedBox(height: 7.h),
-              _infoRow(
-                Icons.phone_outlined,
-                customer.phone ?? 'N/A',
-                onEdit: _showEditPhoneSheet,
-                isSaving: isPhoneSaving,
-              ),
+              _infoRow(Icons.phone_outlined, customer.phone ?? 'N/A'),
               if (customer.email?.isNotEmpty ?? false) ...[
                 SizedBox(height: 5.h),
                 _infoRow(Icons.email_outlined, customer.email!),
@@ -691,15 +643,54 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 (customer.address?.isNotEmpty ?? false)
                     ? customer.address!
                     : 'No address provided',
-                onEdit: _showEditAddressSheet,
-                isSaving: isAddressSaving,
               ),
               SizedBox(height: 10.h),
               _statusBadge(),
             ],
           ),
         ),
+        SizedBox(width: 8.w),
+        _editProfileButton(),
       ],
+    ),
+  );
+
+  /// Single entry point for editing the whole customer profile (name,
+  /// phone, address) — replaces the old per-field edit icons.
+  Widget _editProfileButton() => GestureDetector(
+    onTap: isProfileSaving ? null : _showEditProfileSheet,
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+      decoration: BoxDecoration(
+        color: _C.primaryLight,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: _C.primaryMid),
+      ),
+      child:
+          isProfileSaving
+              ? SizedBox(
+                height: 14.sp,
+                width: 14.sp,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: _C.primary,
+                ),
+              )
+              : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.edit_outlined, size: 14.sp, color: _C.greenMid),
+                  SizedBox(width: 4.w),
+                  Text(
+                    'Edit',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _C.greenMid,
+                    ),
+                  ),
+                ],
+              ),
     ),
   );
 
@@ -1139,12 +1130,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     child: child,
   );
 
-  Widget _infoRow(
-    IconData icon,
-    String text, {
-    VoidCallback? onEdit,
-    bool isSaving = false,
-  }) => Row(
+  Widget _infoRow(IconData icon, String text) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Icon(icon, size: 13.sp, color: _C.textTertiary),
@@ -1155,28 +1141,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           style: GoogleFonts.poppins(fontSize: 12.sp, color: _C.textSecondary),
         ),
       ),
-      if (onEdit != null)
-        GestureDetector(
-          onTap: isSaving ? null : onEdit,
-          child: Padding(
-            padding: EdgeInsets.only(left: 6.w),
-            child:
-                isSaving
-                    ? SizedBox(
-                      height: 12.sp,
-                      width: 12.sp,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: _C.primary,
-                      ),
-                    )
-                    : Icon(
-                      Icons.edit_outlined,
-                      size: 13.sp,
-                      color: _C.textSecondary,
-                    ),
-          ),
-        ),
     ],
   );
 
@@ -2611,7 +2575,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                         ),
                         SizedBox(height: 16.h),
                         Text(
-                        "Discount Amount (₹)",
+                          "Discount Amount (₹)",
                           style: GoogleFonts.poppins(
                             fontSize: 11.sp,
                             color: _C.textSecondary,
