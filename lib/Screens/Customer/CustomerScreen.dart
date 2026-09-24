@@ -58,7 +58,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
       search: searchQuery.isEmpty ? null : searchQuery,
       planId: selectedPlanId.isEmpty ? null : selectedPlanId,
       subscriptionFilter:
-          selectedSubscriptionFilter.isEmpty ? null : selectedSubscriptionFilter,
+          selectedSubscriptionFilter.isEmpty
+              ? null
+              : selectedSubscriptionFilter,
     );
   }
 
@@ -250,7 +252,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     label: "Ending in 7 Days",
                     selected: selectedSubscriptionFilter == "ending_soon",
                     onTap: () {
-                      setState(() => selectedSubscriptionFilter = "ending_soon");
+                      setState(
+                        () => selectedSubscriptionFilter = "ending_soon",
+                      );
                       _loadCustomers(reset: true);
                     },
                   ),
@@ -279,7 +283,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                     final showLoadingFooter = controller.isMoreLoading;
                     final itemCount =
-                        controller.customers.length + (showLoadingFooter ? 1 : 0);
+                        controller.customers.length +
+                        (showLoadingFooter ? 1 : 0);
 
                     return ListView.separated(
                       controller: _scrollController,
@@ -293,7 +298,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
                               child: SizedBox(
                                 height: 22,
                                 width: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2.2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                ),
                               ),
                             ),
                           );

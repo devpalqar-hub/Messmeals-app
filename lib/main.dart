@@ -5,9 +5,11 @@ import 'package:get/get.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/OnboardingScreen/Service/onboarding_controller.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/routes.dart';
 import 'package:mess/dashbaord_binding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 String baseUrl = "https://api.messmeals.com";
 //String baseUrl = "https://staging-api.messmeals.com";
@@ -57,21 +59,24 @@ class MessMeals extends StatelessWidget {
             ),
             switchTheme: SwitchThemeData(
               thumbColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.selected)
-                    ? AppColors.primary
-                    : null,
+                (states) =>
+                    states.contains(WidgetState.selected)
+                        ? AppColors.primary
+                        : null,
               ),
               trackColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.selected)
-                    ? AppColors.primary.withOpacity(0.4)
-                    : null,
+                (states) =>
+                    states.contains(WidgetState.selected)
+                        ? AppColors.primary.withOpacity(0.4)
+                        : null,
               ),
             ),
             checkboxTheme: CheckboxThemeData(
               fillColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.selected)
-                    ? AppColors.primary
-                    : null,
+                (states) =>
+                    states.contains(WidgetState.selected)
+                        ? AppColors.primary
+                        : null,
               ),
             ),
             appBarTheme: const AppBarTheme(
@@ -81,12 +86,23 @@ class MessMeals extends StatelessWidget {
             ),
           ),
           // BUG #2414 — stops keyboard from causing layout overflow on iPhone
+          //
+          // Wraps the whole app in one ShowCaseWidget so the Home dashboard's
+          // guided tour (see HomeScreen.dart) has a ShowCaseWidget ancestor
+          // to find via ShowCaseWidget.of(context) wherever it's triggered
+          // from. onFinish marks the tour as permanently seen once the
+          // whole sequence completes.
           builder: (context, widget) {
-            return MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.noScaling),
-              child: widget!,
+            return ShowCaseWidget(
+              onFinish: () => AppTourController.instance.markSeen(),
+              builder: (context) {
+                return MediaQuery(
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(textScaler: TextScaler.noScaling),
+                  child: widget!,
+                );
+              },
             );
           },
         );

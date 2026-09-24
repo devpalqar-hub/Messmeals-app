@@ -88,7 +88,10 @@ class ExpenseScreen extends StatelessWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
-                        borderSide: BorderSide(color: Colors.grey, width: 1.5.w),
+                        borderSide: BorderSide(
+                          color: Colors.grey,
+                          width: 1.5.w,
+                        ),
                       ),
                     ),
                   ),
@@ -276,7 +279,10 @@ class ExpenseScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 11.sp, color: Colors.grey[600])),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11.sp, color: Colors.grey[600]),
+          ),
           SizedBox(height: 4.h),
           Text(
             value,
@@ -365,7 +371,9 @@ void _showDeleteDialog(
     builder: (BuildContext ctx) {
       return Dialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
         child: Padding(
           padding: EdgeInsets.all(20.w),
           child: Column(
@@ -453,7 +461,9 @@ void _showRecordPaymentDialog(
     builder: (BuildContext ctx) {
       return Dialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
         child: Padding(
           padding: EdgeInsets.all(20.w),
           child: Column(
@@ -479,7 +489,9 @@ void _showRecordPaymentDialog(
               TextField(
                 controller: paidAmountCtrl,
                 autofocus: true,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   hintText: "e.g. ${expense.amount.toStringAsFixed(0)}",
                   contentPadding: EdgeInsets.symmetric(

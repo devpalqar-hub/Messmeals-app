@@ -52,6 +52,7 @@ dependencies:
   firebase_core: ^4.10.0
   share_plus: ^10.1.4
   path_provider: ^2.1.5
+  showcaseview: ^5.1.0
 
 dev_dependencies:
   flutter_test:

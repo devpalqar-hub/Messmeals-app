@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/Utils/TiffinBoxIcon.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourTooltipActions.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class BottomBar extends StatelessWidget {
   final int selectedIndex;
@@ -16,11 +19,14 @@ class BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       {
-        'icon': (Color c, double s) => Icon(Icons.home_outlined, color: c, size: s),
+        'icon':
+            (Color c, double s) => Icon(Icons.home_outlined, color: c, size: s),
         'label': 'Home',
       },
       {
-        'icon': (Color c, double s) => Icon(Icons.group_outlined, color: c, size: s),
+        'icon':
+            (Color c, double s) =>
+                Icon(Icons.group_outlined, color: c, size: s),
         'label': 'Customers',
       },
       {
@@ -34,7 +40,9 @@ class BottomBar extends StatelessWidget {
         'label': 'Deliveries',
       },
       {
-        'icon': (Color c, double s) => Icon(Icons.assignment_outlined, color: c, size: s),
+        'icon':
+            (Color c, double s) =>
+                Icon(Icons.assignment_outlined, color: c, size: s),
         'label': 'Plans',
       },
       {
@@ -44,6 +52,16 @@ class BottomBar extends StatelessWidget {
         'label': 'Menu',
       },
     ];
+
+    // The guided tour spotlights the Menu, Plans and Deliveries tabs
+    // individually (steps 2, 3 and 6 of 8) — everything else on this bar
+    // is left unwrapped.
+    const tourStepForIndex = {5: 2, 4: 3, 3: 6};
+    final tourKeyForIndex = {
+      5: TourKeys.bottomNavMenu,
+      4: TourKeys.bottomNavPlans,
+      3: TourKeys.bottomNavDeliveries,
+    };
 
     return Container(
       height: 60, // ✅ FIX 1 → fixed slim height
@@ -57,7 +75,7 @@ class BottomBar extends StatelessWidget {
           final item = items[index];
           final isSelected = index == selectedIndex;
 
-          return GestureDetector(
+          final navItem = GestureDetector(
             onTap: () => onItemTapped(index),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center, // ✅ center items
@@ -77,6 +95,37 @@ class BottomBar extends StatelessWidget {
                 ),
               ],
             ),
+          );
+
+          final tourStep = tourStepForIndex[index];
+          if (tourStep == null) return navItem;
+
+          return Showcase(
+            key: tourKeyForIndex[index]!,
+            title: switch (item['label']) {
+              'Menu' => 'Tap here to manage your Menu',
+              'Plans' => 'Tap here to manage your Plans',
+              _ => 'Tap here to track Deliveries',
+            },
+            description: switch (item['label']) {
+              'Menu' => 'Build your weekly menu — what\'s served each day.',
+              'Plans' =>
+                'Create a subscription plan — set the price and schedule.',
+              _ => 'Track today\'s deliveries and mark orders as delivered.',
+            },
+            titleTextStyle: tourTitleStyle(),
+            descTextStyle: tourDescStyle(),
+            tooltipBorderRadius: tourTooltipBorderRadius(),
+            tooltipPadding: tourTooltipPadding(),
+            tooltipActionConfig: const TooltipActionConfig(
+              alignment: MainAxisAlignment.spaceBetween,
+            ),
+            tooltipActions: tourTooltipActions(
+              context,
+              step: tourStep,
+              total: TourKeys.sequence.length,
+            ),
+            child: navItem,
           );
         }),
       ),

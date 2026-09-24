@@ -103,7 +103,10 @@ class MenuScreen extends StatelessWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
-                        borderSide: BorderSide(color: Colors.grey, width: 1.5.w),
+                        borderSide: BorderSide(
+                          color: Colors.grey,
+                          width: 1.5.w,
+                        ),
                       ),
                     ),
                   ),

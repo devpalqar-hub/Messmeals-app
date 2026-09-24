@@ -27,9 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
 
     screens = [
-      Homescreen(
-        onNavigateToTab: onTabTapped,
-      ),
+      Homescreen(onNavigateToTab: onTabTapped),
       CustomersScreen(),
       PartnerScreen(),
       DeliveriesScreen(),
@@ -58,9 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
 
-      body: SafeArea(
-        child: screens[selectedIndex],
-      ),
+      body: SafeArea(child: screens[selectedIndex]),
     );
   }
 }

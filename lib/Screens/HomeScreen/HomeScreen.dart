@@ -19,6 +19,10 @@ import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourTooltipActions.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class Homescreen extends StatelessWidget {
   final Function(int) onNavigateToTab;
@@ -26,6 +30,27 @@ class Homescreen extends StatelessWidget {
 
   final HomeScreenController ctrl = Get.put(HomeScreenController());
   final ExpenseController expenseController = Get.put(ExpenseController());
+
+  // Guards against re-starting the tour every time this rebuilds (it
+  // rebuilds often via GetBuilder<HomeScreenController> as dashboard data
+  // loads) — "don't show again" persistence is the SharedPreferences flag
+  // checked inside _maybeStartTour.
+  static bool _tourStartAttempted = false;
+
+  /// Kicks off the guided tour — one sequence of "tap here to do X" stops
+  /// across the Home dashboard's own buttons, in the order the owner
+  /// should actually set things up — the first time the real dashboard
+  /// content (not the loading shimmer) is on screen, unless they've
+  /// already completed (or skipped) it before.
+  Future<void> _maybeStartTour(BuildContext context) async {
+    if (_tourStartAttempted) return;
+    _tourStartAttempted = true;
+
+    final alreadySeen = await AppTourController.instance.hasSeenTour();
+    if (alreadySeen) return;
+
+    ShowCaseWidget.of(context).startShowCase(TourKeys.sequence);
+  }
 
   // BUG #2427 — Logout function: clears prefs and navigates to login
   Future<void> _logout(BuildContext context) async {
@@ -109,7 +134,10 @@ class Homescreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 13.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 25.w,
+                    vertical: 13.h,
+                  ),
                 ),
               ),
               SizedBox(height: 12.h),
@@ -136,6 +164,12 @@ class Homescreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<HomeScreenController>(
       builder: (__) {
+        if (ctrl.dashboardData != null) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _maybeStartTour(context),
+          );
+        }
+
         return (ctrl.dashboardData == null)
             ? (ctrl.profileLoadFailed
                 ? _buildLoadErrorView(context, ctrl)
@@ -227,15 +261,33 @@ class Homescreen extends StatelessWidget {
                     ),
 
                     // Settings icon — opens the Mess Profile Settings screen
-                    IconButton(
-                      onPressed: () {
-                        Get.to(
-                          () => const MessProfileSettingsScreen(),
-                          transition: Transition.rightToLeft,
-                        );
-                      },
-                      icon: const Icon(Icons.settings_outlined),
-                      color: const Color(0xFF111827),
+                    Showcase(
+                      key: TourKeys.settingsGear,
+                      title: 'Tap here to complete your Mess Profile',
+                      description:
+                          'Start here — add your name, cover photo and address so your listing is ready.',
+                      titleTextStyle: tourTitleStyle(),
+                      descTextStyle: tourDescStyle(),
+                      tooltipBorderRadius: tourTooltipBorderRadius(),
+                      tooltipPadding: tourTooltipPadding(),
+                      tooltipActionConfig: const TooltipActionConfig(
+                        alignment: MainAxisAlignment.spaceBetween,
+                      ),
+                      tooltipActions: tourTooltipActions(
+                        context,
+                        step: 1,
+                        total: TourKeys.sequence.length,
+                      ),
+                      child: IconButton(
+                        onPressed: () {
+                          Get.to(
+                            () => const MessProfileSettingsScreen(),
+                            transition: Transition.rightToLeft,
+                          );
+                        },
+                        icon: const Icon(Icons.settings_outlined),
+                        color: const Color(0xFF111827),
+                      ),
                     ),
                   ],
                 ),
@@ -252,73 +304,93 @@ class Homescreen extends StatelessWidget {
                           SizedBox(height: 16.h),
 
                           // TOP REVENUE CARD
-                          Container(
-                            width: double.infinity,
-                            margin: EdgeInsets.symmetric(horizontal: 10.w),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 22.w,
-                              vertical: 18.h,
+                          Showcase(
+                            key: TourKeys.revenueCard,
+                            title: 'Track Your Revenue',
+                            description:
+                                'And finally — this is where you\'ll watch it all pay off. Your total earnings, updated in real time.',
+                            targetBorderRadius: BorderRadius.circular(14.r),
+                            titleTextStyle: tourTitleStyle(),
+                            descTextStyle: tourDescStyle(),
+                            tooltipBorderRadius: tourTooltipBorderRadius(),
+                            tooltipPadding: tourTooltipPadding(),
+                            tooltipActionConfig: const TooltipActionConfig(
+                              alignment: MainAxisAlignment.spaceBetween,
                             ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14.r),
-                              gradient: LinearGradient(
-                                colors: AppColors.primaryGradient,
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                            tooltipActions: tourTooltipActions(
+                              context,
+                              step: 8,
+                              total: TourKeys.sequence.length,
+                            ),
+                            child: Container(
+                              width: double.infinity,
+                              margin: EdgeInsets.symmetric(horizontal: 10.w),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 22.w,
+                                vertical: 18.h,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.28),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 8),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14.r),
+                                gradient: LinearGradient(
+                                  colors: AppColors.primaryGradient,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  right: -6.w,
-                                  top: -6.h,
-                                  child: Icon(
-                                    Icons.account_balance_wallet_rounded,
-                                    size: 72.sp,
-                                    color: Colors.white.withOpacity(0.14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withOpacity(0.28),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 8),
                                   ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Total Revenue",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.white.withOpacity(0.9),
-                                      ),
+                                ],
+                              ),
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    right: -6.w,
+                                    top: -6.h,
+                                    child: Icon(
+                                      Icons.account_balance_wallet_rounded,
+                                      size: 72.sp,
+                                      color: Colors.white.withOpacity(0.14),
                                     ),
-                                    SizedBox(height: 6.h),
-                                    // BUG #2435 — format to avoid long decimal overflow
-                                    Text(
-                                      "₹ ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 26.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                                  ),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Total Revenue",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white.withOpacity(0.9),
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: 6.h),
-                                    Text(
-                                      "Overall earnings",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.white.withOpacity(0.85),
+                                      SizedBox(height: 6.h),
+                                      // BUG #2435 — format to avoid long decimal overflow
+                                      Text(
+                                        "₹ ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 26.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                      SizedBox(height: 6.h),
+                                      Text(
+                                        "Overall earnings",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.white.withOpacity(0.85),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
 
@@ -348,7 +420,9 @@ class Homescreen extends StatelessWidget {
                                   period: 'This Month',
                                   icon: Icons.trending_up,
                                   themeColor: AppColors.primaryDark,
-                                  iconBgColor: AppColors.primary.withOpacity(0.12),
+                                  iconBgColor: AppColors.primary.withOpacity(
+                                    0.12,
+                                  ),
                                   cardBgColor: const Color(0xFFF9FCF9),
                                 ),
                               ),
@@ -370,82 +444,92 @@ class Homescreen extends StatelessWidget {
                           SizedBox(height: 22.h),
 
                           // OVERVIEW — KPI GRID (BUG #2435: format Avg/Customer to avoid overflow)
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w),
-                            child: Text(
-                              'Overview',
-                              style: GoogleFonts.poppins(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF111827),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                                child: Text(
+                                  'Overview',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF111827),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          SizedBox(height: 10.h),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _kpiCard(
-                                    onTap: () => onNavigateToTab(3),
-                                    icon: Icons.shopping_bag_outlined,
-                                    iconColor: const Color(0xFF4CB051),
-                                    iconBgColor: const Color(0xFFE4F3E8),
-                                    label: 'Orders',
-                                    value:
-                                        '${ctrl.dashboardData!.totalOrders ?? 0}',
-                                  ),
-                                ),
-                                SizedBox(width: 10.w),
-                                Expanded(
-                                  child: _kpiCard(
-                                    onTap: () => onNavigateToTab(1),
-                                    icon: Icons.group_outlined,
-                                    iconColor: const Color(0xFF10938F),
-                                    iconBgColor: const Color(0xFFE2F3F3),
-                                    label: 'Customers',
-                                    value:
-                                        '${ctrl.dashboardData!.totalCustomers ?? 0}',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10.h),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _kpiCard(
-                                    onTap: () => onNavigateToTab(2),
-                                    icon: Icons.handshake_outlined,
-                                    iconColor: const Color(0xFFF67C31),
-                                    iconBgColor: const Color(0xFFFEF3ED),
-                                    label: 'Partners',
-                                    value:
-                                        '${ctrl.dashboardData!.totalPartners ?? 0}',
-                                  ),
-                                ),
-                                SizedBox(width: 10.w),
-                                Expanded(
-                                  child: GetBuilder<ExpenseController>(
-                                    builder: (expenseCtrl) {
-                                      return _kpiCard(
-                                        onTap: () => Get.to(() => const ExpenseScreen()),
-                                        icon: Icons.receipt_long_outlined,
-                                        iconColor: const Color(0xFFC0392B),
-                                        iconBgColor: const Color(0xFFFBEAE8),
-                                        label: 'Expenses',
+                              SizedBox(height: 10.h),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _kpiCard(
+                                        onTap: () => onNavigateToTab(3),
+                                        icon: Icons.shopping_bag_outlined,
+                                        iconColor: const Color(0xFF4CB051),
+                                        iconBgColor: const Color(0xFFE4F3E8),
+                                        label: 'Orders',
                                         value:
-                                            '₹${_formatAmount(expenseCtrl.listSummary.total.amount)}',
-                                      );
-                                    },
-                                  ),
+                                            '${ctrl.dashboardData!.totalOrders ?? 0}',
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: _kpiCard(
+                                        onTap: () => onNavigateToTab(1),
+                                        icon: Icons.group_outlined,
+                                        iconColor: const Color(0xFF10938F),
+                                        iconBgColor: const Color(0xFFE2F3F3),
+                                        label: 'Customers',
+                                        value:
+                                            '${ctrl.dashboardData!.totalCustomers ?? 0}',
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(height: 10.h),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _kpiCard(
+                                        onTap: () => onNavigateToTab(2),
+                                        icon: Icons.handshake_outlined,
+                                        iconColor: const Color(0xFFF67C31),
+                                        iconBgColor: const Color(0xFFFEF3ED),
+                                        label: 'Partners',
+                                        value:
+                                            '${ctrl.dashboardData!.totalPartners ?? 0}',
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: GetBuilder<ExpenseController>(
+                                        builder: (expenseCtrl) {
+                                          return _kpiCard(
+                                            onTap:
+                                                () => Get.to(
+                                                  () => const ExpenseScreen(),
+                                                ),
+                                            icon: Icons.receipt_long_outlined,
+                                            iconColor: const Color(0xFFC0392B),
+                                            iconBgColor: const Color(
+                                              0xFFFBEAE8,
+                                            ),
+                                            label: 'Expenses',
+                                            value:
+                                                '₹${_formatAmount(expenseCtrl.listSummary.total.amount)}',
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
 
                           SizedBox(height: 22.h),
@@ -468,33 +552,76 @@ class Homescreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Expanded(
-                                  child: InkWell(
-                                    onTap:
-                                        () => Get.to(
-                                          () => AddCustomerScreen(),
-                                          transition: Transition.rightToLeft,
+                                  child: Showcase(
+                                    key: TourKeys.quickActionCustomer,
+                                    title: 'Tap here to Add a Customer',
+                                    description:
+                                        'Enroll a new customer and pick which plan and delivery schedule they subscribe to.',
+                                    titleTextStyle: tourTitleStyle(),
+                                    descTextStyle: tourDescStyle(),
+                                    tooltipBorderRadius:
+                                        tourTooltipBorderRadius(),
+                                    tooltipPadding: tourTooltipPadding(),
+                                    tooltipActionConfig:
+                                        const TooltipActionConfig(
+                                          alignment:
+                                              MainAxisAlignment.spaceBetween,
                                         ),
-                                    child: QuickActionCard(
-                                      label: 'Add Customer',
-                                      icon: Icons.person_add_alt_1_outlined,
-                                      iconColor: AppColors.primaryDark,
-                                      iconBgColor: AppColors.primary.withOpacity(0.12),
+                                    tooltipActions: tourTooltipActions(
+                                      context,
+                                      step: 5,
+                                      total: TourKeys.sequence.length,
+                                    ),
+                                    child: InkWell(
+                                      onTap:
+                                          () => Get.to(
+                                            () => AddCustomerScreen(),
+                                            transition: Transition.rightToLeft,
+                                          ),
+                                      child: QuickActionCard(
+                                        label: 'Add Customer',
+                                        icon: Icons.person_add_alt_1_outlined,
+                                        iconColor: AppColors.primaryDark,
+                                        iconBgColor: AppColors.primary
+                                            .withOpacity(0.12),
+                                      ),
                                     ),
                                   ),
                                 ),
                                 SizedBox(width: 8.w),
                                 Expanded(
-                                  child: InkWell(
-                                    onTap:
-                                        () => Get.to(
-                                          () => AddPartnerScreen(),
-                                          transition: Transition.rightToLeft,
+                                  child: Showcase(
+                                    key: TourKeys.quickActionPartner,
+                                    title: 'Tap here to Add a Partner',
+                                    description:
+                                        'Register the people who deliver your meals — you\'ll assign them to customers later.',
+                                    titleTextStyle: tourTitleStyle(),
+                                    descTextStyle: tourDescStyle(),
+                                    tooltipBorderRadius:
+                                        tourTooltipBorderRadius(),
+                                    tooltipPadding: tourTooltipPadding(),
+                                    tooltipActionConfig:
+                                        const TooltipActionConfig(
+                                          alignment:
+                                              MainAxisAlignment.spaceBetween,
                                         ),
-                                    child: QuickActionCard(
-                                      label: 'Add Partner',
-                                      icon: Icons.delivery_dining,
-                                      iconColor: const Color(0xFF7D39D3),
-                                      iconBgColor: const Color(0xFFEFE8FB),
+                                    tooltipActions: tourTooltipActions(
+                                      context,
+                                      step: 4,
+                                      total: TourKeys.sequence.length,
+                                    ),
+                                    child: InkWell(
+                                      onTap:
+                                          () => Get.to(
+                                            () => AddPartnerScreen(),
+                                            transition: Transition.rightToLeft,
+                                          ),
+                                      child: QuickActionCard(
+                                        label: 'Add Partner',
+                                        icon: Icons.delivery_dining,
+                                        iconColor: const Color(0xFF7D39D3),
+                                        iconBgColor: const Color(0xFFEFE8FB),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -516,17 +643,38 @@ class Homescreen extends StatelessWidget {
                                 ),
                                 SizedBox(width: 8.w),
                                 Expanded(
-                                  child: InkWell(
-                                    onTap:
-                                        () => Get.to(
-                                          () => const ExpenseScreen(),
-                                          transition: Transition.rightToLeft,
+                                  child: Showcase(
+                                    key: TourKeys.quickActionExpenses,
+                                    title: 'Tap here to log Expenses',
+                                    description:
+                                        'Track your costs against categories to see them alongside your revenue.',
+                                    titleTextStyle: tourTitleStyle(),
+                                    descTextStyle: tourDescStyle(),
+                                    tooltipBorderRadius:
+                                        tourTooltipBorderRadius(),
+                                    tooltipPadding: tourTooltipPadding(),
+                                    tooltipActionConfig:
+                                        const TooltipActionConfig(
+                                          alignment:
+                                              MainAxisAlignment.spaceBetween,
                                         ),
-                                    child: QuickActionCard(
-                                      label: 'Expenses',
-                                      icon: Icons.receipt_long_outlined,
-                                      iconColor: const Color(0xFFC0392B),
-                                      iconBgColor: const Color(0xFFFBEAE8),
+                                    tooltipActions: tourTooltipActions(
+                                      context,
+                                      step: 7,
+                                      total: TourKeys.sequence.length,
+                                    ),
+                                    child: InkWell(
+                                      onTap:
+                                          () => Get.to(
+                                            () => const ExpenseScreen(),
+                                            transition: Transition.rightToLeft,
+                                          ),
+                                      child: QuickActionCard(
+                                        label: 'Expenses',
+                                        icon: Icons.receipt_long_outlined,
+                                        iconColor: const Color(0xFFC0392B),
+                                        iconBgColor: const Color(0xFFFBEAE8),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -564,7 +712,9 @@ class Homescreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(10.r),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.3),
+                                        color: AppColors.primary.withOpacity(
+                                          0.3,
+                                        ),
                                         blurRadius: 8,
                                         spreadRadius: 2,
                                         offset: const Offset(0, 4),

@@ -246,7 +246,23 @@ class PlanController extends GetxController {
         return true;
       }
 
-      Fluttertoast.showToast(msg: "Failed to save plan");
+      debugPrint("SAVE PLAN FAILED ${response.statusCode}: ${response.body}");
+      debugPrint("SAVE PLAN REQUEST BODY: ${jsonEncode(body)}");
+
+      // Show the backend's own reason (NestJS returns `message` as either a
+      // string or a list of validation errors) instead of a generic failure.
+      String reason = "Failed to save plan";
+      try {
+        final decoded = jsonDecode(response.body);
+        final message = decoded is Map ? decoded["message"] : null;
+        if (message is List && message.isNotEmpty) {
+          reason = message.join(", ");
+        } else if (message is String && message.isNotEmpty) {
+          reason = message;
+        }
+      } catch (_) {}
+
+      Fluttertoast.showToast(msg: reason, toastLength: Toast.LENGTH_LONG);
 
       return false;
     } catch (e) {
