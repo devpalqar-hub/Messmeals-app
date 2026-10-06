@@ -18,7 +18,7 @@ class AddPartnerScreen extends StatefulWidget {
 
 class _AddPartnerScreenState extends State<AddPartnerScreen> {
   final _formKey = GlobalKey<FormState>();
-   final PartnerController controller = Get.put(PartnerController());
+  final PartnerController controller = Get.put(PartnerController());
 
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
@@ -208,6 +208,24 @@ class _AddPartnerScreenState extends State<AddPartnerScreen> {
                                   r'^\d{10}$',
                                 ).hasMatch(value.trim())) {
                                   return "Enter a valid 10-digit phone number";
+                                }
+                                return null;
+                              },
+                            ),
+                            SizedBox(height: 14.h),
+
+                            // BUG #3192 — Address was collected by the
+                            // controller but had no field in this form, so
+                            // every partner was created with an empty
+                            // address/region, which the backend rejected.
+                            _buildTextField(
+                              label: "Address",
+                              hint: "Delivery region / address",
+                              controller: addressController,
+                              isRequired: true,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Address is required";
                                 }
                                 return null;
                               },

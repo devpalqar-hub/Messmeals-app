@@ -8,8 +8,11 @@ import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 import 'package:mess/Screens/PlanScreen/Views/AddPlanScreen.dart';
 import 'package:mess/Screens/PlanScreen/Views/PlanCard.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 import 'package:mess/main.dart';
 
 class PlanScreen extends StatelessWidget {
@@ -39,6 +42,21 @@ class PlanScreen extends StatelessWidget {
           padding: EdgeInsets.all(16.w),
           child: GetBuilder<PlanController>(
             builder: (controller) {
+              // Plans walkthrough — only runs when the owner tapped this tab
+              // from the tour prompt, not on every open. Waits for the first
+              // fetch so we know whether there's a plan card to point at.
+              final hasPlans = controller.plans.isNotEmpty;
+              if (controller.isReady && !controller.isLoading) {
+                AppTourController.instance.startIfRequested(
+                  context,
+                  AppTourController.plansTour,
+                  [
+                    TourKeys.plansAdd,
+                    if (hasPlans) ...[TourKeys.plansEdit, TourKeys.plansDelete],
+                  ],
+                );
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -47,25 +65,42 @@ class PlanScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const TittleText(text: "Plans"),
-                      ElevatedButton.icon(
-                        onPressed: () => _openAddPlan(controller),
-                        icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
-                        label: Text(
-                          "Add Plan",
-                          style: TextStyle(
+                      tourStop(
+                        context,
+                        key: TourKeys.plansAdd,
+                        tourId: AppTourController.plansTour,
+                        step: 1,
+                        total: hasPlans ? 3 : 1,
+                        title:
+                            hasPlans
+                                ? 'Tap here to create a Plan'
+                                : 'Tap here to create your first Plan',
+                        description:
+                            'Set the price, the meals it includes, and which days it runs.',
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openAddPlan(controller),
+                          icon: Icon(
+                            Icons.add,
+                            size: 18.sp,
                             color: Colors.white,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                          label: Text(
+                            "Add Plan",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 25.w,
-                            vertical: 13.h,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 25.w,
+                              vertical: 13.h,
+                            ),
                           ),
                         ),
                       ),
@@ -183,6 +218,8 @@ class PlanScreen extends StatelessWidget {
           ;
 
           return PlanCard(
+            // Only the first card carries the tour's edit / delete stops.
+            isTourTarget: index == 0,
             title: plan.planName,
             price: double.tryParse(plan.price) ?? 0,
             minPrice: double.tryParse(plan.minPrice) ?? 0,

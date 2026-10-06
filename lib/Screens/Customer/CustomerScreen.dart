@@ -8,7 +8,10 @@ import 'package:mess/Screens/Customer/Views/customer_summary_card.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -112,31 +115,48 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     ],
                   ),
 
-                  GestureDetector(
-                    onTap: _openAddCustomer,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 10.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.add, color: Colors.white, size: 18.sp),
-                          SizedBox(width: 5.w),
-                          Text(
-                            "Add Customer",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
+                  GetBuilder<CustomerController>(
+                    builder:
+                        (c) => tourStop(
+                          context,
+                          key: TourKeys.customersAdd,
+                          tourId: AppTourController.customersTour,
+                          step: 1,
+                          total: c.customers.isNotEmpty ? 3 : 2,
+                          title: 'Tap here to add a Customer',
+                          description:
+                              'Enter their details, pick a plan and delivery schedule, and top up their wallet.',
+                          child: GestureDetector(
+                            onTap: _openAddCustomer,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 10.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 18.sp,
+                                  ),
+                                  SizedBox(width: 5.w),
+                                  Text(
+                                    "Add Customer",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
                   ),
                 ],
               ),
@@ -160,32 +180,46 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 children: [
                   /// SEARCH
                   Expanded(
-                    child: Container(
-                      height: 45.h,
-                      padding: EdgeInsets.symmetric(horizontal: 10.w),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.search, size: 20.sp),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: TextField(
-                              controller: searchCtrl,
-                              onChanged: (value) {
-                                searchQuery = value;
-                                _loadCustomers(reset: true);
-                              },
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                hintText: "Search by name, phone or email",
+                    child: GetBuilder<CustomerController>(
+                      builder:
+                          (c) => tourStop(
+                            context,
+                            key: TourKeys.customersSearch,
+                            tourId: AppTourController.customersTour,
+                            step: 2,
+                            total: c.customers.isNotEmpty ? 3 : 2,
+                            title: 'Tap here to find a Customer',
+                            description:
+                                'Search by name, phone or email — the list filters as you type.',
+                            child: Container(
+                              height: 45.h,
+                              padding: EdgeInsets.symmetric(horizontal: 10.w),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.search, size: 20.sp),
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: searchCtrl,
+                                      onChanged: (value) {
+                                        searchQuery = value;
+                                        _loadCustomers(reset: true);
+                                      },
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        hintText:
+                                            "Search by name, phone or email",
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
                     ),
                   ),
 
@@ -271,6 +305,22 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       return const Center(child: CircularProgressIndicator());
                     }
 
+                    // Customers walkthrough — only runs when the owner tapped
+                    // this tab from the tour prompt, not on every open. Starts
+                    // once the list has loaded, so we know if there's a card.
+                    if (!controller.isLoading && !controller.isSummaryLoading) {
+                      AppTourController.instance.startIfRequested(
+                        context,
+                        AppTourController.customersTour,
+                        [
+                          TourKeys.customersAdd,
+                          TourKeys.customersSearch,
+                          if (controller.customers.isNotEmpty)
+                            TourKeys.customersCard,
+                        ],
+                      );
+                    }
+
                     if (controller.customers.isEmpty) {
                       return EmptyStateAddButton(
                         icon: Icons.group_outlined,
@@ -308,14 +358,26 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                         final customer = controller.customers[index];
 
-                        return CustomerCard(
-                          name: customer.name,
-                          phone: customer.phone,
-                          initials:
-                              customer.name.isNotEmpty
-                                  ? customer.name[0].toUpperCase()
-                                  : "",
-                          customer: customer,
+                        return tourStop(
+                          context,
+                          key: TourKeys.customersCard,
+                          tourId: AppTourController.customersTour,
+                          step: 3,
+                          total: 3,
+                          title: 'Tap a Customer to open their details',
+                          description:
+                              'See their wallet, subscriptions and history — and top up, pause, renew or cancel a plan.',
+                          // Only the first card carries the tour stop.
+                          enabled: index == 0,
+                          child: CustomerCard(
+                            name: customer.name,
+                            phone: customer.phone,
+                            initials:
+                                customer.name.isNotEmpty
+                                    ? customer.name[0].toUpperCase()
+                                    : "",
+                            customer: customer,
+                          ),
                         );
                       },
                     );

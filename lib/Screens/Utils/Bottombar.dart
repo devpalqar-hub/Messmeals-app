@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/Utils/TiffinBoxIcon.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 import 'package:mess/Screens/Utils/TourKeys.dart';
 import 'package:mess/Screens/Utils/TourTooltipActions.dart';
 import 'package:showcaseview/showcaseview.dart';
@@ -53,14 +55,46 @@ class BottomBar extends StatelessWidget {
       },
     ];
 
-    // The guided tour spotlights the Menu, Plans and Deliveries tabs
-    // individually (steps 2, 3 and 6 of 8) — everything else on this bar
-    // is left unwrapped.
+    // The Home tour spotlights the Menu, Plans and Deliveries tabs
+    // individually (steps 2, 3 and 6 of 8).
     const tourStepForIndex = {5: 2, 4: 3, 3: 6};
     final tourKeyForIndex = {
       5: TourKeys.bottomNavMenu,
       4: TourKeys.bottomNavPlans,
       3: TourKeys.bottomNavDeliveries,
+    };
+
+    // Every feature tab also carries a "Tap here to learn …" prompt, shown
+    // after the Home tour and after each previous feature walkthrough;
+    // tapping it opens the tab and starts that feature's walkthrough.
+    const promptTourForIndex = {
+      5: AppTourController.menuTour,
+      4: AppTourController.plansTour,
+      2: AppTourController.partnersTour,
+      1: AppTourController.customersTour,
+      3: AppTourController.deliveriesTour,
+    };
+    const promptTextForTour = {
+      AppTourController.menuTour: (
+        'Tap here to learn how to use Menu',
+        'We\'ll show you how to create, share, edit and delete a menu.',
+      ),
+      AppTourController.plansTour: (
+        'Tap here to learn how to use Plans',
+        'We\'ll show you how to create, edit and delete a plan.',
+      ),
+      AppTourController.partnersTour: (
+        'Tap here to learn Delivery Partners',
+        'We\'ll show you how to add, edit and delete a partner.',
+      ),
+      AppTourController.customersTour: (
+        'Tap here to learn how to use Customers',
+        'We\'ll show you how to add a customer, find one, and open their details.',
+      ),
+      AppTourController.deliveriesTour: (
+        'Tap here to learn how to use Deliveries',
+        'We\'ll show you how to read today\'s deliveries and update them.',
+      ),
     };
 
     return Container(
@@ -97,8 +131,21 @@ class BottomBar extends StatelessWidget {
             ),
           );
 
+          final promptTour = promptTourForIndex[index];
+          final tappable =
+              promptTour == null
+                  ? navItem
+                  : tourPrompt(
+                    key: TourKeys.promptFor(promptTour),
+                    tourId: promptTour,
+                    title: promptTextForTour[promptTour]!.$1,
+                    description: promptTextForTour[promptTour]!.$2,
+                    onOpen: () => onItemTapped(index),
+                    child: navItem,
+                  );
+
           final tourStep = tourStepForIndex[index];
-          if (tourStep == null) return navItem;
+          if (tourStep == null) return tappable;
 
           return Showcase(
             key: tourKeyForIndex[index]!,
@@ -115,8 +162,17 @@ class BottomBar extends StatelessWidget {
             },
             titleTextStyle: tourTitleStyle(),
             descTextStyle: tourDescStyle(),
+            descriptionPadding: tourDescPadding(),
             tooltipBorderRadius: tourTooltipBorderRadius(),
             tooltipPadding: tourTooltipPadding(),
+            targetBorderRadius: tourTargetBorderRadius(),
+            targetPadding: tourTargetPadding(),
+            overlayColor: tourOverlayColor(),
+            overlayOpacity: tourOverlayOpacity(),
+            blurValue: tourBlurValue(),
+            scaleAnimationDuration: tourScaleAnimationDuration(),
+            scaleAnimationCurve: tourScaleAnimationCurve(),
+            movingAnimationDuration: tourMovingAnimationDuration(),
             tooltipActionConfig: const TooltipActionConfig(
               alignment: MainAxisAlignment.spaceBetween,
             ),
@@ -125,7 +181,7 @@ class BottomBar extends StatelessWidget {
               step: tourStep,
               total: TourKeys.sequence.length,
             ),
-            child: navItem,
+            child: tappable,
           );
         }),
       ),

@@ -14,6 +14,9 @@ import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/MenuScreen/Models/MenuModel.dart';
 import 'package:mess/Screens/PlanScreen/Models/VariationModel.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 
 // On-screen grid: days run down the left (frozen) column, meal types run
 // across the top, scrollable horizontally if there are more than fit.
@@ -42,12 +45,17 @@ class MenuTimetableCard extends StatefulWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  /// True for the one card that carries the Menu tab tour's share / edit /
+  /// delete spotlights (a GlobalKey can only sit on one widget at a time).
+  final bool isTourTarget;
+
   const MenuTimetableCard({
     super.key,
     required this.menu,
     required this.variations,
     required this.onEdit,
     required this.onDelete,
+    this.isTourTarget = false,
   });
 
   @override
@@ -249,6 +257,29 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
       entry?.remove();
       if (mounted) setState(() => _isSharing = false);
     }
+  }
+
+  /// Wraps [child] as one stop of the Menu tab tour (steps 2–4 of 4) — but
+  /// only on the card flagged [MenuTimetableCard.isTourTarget]; every other
+  /// card renders its icon untouched.
+  Widget _tourStop({
+    required GlobalKey key,
+    required int step,
+    required String title,
+    required String description,
+    required Widget child,
+  }) {
+    return tourStop(
+      context,
+      key: key,
+      tourId: AppTourController.menuTour,
+      step: step,
+      total: 4,
+      title: title,
+      description: description,
+      enabled: widget.isTourTarget,
+      child: child,
+    );
   }
 
   Widget _toolbarIcon({
@@ -865,25 +896,46 @@ class _MenuTimetableCardState extends State<MenuTimetableCard> {
                     ],
                   ),
                 ),
-                _toolbarIcon(
-                  icon: Icons.ios_share_rounded,
-                  color: AppColors.primary,
-                  size: 19,
-                  onTap: _shareAsImage,
-                  loading: _isSharing,
+                _tourStop(
+                  key: TourKeys.menuShare,
+                  step: 2,
+                  title: 'Tap here to share your Menu',
+                  description:
+                      'Sends your weekly menu as a poster image — with your mess cover photo — to your customers.',
+                  child: _toolbarIcon(
+                    icon: Icons.ios_share_rounded,
+                    color: AppColors.primary,
+                    size: 19,
+                    onTap: _shareAsImage,
+                    loading: _isSharing,
+                  ),
                 ),
                 SizedBox(width: 6.w),
-                _toolbarIcon(
-                  icon: Icons.edit_outlined,
-                  color: Colors.grey.shade700,
-                  onTap: widget.onEdit,
+                _tourStop(
+                  key: TourKeys.menuEdit,
+                  step: 3,
+                  title: 'Tap here to edit this Menu',
+                  description:
+                      'Change the items for any day, or rename the menu.',
+                  child: _toolbarIcon(
+                    icon: Icons.edit_outlined,
+                    color: Colors.grey.shade700,
+                    onTap: widget.onEdit,
+                  ),
                 ),
                 SizedBox(width: 6.w),
-                _toolbarIcon(
-                  icon: Icons.delete_outline,
-                  color: Colors.red.shade400,
-                  size: 19,
-                  onTap: widget.onDelete,
+                _tourStop(
+                  key: TourKeys.menuDelete,
+                  step: 4,
+                  title: 'Tap here to delete this Menu',
+                  description:
+                      'Removes it for good. Plans linked to it will lose this menu.',
+                  child: _toolbarIcon(
+                    icon: Icons.delete_outline,
+                    color: Colors.red.shade400,
+                    size: 19,
+                    onTap: widget.onDelete,
+                  ),
                 ),
               ],
             ),

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:mess/Screens/Customer/CustomerScreen.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/Bottombar.dart';
 import 'package:mess/Screens/HomeScreen/HomeScreen.dart';
 import 'package:mess/Screens/PartnerScreen/PartnerScreen.dart';
@@ -26,6 +27,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
 
+    // Lets the guided tour bring the owner back to the Home tab.
+    AppTourController.instance.selectTab = onTabTapped;
+
     screens = [
       Homescreen(onNavigateToTab: onTabTapped),
       CustomersScreen(),
@@ -40,6 +44,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       selectedIndex = index;
     });
+
+    // BUG #3193 — the Home tab's widget is built once and kept alive, so
+    // revenue/stats never re-fetched on their own when coming back to it
+    // from another tab (previously only happened on a full app restart).
+    if (index == 0) {
+      Get.find<HomeScreenController>().refreshAllData();
+    }
   }
 
   @override

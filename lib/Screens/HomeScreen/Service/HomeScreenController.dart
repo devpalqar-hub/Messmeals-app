@@ -58,6 +58,9 @@ class HomeScreenController extends GetxController {
       } else if (response.statusCode == 401 || response.statusCode == 403) {
         await _handleLogout();
       } else {
+        debugPrint(
+          'FETCH PROFILE FAILED: ${response.statusCode} ${response.body}',
+        );
         profileLoadFailed = true;
         update();
       }

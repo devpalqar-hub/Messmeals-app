@@ -10,6 +10,9 @@ import 'package:mess/Screens/HomeScreen/Model/MessModel.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 
 /// Edit screen for the mess owner's existing mess profile.
 ///
@@ -163,6 +166,18 @@ class _MessProfileSettingsScreenState extends State<MessProfileSettingsScreen> {
     if (editingMessId != null && editingMessId.isNotEmpty) {
       _loadFullMessDetails(editingMessId);
     }
+
+    // Mess profile walkthrough — only runs when the owner tapped the Settings
+    // prompt on Home. It's the last walkthrough, so finishing it ends the tour.
+    AppTourController.instance.startIfRequested(
+      context,
+      AppTourController.settingsTour,
+      [
+        TourKeys.settingsBasicInfo,
+        TourKeys.settingsCover,
+        TourKeys.settingsSave,
+      ],
+    );
   }
 
   // ===========================================================================
@@ -650,17 +665,52 @@ class _MessProfileSettingsScreenState extends State<MessProfileSettingsScreen> {
                         children: [
                           _appBar(),
                           _header(),
-                          _basicInformationCard(),
+                          tourStop(
+                            context,
+                            key: TourKeys.settingsBasicInfo,
+                            tourId: AppTourController.settingsTour,
+                            step: 1,
+                            total: 3,
+                            title: 'Tap here to fill in your Mess details',
+                            description:
+                                'Your mess name, phone, email, address and a short description — what customers see first.',
+                            child: _basicInformationCard(),
+                          ),
                           _foodTypeCard(),
                           _tagsCard(),
                           _iconCard(),
-                          _coverImageCard(),
+                          tourStop(
+                            context,
+                            key: TourKeys.settingsCover,
+                            tourId: AppTourController.settingsTour,
+                            step: 2,
+                            total: 3,
+                            title: 'Tap here to add your Cover Image',
+                            description:
+                                'This photo tops your listing and the weekly menu poster you share with customers.',
+                            child: _coverImageCard(),
+                          ),
                           _galleryCard(),
                           SizedBox(height: 8.h),
                         ],
                       ),
                     ),
-                    Positioned(left: 0, right: 0, bottom: 0, child: _saveBar()),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: tourStop(
+                        context,
+                        key: TourKeys.settingsSave,
+                        tourId: AppTourController.settingsTour,
+                        step: 3,
+                        total: 3,
+                        title: 'Tap here to Save your changes',
+                        description:
+                            'Nothing is stored until you save — do this after editing anything above.',
+                        child: _saveBar(),
+                      ),
+                    ),
                   ],
                 )
                 : Column(children: [_appBar(), Expanded(child: _emptyState())]),

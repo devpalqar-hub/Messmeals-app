@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 
 class PlanCard extends StatelessWidget {
   final String title;
@@ -14,6 +17,9 @@ class PlanCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  /// True for the one card carrying the Plans tour's edit / delete stops.
+  final bool isTourTarget;
+
   const PlanCard({
     super.key,
     required this.title,
@@ -24,6 +30,7 @@ class PlanCard extends StatelessWidget {
     this.availableDays = const [],
     required this.onEdit,
     required this.onDelete,
+    this.isTourTarget = false,
   });
 
   @override
@@ -67,21 +74,43 @@ class PlanCard extends StatelessWidget {
               ),
               Row(
                 children: [
-                  GestureDetector(
-                    onTap: onEdit,
-                    child: Icon(
-                      Icons.edit_outlined,
-                      size: 16.sp, // Smaller icons
-                      color: Colors.grey.shade700,
+                  tourStop(
+                    context,
+                    key: TourKeys.plansEdit,
+                    tourId: AppTourController.plansTour,
+                    step: 2,
+                    total: 3,
+                    title: 'Tap here to edit this Plan',
+                    description:
+                        'Change the name, price, meals, menus or schedule.',
+                    enabled: isTourTarget,
+                    child: GestureDetector(
+                      onTap: onEdit,
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 16.sp, // Smaller icons
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  GestureDetector(
-                    onTap: onDelete,
-                    child: Icon(
-                      Icons.delete_outline,
-                      size: 16.sp,
-                      color: Colors.red.shade400, // Subtle red for delete
+                  tourStop(
+                    context,
+                    key: TourKeys.plansDelete,
+                    tourId: AppTourController.plansTour,
+                    step: 3,
+                    total: 3,
+                    title: 'Tap here to delete this Plan',
+                    description:
+                        'Removes the plan. Customers already on it keep their subscription.',
+                    enabled: isTourTarget,
+                    child: GestureDetector(
+                      onTap: onDelete,
+                      child: Icon(
+                        Icons.delete_outline,
+                        size: 16.sp,
+                        color: Colors.red.shade400, // Subtle red for delete
+                      ),
                     ),
                   ),
                 ],

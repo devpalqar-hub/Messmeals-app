@@ -7,8 +7,11 @@ import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 import 'package:mess/Screens/MenuScreen/Views/AddMenuScreen.dart';
 import 'package:mess/Screens/MenuScreen/Views/MenuTimetableCard.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -37,6 +40,27 @@ class MenuScreen extends StatelessWidget {
           padding: EdgeInsets.all(16.w),
           child: GetBuilder<MessMenuController>(
             builder: (controller) {
+              // Menu walkthrough — only runs when the owner tapped this tab
+              // from the tour prompt (see AppTourController), not on every
+              // open. Waits for the first fetch so we know whether there's a
+              // menu card to point at.
+              final hasMenus = controller.menus.isNotEmpty;
+              final tourTotal = hasMenus ? 4 : 1;
+              if (controller.isReady && !controller.isLoading) {
+                AppTourController.instance.startIfRequested(
+                  context,
+                  AppTourController.menuTour,
+                  [
+                    TourKeys.menuAddButton,
+                    if (hasMenus) ...[
+                      TourKeys.menuShare,
+                      TourKeys.menuEdit,
+                      TourKeys.menuDelete,
+                    ],
+                  ],
+                );
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -45,25 +69,42 @@ class MenuScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const TittleText(text: "Menus"),
-                      ElevatedButton.icon(
-                        onPressed: () => _openAddMenu(controller),
-                        icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
-                        label: Text(
-                          "Add Menu",
-                          style: TextStyle(
+                      tourStop(
+                        context,
+                        key: TourKeys.menuAddButton,
+                        tourId: AppTourController.menuTour,
+                        step: 1,
+                        total: tourTotal,
+                        title:
+                            hasMenus
+                                ? 'Tap here to create a Menu'
+                                : 'Tap here to create your first Menu',
+                        description:
+                            'Set what\'s served on each day of the week, then save it.',
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openAddMenu(controller),
+                          icon: Icon(
+                            Icons.add,
+                            size: 18.sp,
                             color: Colors.white,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                          label: Text(
+                            "Add Menu",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 25.w,
-                            vertical: 13.h,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 25.w,
+                              vertical: 13.h,
+                            ),
                           ),
                         ),
                       ),
@@ -164,6 +205,9 @@ class MenuScreen extends StatelessWidget {
 
               return MenuTimetableCard(
                 menu: menu,
+                // Only the first card carries the tour's share/edit/delete
+                // spotlights (a GlobalKey can only be on one widget).
+                isTourTarget: index == 0,
                 variations: variationCtrl.variations,
                 onDelete: () {
                   _showDeleteDialog(context, controller, menu.id);

@@ -6,6 +6,9 @@ import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerDetailScreen.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 
 class PartnerCard extends StatelessWidget {
   final String id;
@@ -16,8 +19,13 @@ class PartnerCard extends StatelessWidget {
   final int totalOrders;
   final bool isActive;
 
+  /// True for the one card carrying the Partners tour's edit / delete /
+  /// details stops.
+  final bool isTourTarget;
+
   const PartnerCard({
     super.key,
+    this.isTourTarget = false,
     required this.id,
     required this.name,
     required this.phone,
@@ -130,10 +138,21 @@ class PartnerCard extends StatelessWidget {
                 },
                 child: Padding(
                   padding: EdgeInsets.all(6.w),
-                  child: Icon(
-                    Icons.edit_outlined,
-                    size: 16.sp,
-                    color: Colors.grey.shade700,
+                  child: tourStop(
+                    context,
+                    key: TourKeys.partnersEdit,
+                    tourId: AppTourController.partnersTour,
+                    step: 2,
+                    total: 4,
+                    title: 'Tap here to edit this Partner',
+                    description:
+                        'Change their name or phone number, or mark them active or inactive.',
+                    enabled: isTourTarget,
+                    child: Icon(
+                      Icons.edit_outlined,
+                      size: 16.sp,
+                      color: Colors.grey.shade700,
+                    ),
                   ),
                 ),
               ),
@@ -141,10 +160,21 @@ class PartnerCard extends StatelessWidget {
                 onTap: () => _confirmDelete(context, id, controller),
                 child: Padding(
                   padding: EdgeInsets.all(6.w),
-                  child: Icon(
-                    Icons.delete_outline,
-                    size: 16.sp,
-                    color: Colors.red.shade400,
+                  child: tourStop(
+                    context,
+                    key: TourKeys.partnersDelete,
+                    tourId: AppTourController.partnersTour,
+                    step: 3,
+                    total: 4,
+                    title: 'Tap here to delete this Partner',
+                    description:
+                        'Removes the partner. You\'ll be asked to confirm first.',
+                    enabled: isTourTarget,
+                    child: Icon(
+                      Icons.delete_outline,
+                      size: 16.sp,
+                      color: Colors.red.shade400,
+                    ),
                   ),
                 ),
               ),
@@ -154,10 +184,21 @@ class PartnerCard extends StatelessWidget {
                 },
                 child: Padding(
                   padding: EdgeInsets.only(left: 6.w, top: 6.w, bottom: 6.w),
-                  child: Icon(
-                    Icons.chevron_right,
-                    size: 20.sp,
-                    color: Colors.grey.shade800,
+                  child: tourStop(
+                    context,
+                    key: TourKeys.partnersDetails,
+                    tourId: AppTourController.partnersTour,
+                    step: 4,
+                    total: 4,
+                    title: 'Tap here to see their details',
+                    description:
+                        'Opens the partner\'s full profile and delivery stats.',
+                    enabled: isTourTarget,
+                    child: Icon(
+                      Icons.chevron_right,
+                      size: 20.sp,
+                      color: Colors.grey.shade800,
+                    ),
                   ),
                 ),
               ),

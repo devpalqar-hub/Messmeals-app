@@ -21,6 +21,7 @@ import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 import 'package:mess/Screens/Utils/TourTooltipActions.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -268,8 +269,17 @@ class Homescreen extends StatelessWidget {
                           'Start here — add your name, cover photo and address so your listing is ready.',
                       titleTextStyle: tourTitleStyle(),
                       descTextStyle: tourDescStyle(),
+                      descriptionPadding: tourDescPadding(),
                       tooltipBorderRadius: tourTooltipBorderRadius(),
                       tooltipPadding: tourTooltipPadding(),
+                      targetBorderRadius: tourTargetBorderRadius(),
+                      targetPadding: tourTargetPadding(),
+                      overlayColor: tourOverlayColor(),
+                      overlayOpacity: tourOverlayOpacity(),
+                      blurValue: tourBlurValue(),
+                      scaleAnimationDuration: tourScaleAnimationDuration(),
+                      scaleAnimationCurve: tourScaleAnimationCurve(),
+                      movingAnimationDuration: tourMovingAnimationDuration(),
                       tooltipActionConfig: const TooltipActionConfig(
                         alignment: MainAxisAlignment.spaceBetween,
                       ),
@@ -278,15 +288,30 @@ class Homescreen extends StatelessWidget {
                         step: 1,
                         total: TourKeys.sequence.length,
                       ),
-                      child: IconButton(
-                        onPressed: () {
-                          Get.to(
-                            () => const MessProfileSettingsScreen(),
-                            transition: Transition.rightToLeft,
-                          );
-                        },
-                        icon: const Icon(Icons.settings_outlined),
-                        color: const Color(0xFF111827),
+                      // Second, separate stop on the gear: the last feature the
+                      // tour comes back to. Tapping it opens Settings and starts
+                      // the Mess Profile walkthrough.
+                      child: tourPrompt(
+                        key: TourKeys.promptSettings,
+                        tourId: AppTourController.settingsTour,
+                        title: 'Tap here to learn your Mess Profile',
+                        description:
+                            'We\'ll show you where to fill in your details, add a cover image and save.',
+                        onOpen:
+                            () => Get.to(
+                              () => const MessProfileSettingsScreen(),
+                              transition: Transition.rightToLeft,
+                            ),
+                        child: IconButton(
+                          onPressed: () {
+                            Get.to(
+                              () => const MessProfileSettingsScreen(),
+                              transition: Transition.rightToLeft,
+                            );
+                          },
+                          icon: const Icon(Icons.settings_outlined),
+                          color: const Color(0xFF111827),
+                        ),
                       ),
                     ),
                   ],
@@ -309,11 +334,23 @@ class Homescreen extends StatelessWidget {
                             title: 'Track Your Revenue',
                             description:
                                 'And finally — this is where you\'ll watch it all pay off. Your total earnings, updated in real time.',
-                            targetBorderRadius: BorderRadius.circular(14.r),
                             titleTextStyle: tourTitleStyle(),
                             descTextStyle: tourDescStyle(),
+                            descriptionPadding: tourDescPadding(),
                             tooltipBorderRadius: tourTooltipBorderRadius(),
                             tooltipPadding: tourTooltipPadding(),
+                            // Matches the card's own rounded corners rather
+                            // than the generic icon-sized shape.
+                            targetBorderRadius: BorderRadius.circular(14.r),
+                            targetPadding: tourTargetPadding(),
+                            overlayColor: tourOverlayColor(),
+                            overlayOpacity: tourOverlayOpacity(),
+                            blurValue: tourBlurValue(),
+                            scaleAnimationDuration:
+                                tourScaleAnimationDuration(),
+                            scaleAnimationCurve: tourScaleAnimationCurve(),
+                            movingAnimationDuration:
+                                tourMovingAnimationDuration(),
                             tooltipActionConfig: const TooltipActionConfig(
                               alignment: MainAxisAlignment.spaceBetween,
                             ),
@@ -321,6 +358,21 @@ class Homescreen extends StatelessWidget {
                               context,
                               step: 8,
                               total: TourKeys.sequence.length,
+                              // Full circle done — come back to the Menu tab
+                              // and ask the owner to tap it, which then
+                              // starts the create / edit / delete tour.
+                              onDone: () {
+                                Future.delayed(
+                                  const Duration(milliseconds: 400),
+                                  () {
+                                    if (context.mounted) {
+                                      ShowCaseWidget.of(
+                                        context,
+                                      ).startShowCase([TourKeys.promptMenu]);
+                                    }
+                                  },
+                                );
+                              },
                             ),
                             child: Container(
                               width: double.infinity,
@@ -559,9 +611,22 @@ class Homescreen extends StatelessWidget {
                                         'Enroll a new customer and pick which plan and delivery schedule they subscribe to.',
                                     titleTextStyle: tourTitleStyle(),
                                     descTextStyle: tourDescStyle(),
+                                    descriptionPadding: tourDescPadding(),
                                     tooltipBorderRadius:
                                         tourTooltipBorderRadius(),
                                     tooltipPadding: tourTooltipPadding(),
+                                    targetBorderRadius:
+                                        tourTargetBorderRadius(),
+                                    targetPadding: tourTargetPadding(),
+                                    overlayColor: tourOverlayColor(),
+                                    overlayOpacity: tourOverlayOpacity(),
+                                    blurValue: tourBlurValue(),
+                                    scaleAnimationDuration:
+                                        tourScaleAnimationDuration(),
+                                    scaleAnimationCurve:
+                                        tourScaleAnimationCurve(),
+                                    movingAnimationDuration:
+                                        tourMovingAnimationDuration(),
                                     tooltipActionConfig:
                                         const TooltipActionConfig(
                                           alignment:
@@ -597,9 +662,22 @@ class Homescreen extends StatelessWidget {
                                         'Register the people who deliver your meals — you\'ll assign them to customers later.',
                                     titleTextStyle: tourTitleStyle(),
                                     descTextStyle: tourDescStyle(),
+                                    descriptionPadding: tourDescPadding(),
                                     tooltipBorderRadius:
                                         tourTooltipBorderRadius(),
                                     tooltipPadding: tourTooltipPadding(),
+                                    targetBorderRadius:
+                                        tourTargetBorderRadius(),
+                                    targetPadding: tourTargetPadding(),
+                                    overlayColor: tourOverlayColor(),
+                                    overlayOpacity: tourOverlayOpacity(),
+                                    blurValue: tourBlurValue(),
+                                    scaleAnimationDuration:
+                                        tourScaleAnimationDuration(),
+                                    scaleAnimationCurve:
+                                        tourScaleAnimationCurve(),
+                                    movingAnimationDuration:
+                                        tourMovingAnimationDuration(),
                                     tooltipActionConfig:
                                         const TooltipActionConfig(
                                           alignment:
@@ -650,9 +728,22 @@ class Homescreen extends StatelessWidget {
                                         'Track your costs against categories to see them alongside your revenue.',
                                     titleTextStyle: tourTitleStyle(),
                                     descTextStyle: tourDescStyle(),
+                                    descriptionPadding: tourDescPadding(),
                                     tooltipBorderRadius:
                                         tourTooltipBorderRadius(),
                                     tooltipPadding: tourTooltipPadding(),
+                                    targetBorderRadius:
+                                        tourTargetBorderRadius(),
+                                    targetPadding: tourTargetPadding(),
+                                    overlayColor: tourOverlayColor(),
+                                    overlayOpacity: tourOverlayOpacity(),
+                                    blurValue: tourBlurValue(),
+                                    scaleAnimationDuration:
+                                        tourScaleAnimationDuration(),
+                                    scaleAnimationCurve:
+                                        tourScaleAnimationCurve(),
+                                    movingAnimationDuration:
+                                        tourMovingAnimationDuration(),
                                     tooltipActionConfig:
                                         const TooltipActionConfig(
                                           alignment:
@@ -663,17 +754,34 @@ class Homescreen extends StatelessWidget {
                                       step: 7,
                                       total: TourKeys.sequence.length,
                                     ),
-                                    child: InkWell(
-                                      onTap:
+                                    // Second, separate stop on this card: after the Delivery
+                                    // walkthrough, the tour comes back here and asks the owner
+                                    // to tap it, which opens Expenses and starts its walkthrough.
+                                    child: tourPrompt(
+                                      key: TourKeys.promptExpenses,
+                                      tourId: AppTourController.expensesTour,
+                                      title:
+                                          'Tap here to learn how to use Expenses',
+                                      description:
+                                          'We\'ll show you how to add a category and log an expense.',
+                                      onOpen:
                                           () => Get.to(
                                             () => const ExpenseScreen(),
                                             transition: Transition.rightToLeft,
                                           ),
-                                      child: QuickActionCard(
-                                        label: 'Expenses',
-                                        icon: Icons.receipt_long_outlined,
-                                        iconColor: const Color(0xFFC0392B),
-                                        iconBgColor: const Color(0xFFFBEAE8),
+                                      child: InkWell(
+                                        onTap:
+                                            () => Get.to(
+                                              () => const ExpenseScreen(),
+                                              transition:
+                                                  Transition.rightToLeft,
+                                            ),
+                                        child: QuickActionCard(
+                                          label: 'Expenses',
+                                          icon: Icons.receipt_long_outlined,
+                                          iconColor: const Color(0xFFC0392B),
+                                          iconBgColor: const Color(0xFFFBEAE8),
+                                        ),
                                       ),
                                     ),
                                   ),

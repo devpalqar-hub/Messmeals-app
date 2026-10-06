@@ -5,8 +5,11 @@ import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerCard.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 
 class PartnerScreen extends StatefulWidget {
   const PartnerScreen({super.key});
@@ -57,6 +60,24 @@ class _PartnerScreenState extends State<PartnerScreen> {
                       )
                       .toList();
 
+              // Partners walkthrough — only runs when the owner tapped this
+              // tab from the tour prompt, not on every open.
+              final hasPartners = partners.isNotEmpty;
+              if (controller.isReady && !controller.isLoading) {
+                AppTourController.instance.startIfRequested(
+                  context,
+                  AppTourController.partnersTour,
+                  [
+                    TourKeys.partnersAdd,
+                    if (hasPartners) ...[
+                      TourKeys.partnersEdit,
+                      TourKeys.partnersDelete,
+                      TourKeys.partnersDetails,
+                    ],
+                  ],
+                );
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -64,24 +85,41 @@ class _PartnerScreenState extends State<PartnerScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const TittleText(text: "Partners"),
-                      ElevatedButton.icon(
-                        onPressed: _openAddPartner,
-                        icon: Icon(Icons.add, size: 18.sp, color: Colors.white),
-                        label: Text(
-                          "Add",
-                          style: TextStyle(
+                      tourStop(
+                        context,
+                        key: TourKeys.partnersAdd,
+                        tourId: AppTourController.partnersTour,
+                        step: 1,
+                        total: hasPartners ? 4 : 1,
+                        title:
+                            hasPartners
+                                ? 'Tap here to add a Partner'
+                                : 'Tap here to add your first Partner',
+                        description:
+                            'Enter their name and phone number — you\'ll assign them to customers\' deliveries.',
+                        child: ElevatedButton.icon(
+                          onPressed: _openAddPartner,
+                          icon: Icon(
+                            Icons.add,
+                            size: 18.sp,
                             color: Colors.white,
-                            fontSize: 14.sp,
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF7ED321),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                          label: Text(
+                            "Add",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                            ),
                           ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 25.w,
-                            vertical: 13.h,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF7ED321),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 25.w,
+                              vertical: 13.h,
+                            ),
                           ),
                         ),
                       ),
@@ -197,6 +235,8 @@ class _PartnerScreenState extends State<PartnerScreen> {
         final profile = partner.deliveryPartnerProfile;
 
         return PartnerCard(
+          // Only the first card carries the tour's edit / delete / details stops.
+          isTourTarget: index == 0,
           id: partner.id,
           name: partner.name,
           phone: partner.phone,

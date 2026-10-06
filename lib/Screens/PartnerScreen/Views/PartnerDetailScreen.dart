@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
+import 'package:mess/Screens/PartnerScreen/Views/PartnerOrdersScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
 
@@ -251,6 +252,47 @@ class PartnerDetailsScreen extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 16.h),
+
+                  /// VIEW ORDERS — full drag-and-drop order board for
+                  /// this specific partner (GET /deliveries?partnerId=).
+                  GestureDetector(
+                    onTap: () {
+                      final partnerId = profile?.id ?? partner.id;
+                      Get.to(
+                        () => PartnerOrdersScreen(
+                          partnerId: partnerId,
+                          partnerName: partner.name,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: 13.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.view_kanban_outlined,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            "View Order Board",
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );

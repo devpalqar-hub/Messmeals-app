@@ -9,7 +9,10 @@ import 'package:mess/Screens/ExpenseScreen/Service/ExpenseController.dart';
 import 'package:mess/Screens/ExpenseScreen/Views/AddExpenseScreen.dart';
 import 'package:mess/Screens/ExpenseScreen/Views/ExpenseCard.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 
 class ExpenseScreen extends StatelessWidget {
   const ExpenseScreen({super.key});
@@ -29,6 +32,17 @@ class ExpenseScreen extends StatelessWidget {
           padding: EdgeInsets.all(16.w),
           child: GetBuilder<ExpenseController>(
             builder: (ctrl) {
+              // Expenses walkthrough — only runs when the owner tapped the
+              // Expenses prompt on Home. When it finishes, the tour returns
+              // to Home for the next feature.
+              if (ctrl.isReady && !ctrl.isLoading) {
+                AppTourController.instance.startIfRequested(
+                  context,
+                  AppTourController.expensesTour,
+                  [TourKeys.expensesAddCategory, TourKeys.expensesAddExpense],
+                );
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -39,19 +53,41 @@ class ExpenseScreen extends StatelessWidget {
                       const TittleText(text: "Expenses"),
                       Row(
                         children: [
-                          _headerButton(
-                            label: "Add Category",
-                            onTap: () async {
-                              await Get.to(() => const ExpenseCategoryScreen());
-                            },
+                          tourStop(
+                            context,
+                            key: TourKeys.expensesAddCategory,
+                            tourId: AppTourController.expensesTour,
+                            step: 1,
+                            total: 2,
+                            title: 'Tap here to add a Category',
+                            description:
+                                'Group your costs first — like Groceries, Gas or Salaries.',
+                            child: _headerButton(
+                              label: "Add Category",
+                              onTap: () async {
+                                await Get.to(
+                                  () => const ExpenseCategoryScreen(),
+                                );
+                              },
+                            ),
                           ),
                           SizedBox(width: 8.w),
-                          _headerButton(
-                            label: "Add Expense",
-                            onTap: () async {
-                              await Get.to(() => const AddExpenseScreen());
-                              controller.refreshExpenses();
-                            },
+                          tourStop(
+                            context,
+                            key: TourKeys.expensesAddExpense,
+                            tourId: AppTourController.expensesTour,
+                            step: 2,
+                            total: 2,
+                            title: 'Tap here to add an Expense',
+                            description:
+                                'Log an amount against a category, mark what you\'ve paid, and attach a receipt.',
+                            child: _headerButton(
+                              label: "Add Expense",
+                              onTap: () async {
+                                await Get.to(() => const AddExpenseScreen());
+                                controller.refreshExpenses();
+                              },
+                            ),
                           ),
                         ],
                       ),

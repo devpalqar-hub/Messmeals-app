@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:mess/Screens/CustomerScreen/Model/CustomerDetailedModel.dart';
+import 'package:mess/Screens/DeliveriesScreen/DeliveriesScreen.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
@@ -48,6 +49,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   bool _isFetched = false;
   late CustomerDetailModel customer;
   late int _walletBalance;
+  final DeliveriesController _deliveriesController = Get.put(
+    DeliveriesController(),
+  );
 
   final List<String> _daysOfWeek = [
     "MONDAY",
@@ -79,6 +83,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         _walletBalance = customer.walletBalance ?? 0;
         _isFetched = true;
       });
+      // Search by phone rather than name — unique per customer, so this
+      // only ever pulls back this customer's own deliveries.
+      if ((customer.phone ?? '').trim().isNotEmpty) {
+        _deliveriesController.fetchDeliveries(search: customer.phone);
+      }
     }
   }
 
@@ -561,6 +570,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       _buildStatsGrid(),
                       SizedBox(height: 24.h),
                       _buildSubscriptionsSection(),
+                      SizedBox(height: 24.h),
+                      _buildDeliveriesSection(),
                       SizedBox(height: 32.h),
                     ],
                   ),
@@ -1119,6 +1130,58 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       ),
     );
   }
+
+  /// This customer's own delivery history — reuses the same `OrderCard`
+  /// the Deliveries tab uses, so status changes/cancel here behave
+  /// identically to the main Deliveries screen.
+  Widget _buildDeliveriesSection() => GetBuilder<DeliveriesController>(
+    builder: (ctrl) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Deliveries',
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: _C.textPrimary,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          if (ctrl.isLoading)
+            Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.h),
+                child: const CircularProgressIndicator(color: _C.primary),
+              ),
+            )
+          else if (ctrl.deliveries.isEmpty)
+            Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.h),
+                child: Text(
+                  'No deliveries found for this customer.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    color: _C.textTertiary,
+                  ),
+                ),
+              ),
+            )
+          else
+            ...ctrl.deliveries.map(
+              (d) => OrderCard(
+                delivery: d,
+                onRefreshNeeded:
+                    () => _deliveriesController.fetchDeliveries(
+                      search: customer.phone,
+                    ),
+              ),
+            ),
+        ],
+      );
+    },
+  );
 
   Widget _card({required Widget child, EdgeInsets? padding}) => Container(
     padding: padding ?? EdgeInsets.all(16.w),

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/HomeScreen/HomeView.dart';
+import 'package:pinput/pinput.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/LoginScreen/Service/SignUpController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
@@ -28,11 +29,8 @@ class OtpVerificationScreen extends StatefulWidget {
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final AuthController authCtrl = Get.put(AuthController());
 
-  final List<TextEditingController> _otpCtrl = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
-  final List<FocusNode> _nodes = List.generate(6, (_) => FocusNode());
+  final TextEditingController _otpCtrl = TextEditingController();
+  final FocusNode _otpFocus = FocusNode();
 
   int _seconds = 45;
   int _resendCount = 0; // track how many times resend was tapped
@@ -76,9 +74,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     try {
       final ok = await authCtrl.sendOtp(widget.phoneNumber);
       if (ok) {
-        // Clear all OTP boxes on resend
-        for (var c in _otpCtrl) c.clear();
-        FocusScope.of(context).requestFocus(_nodes[0]);
+        // Clear the entered code on resend
+        _otpCtrl.clear();
+        _otpFocus.requestFocus();
         _resendCount++;
         _startTimer();
         AppToast.success('OTP resent successfully');
@@ -95,55 +93,57 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (var c in _otpCtrl) c.dispose();
-    for (var n in _nodes) n.dispose();
+    _otpCtrl.dispose();
+    _otpFocus.dispose();
     super.dispose();
   }
 
-  Widget _otpBox(int i) {
-    return SizedBox(
-      width: 44.w,
-      height: 52.h,
-      child: TextField(
-        controller: _otpCtrl[i],
-        focusNode: _nodes[i],
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        maxLength: 1,
-        style: GoogleFonts.poppins(
-          fontSize: 20.sp,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF111827),
-        ),
-        decoration: InputDecoration(
-          counterText: '',
-          filled: false,
-          contentPadding: EdgeInsets.zero,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(color: AppColors.primary, width: 1.6),
-          ),
-        ),
-        onChanged: (v) {
-          if (v.isNotEmpty) {
-            if (i < 5)
-              FocusScope.of(context).requestFocus(_nodes[i + 1]);
-            else
-              FocusScope.of(context).unfocus();
-          } else {
-            if (i > 0) FocusScope.of(context).requestFocus(_nodes[i - 1]);
-          }
-        },
+  /// The 6-digit code field — one Pinput (typing, pasting, backspace and SMS
+  /// autofill all handled by the package) styled to match the app.
+  Widget _otpField() {
+    final baseTheme = PinTheme(
+      width: 46.w,
+      height: 54.h,
+      textStyle: GoogleFonts.poppins(
+        fontSize: 20.sp,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFF111827),
       ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+    );
+
+    return Pinput(
+      length: 6,
+      controller: _otpCtrl,
+      focusNode: _otpFocus,
+      autofocus: true,
+      keyboardType: TextInputType.number,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      defaultPinTheme: baseTheme,
+      focusedPinTheme: baseTheme.copyWith(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.primary, width: 1.6),
+        ),
+      ),
+      // A box that already holds a digit gets a soft green tint.
+      submittedPinTheme: baseTheme.copyWith(
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+        ),
+      ),
+      // Lets the keyboard offer the code from the incoming SMS.
+      autofillHints: const [AutofillHints.oneTimeCode],
     );
   }
 
   Future<void> _verify() async {
-    final otp = _otpCtrl.map((e) => e.text).join();
+    final otp = _otpCtrl.text;
     if (otp.length != 6) {
       AppToast.error('Please enter a valid 6-digit OTP');
       return;
@@ -255,10 +255,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       ),
                     ),
                     SizedBox(height: 10.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(6, _otpBox),
-                    ),
+                    _otpField(),
 
                     SizedBox(height: 24.h),
 

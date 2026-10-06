@@ -1,7 +1,14 @@
+int? _parseSortOrder(dynamic value) {
+  if (value is int) return value;
+  return int.tryParse(value?.toString() ?? '');
+}
+
 class Delivery {
   final String id;
   final String date;
-  final String status;
+  // Mutable so the partner order board can optimistically move a card
+  // between status columns and roll back in place if the PATCH fails.
+  String status;
   final bool isActive;
   final String createdAt;
   final String updatedAt;
@@ -9,6 +16,9 @@ class Delivery {
   final Plan? plan;
   final Partner? partner;
   final List<DeliveryVariation> deliveryVariations; // Added
+  // Backend-assigned delivery priority/position for a partner's route.
+  // Mutable for the same optimistic-reorder reason as `status` above.
+  int? sortOrderId;
 
   Delivery({
     required this.id,
@@ -21,6 +31,7 @@ class Delivery {
     this.plan,
     this.partner,
     required this.deliveryVariations, // Added
+    this.sortOrderId,
   });
 
   factory Delivery.fromJson(Map<String, dynamic> json) {
@@ -43,6 +54,10 @@ class Delivery {
       partner:
           json['partner'] != null ? Partner.fromJson(json['partner']) : null,
       deliveryVariations: variationsList,
+      // Backend's bulk-reorder endpoint calls this "sequence"
+      // (`new_sequence` on write); fall back to `sortOrderId` in case an
+      // older response shape is still in play somewhere.
+      sortOrderId: _parseSortOrder(json['sequence'] ?? json['sortOrderId']),
     );
   }
 }

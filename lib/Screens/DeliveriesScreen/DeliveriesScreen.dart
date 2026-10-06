@@ -12,7 +12,10 @@ import 'package:mess/main.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
+import 'package:mess/Screens/Utils/TourKeys.dart';
+import 'package:mess/Screens/Utils/TourStop.dart';
 import 'package:mess/Screens/DeliveriesScreen/Views/GenerateCard.dart';
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 
@@ -127,6 +130,7 @@ class DeliveriesController extends GetxController {
     String? status,
     String? variationId,
     String? search,
+    String? partnerId,
     bool isLoadMore = false,
   }) async {
     if (isLoadMore) {
@@ -171,6 +175,10 @@ class DeliveriesController extends GetxController {
         queryParams['search'] = search.trim();
       }
 
+      if (partnerId != null && partnerId.trim().isNotEmpty) {
+        queryParams['partnerId'] = partnerId.trim();
+      }
+
       final uri = Uri.parse(
         '$baseUrl/deliveries',
       ).replace(queryParameters: queryParams);
@@ -207,6 +215,40 @@ class DeliveriesController extends GetxController {
       isLoading = false;
       isFetchingMore = false;
       update();
+    }
+  }
+
+  /// 🔢 Update a delivery's priority position in a partner's route —
+  /// used by the partner order board's drag-to-reorder list. Backend's
+  /// endpoint is a bulk sequence updater; a single-item array moves just
+  /// the one dragged order, leaving everyone else's number untouched.
+  Future<bool> updateSortOrder(String deliveryId, int sortOrderId) async {
+    try {
+      final url = Uri.parse('$baseUrl/deliveries/sequence/update');
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+        body: json.encode({
+          "deliveries": [
+            {"delivery_id": deliveryId, "new_sequence": sortOrderId},
+          ],
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      }
+      final msg =
+          json.decode(response.body)['message']?.toString() ??
+          'Failed to update order';
+      AppToast.error(msg);
+      return false;
+    } catch (e) {
+      AppToast.error('Failed to update order');
+      return false;
     }
   }
 
@@ -468,6 +510,24 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
           padding: EdgeInsets.all(16.w),
           child: GetBuilder<DeliveriesController>(
             builder: (controller) {
+              // Deliveries walkthrough — only runs when the owner tapped this
+              // tab from the tour prompt, not on every open. Starts once the
+              // list has loaded, so we know whether there's an order to
+              // point at.
+              final hasDeliveries = controller.deliveries.isNotEmpty;
+              final tourTotal = hasDeliveries ? 3 : 2;
+              if (!controller.isLoading) {
+                AppTourController.instance.startIfRequested(
+                  context,
+                  AppTourController.deliveriesTour,
+                  [
+                    TourKeys.deliveriesSummary,
+                    TourKeys.deliveriesFilters,
+                    if (hasDeliveries) TourKeys.deliveriesCard,
+                  ],
+                );
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -477,13 +537,33 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                   ),
                   SizedBox(height: 14.h),
 
-                  _buildSummaryRow(controller),
+                  tourStop(
+                    context,
+                    key: TourKeys.deliveriesSummary,
+                    tourId: AppTourController.deliveriesTour,
+                    step: 1,
+                    total: tourTotal,
+                    title: 'Tap here to read today\'s Deliveries',
+                    description:
+                        'See how many deliveries are pending and how many there are in total for the day and filters you picked.',
+                    child: _buildSummaryRow(controller),
+                  ),
                   SizedBox(height: 12.h),
 
                   _buildSearchField(),
                   SizedBox(height: 10.h),
 
-                  _buildFilterSystem(context),
+                  tourStop(
+                    context,
+                    key: TourKeys.deliveriesFilters,
+                    tourId: AppTourController.deliveriesTour,
+                    step: 2,
+                    total: tourTotal,
+                    title: 'Tap here to filter Deliveries',
+                    description:
+                        'Pick a date, a status or a meal — for example only today\'s pending lunches.',
+                    child: _buildFilterSystem(context),
+                  ),
                   SizedBox(height: 14.h),
 
                   Expanded(
@@ -523,9 +603,21 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                                     ),
                                   );
                                 }
-                                return OrderCard(
-                                  delivery: controller.deliveries[index],
-                                  onRefreshNeeded: _triggerFilterSearch,
+                                return tourStop(
+                                  context,
+                                  key: TourKeys.deliveriesCard,
+                                  tourId: AppTourController.deliveriesTour,
+                                  step: 3,
+                                  total: 3,
+                                  title: 'Tap an order to open it',
+                                  description:
+                                      'See the address, call or map the customer, mark each meal delivered, or cancel the order.',
+                                  // Only the first card carries the tour stop.
+                                  enabled: index == 0,
+                                  child: OrderCard(
+                                    delivery: controller.deliveries[index],
+                                    onRefreshNeeded: _triggerFilterSearch,
+                                  ),
                                 );
                               },
                             ),
@@ -828,6 +920,20 @@ class _OrderCardState extends State<OrderCard> {
 
   // 🎨 3-color status theme: green = delivered/completed, orange = pending/in
   // progress, red = cancelled/undelivered (nothing else needs its own hue).
+  /// Display label for a status — the backend/API value stays "UNDELIVERED"
+  /// (queries, PATCH bodies, comparisons all keep using that), this only
+  /// changes what the admin reads on screen.
+  String _statusLabel(String status) {
+    switch (status.toUpperCase()) {
+      case 'UNDELIVERED':
+        return 'Not Attempted';
+      case 'CANCELLED':
+        return 'Cancelled';
+      default:
+        return status.toUpperCase();
+    }
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'DELIVERED':
@@ -946,76 +1052,162 @@ class _OrderCardState extends State<OrderCard> {
                   ),
                 ),
                 SizedBox(height: 12.h),
-                ...["PENDING", "DELIVERED", "UNDELIVERED", "CANCELLED"].map((
-                  status,
-                ) {
-                  final isCurrent =
-                      deliveryVar.status.toString().toUpperCase() == status;
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    title: Text(
-                      status == "CANCELLED" ? "Cancel this meal" : status,
-                      style: TextStyle(
-                        fontWeight:
-                            isCurrent ? FontWeight.bold : FontWeight.normal,
-                        color: _getStatusColor(status),
-                      ),
-                    ),
-                    trailing:
-                        isCurrent
-                            ? const Icon(
-                              Icons.check_circle,
-                              color: _C.primary,
-                              size: 20,
-                            )
-                            : null,
-                    onTap: () async {
-                      Navigator.pop(context);
+                Builder(
+                  builder: (context) {
+                    final currentStatus =
+                        deliveryVar.status.toString().toUpperCase();
+                    // Once a meal has been marked Not Attempted, the only way
+                    // forward is an actual successful delivery — everything
+                    // else (including re-opening it as Pending, or
+                    // Cancelling) is locked out.
+                    final isLocked = currentStatus == 'UNDELIVERED';
 
-                      // Cancelling a single meal is hard to undo — confirm first
-                      if (status == "CANCELLED") {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder:
-                              (ctx) => AlertDialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                title: const Text("Cancel this meal"),
-                                content: Text(
-                                  "Cancel ${deliveryVar.variation?.title ?? 'this meal'} for this delivery? It will not be prepared.",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx, false),
-                                    child: const Text("No"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx, true),
-                                    child: const Text(
-                                      "Yes, Cancel",
-                                      style: TextStyle(color: Colors.red),
+                    if (isLocked) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 10.h),
+                        child: Text(
+                          "This meal was not attempted. It can only be moved to Delivered once it's actually delivered.",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: _C.textSecondary,
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                Wrap(
+                  spacing: 8.w,
+                  runSpacing: 8.h,
+                  children:
+                      ["PENDING", "DELIVERED", "UNDELIVERED", "CANCELLED"].map((
+                        status,
+                      ) {
+                        final currentStatus =
+                            deliveryVar.status.toString().toUpperCase();
+                        final isCurrent = currentStatus == status;
+                        final isLocked = currentStatus == 'UNDELIVERED';
+                        // Once locked, Delivered is the only enabled option.
+                        final isEnabled =
+                            !isLocked || status == 'DELIVERED' || isCurrent;
+                        final color =
+                            isEnabled
+                                ? _getStatusColor(status)
+                                : _C.textTertiary;
+
+                        return Opacity(
+                          opacity: isEnabled ? 1 : 0.45,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(10.r),
+                            onTap:
+                                (!isEnabled || isCurrent)
+                                    ? null
+                                    : () async {
+                                      Navigator.pop(context);
+
+                                      // Cancelling a single meal is hard to undo — confirm first
+                                      if (status == "CANCELLED") {
+                                        final confirmed = await showDialog<
+                                          bool
+                                        >(
+                                          context: context,
+                                          builder:
+                                              (ctx) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        12.r,
+                                                      ),
+                                                ),
+                                                title: const Text(
+                                                  "Cancel this meal",
+                                                ),
+                                                content: Text(
+                                                  "Cancel ${deliveryVar.variation?.title ?? 'this meal'} for this delivery? It will not be prepared.",
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed:
+                                                        () => Navigator.pop(
+                                                          ctx,
+                                                          false,
+                                                        ),
+                                                    child: const Text("No"),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed:
+                                                        () => Navigator.pop(
+                                                          ctx,
+                                                          true,
+                                                        ),
+                                                    child: const Text(
+                                                      "Yes, Cancel",
+                                                      style: TextStyle(
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                        );
+                                        if (confirmed != true) return;
+                                      }
+
+                                      final success = await _controller
+                                          .patchVariationStatus(
+                                            deliveryId: widget.delivery.id,
+                                            variationUuid:
+                                                deliveryVar.variationId,
+                                            newStatus: status,
+                                          );
+                                      if (success) {
+                                        // Refresh to reflect specific changes.
+                                        widget.onRefreshNeeded();
+                                      }
+                                    },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14.w,
+                                vertical: 10.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    isCurrent
+                                        ? color.withValues(alpha: 0.12)
+                                        : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10.r),
+                                border: Border.all(color: color, width: 1.2),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _statusLabel(status),
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight:
+                                          isCurrent
+                                              ? FontWeight.bold
+                                              : FontWeight.w600,
+                                      color: color,
                                     ),
                                   ),
+                                  if (isCurrent) ...[
+                                    SizedBox(width: 6.w),
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: color,
+                                      size: 16.sp,
+                                    ),
+                                  ],
                                 ],
                               ),
+                            ),
+                          ),
                         );
-                        if (confirmed != true) return;
-                      }
-
-                      final success = await _controller.patchVariationStatus(
-                        deliveryId: widget.delivery.id,
-                        variationUuid: deliveryVar.variationId,
-                        newStatus: status,
-                      );
-                      if (success) {
-                        // Refresh to reflect specific changes.
-                        widget.onRefreshNeeded();
-                      }
-                    },
-                  );
-                }),
+                      }).toList(),
+                ),
               ],
             ),
           ),
@@ -1029,6 +1221,7 @@ class _OrderCardState extends State<OrderCard> {
     final customer = widget.delivery.customer;
     final user = customer?.user;
     final plan = widget.delivery.plan;
+    final partner = widget.delivery.partner;
     final variations = widget.delivery.deliveryVariations ?? [];
 
     return Container(
@@ -1062,7 +1255,7 @@ class _OrderCardState extends State<OrderCard> {
                             borderRadius: BorderRadius.circular(4.r),
                           ),
                           child: Text(
-                            widget.delivery.status.toUpperCase(),
+                            _statusLabel(widget.delivery.status),
                             style: TextStyle(
                               color: _getStatusColor(widget.delivery.status),
                               fontWeight: FontWeight.bold,
@@ -1140,6 +1333,19 @@ class _OrderCardState extends State<OrderCard> {
                     : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (_has(partner?.user?.name) ||
+                            _has(partner?.deliveryRegion)) ...[
+                          SizedBox(height: 4.h),
+                          _rowInfo(
+                            Icons.delivery_dining_outlined,
+                            [
+                              if (_has(partner?.user?.name))
+                                'From: ${partner!.user!.name}',
+                              if (_has(partner?.deliveryRegion))
+                                partner!.deliveryRegion!,
+                            ].join(' · '),
+                          ),
+                        ],
                         if (_has(customer?.address)) ...[
                           SizedBox(height: 4.h),
                           _rowInfo(
@@ -1205,7 +1411,7 @@ class _OrderCardState extends State<OrderCard> {
                                           ),
                                         ),
                                         Text(
-                                          vStatus,
+                                          _statusLabel(vStatus),
                                           style: TextStyle(
                                             fontSize: 10.sp,
                                             color: _getStatusColor(vStatus),
