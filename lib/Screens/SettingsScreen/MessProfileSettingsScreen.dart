@@ -308,8 +308,13 @@ class _MessProfileSettingsScreenState extends State<MessProfileSettingsScreen> {
 
   Future<void> _addCoverImageUrl() async {
     // Gallery only — no camera capture.
+    // BUG #3196 — cap the picked resolution so a 4000x3000+ camera photo
+    // isn't uploaded at full size; imageQuality alone re-encodes without
+    // shrinking dimensions, so upload stayed slow.
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1920,
       imageQuality: 85,
     );
     if (picked == null) return;
@@ -356,7 +361,14 @@ class _MessProfileSettingsScreenState extends State<MessProfileSettingsScreen> {
 
   Future<void> _addGalleryImageUrl() async {
     // Gallery photos only — no camera capture here, unlike the cover image.
-    final picked = await ImagePicker().pickMultiImage(imageQuality: 85);
+    // BUG #3197 — same resolution cap as the cover image upload: without
+    // maxWidth/maxHeight each full-resolution photo multiplies the already
+    // slow single multipart request's payload size.
+    final picked = await ImagePicker().pickMultiImage(
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
     final files = picked.map((x) => File(x.path)).toList();
 
     if (files.isEmpty) return;

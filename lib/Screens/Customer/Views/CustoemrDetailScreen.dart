@@ -341,6 +341,30 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   bool isPauseLoading = false;
 
+  // BUG #3205/#3207 — API error bodies can return `message` as either a
+  // plain String or a List<String> (e.g. class-validator style field
+  // errors). The other API methods below cast that straight into
+  // _showSnack's String parameter via `?? 'fallback'`, which only guards
+  // against null — a List<String> still passes through and crashes with
+  // "type 'List<String>' is not a subtype of type 'String'" for whichever
+  // requests happen to trigger a multi-field validation error. This safely
+  // coerces either shape (or a missing/unparseable body) down to a String.
+  // `response` is left untyped (dynamic) because this file imports both
+  // `package:get/get.dart` and `package:http/http.dart` unprefixed, and
+  // both packages export a `Response` class — an explicit annotation here
+  // is an ambiguous_import analyzer error.
+  String _extractErrorMessage(dynamic response, String fallback) {
+    try {
+      final decoded = json.decode(response.body);
+      final dynamic msg = decoded is Map ? decoded['message'] : null;
+      if (msg is String && msg.isNotEmpty) return msg;
+      if (msg is List && msg.isNotEmpty) return msg.join(', ');
+      return fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   Future<void> _pauseSubscriptionApi(
     String subId,
     String startDate,
@@ -364,7 +388,17 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         _fetchCustomer();
         _showSnack('Paused', 'Subscription paused successfully', _C.green);
       } else {
-        _showSnack('Error', 'Failed to pause subscription', _C.red);
+        // BUG #3207 — this used to always show a generic "Failed to pause
+        // subscription" message regardless of why the backend rejected the
+        // request, unlike every other mutation API in this file which
+        // surfaces the backend's actual `message`. Surfacing the real
+        // reason here is needed to tell a genuine backend/validation
+        // rejection apart from a client-side request problem.
+        _showSnack(
+          'Error',
+          _extractErrorMessage(response, 'Failed to pause subscription'),
+          _C.red,
+        );
       }
     } catch (e) {
       _showSnack('Error', 'An error occurred: $e', _C.red);
@@ -395,10 +429,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         _fetchCustomer();
         _showSnack('', 'Cancellation applied successfully', _C.green);
       } else {
+        // BUG #3205 — `json.decode(response.body)["message"]` is `dynamic`;
+        // when the backend's validation error for certain date ranges
+        // returns `message` as a List<String> instead of a String, the
+        // `?? fallback` null-check doesn't catch it and the implicit
+        // downcast into _showSnack's String parameter crashed with
+        // "type 'List<String>' is not a subtype of type 'String'".
         _showSnack(
           "",
-          json.decode(response.body)["message"] ??
-              'Failed to apply cancellation',
+          _extractErrorMessage(response, 'Failed to apply cancellation'),
           _C.red,
         );
       }

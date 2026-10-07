@@ -769,8 +769,8 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                 items: [
                   "All Status",
                   "Pending",
-                  "Delivered",
                   "Completed",
+                  "Undelivered",
                   "Cancelled",
                 ],
                 onChanged: (v) {

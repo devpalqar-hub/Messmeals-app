@@ -26,6 +26,21 @@ class CustomerController extends GetxController {
   int page = 1;
   int limit = 10;
 
+  /// The backend's error `message` field isn't always a plain string (e.g.
+  /// NestJS validation errors return a list) — this turns whatever shape
+  /// comes back into something safe to show in a toast.
+  String _extractErrorMessage(String responseBody, String fallback) {
+    try {
+      final decoded = jsonDecode(responseBody);
+      final msg = decoded is Map ? decoded['message'] : null;
+      if (msg is String && msg.isNotEmpty) return msg;
+      if (msg is List && msg.isNotEmpty) return msg.join(', ');
+      return fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   /// 📊 Fetch summary stats (active subscriptions / ending soon / amount to collect)
   Future<void> fetchCustomerSummary() async {
     final messId = dashboardController.selectedMessId;
@@ -205,18 +220,18 @@ class CustomerController extends GetxController {
         return true;
       }
 
-      if (response.statusCode == 400 || response.statusCode == 409) {
-        try {
-          final error = jsonDecode(response.body);
-          final msg = error['message'] ?? "Failed: ${response.statusCode}";
-          Fluttertoast.showToast(msg: msg);
-        } catch (_) {
-          Fluttertoast.showToast(msg: "Failed: ${response.statusCode}");
-        }
-        return false;
-      }
-
-      Fluttertoast.showToast(msg: "Failed: ${response.statusCode}");
+      // Surface the backend's real reason for ANY failure, not just
+      // 400/409 — a 403 (or anything else) used to fall through to a bare
+      // "Failed: 403" with the actual cause thrown away, making it
+      // impossible to tell a permission issue from a session/validation
+      // one. `message` can also come back as a List (e.g. validator-style
+      // field errors), which `?? fallback` alone doesn't guard against.
+      Fluttertoast.showToast(
+        msg: _extractErrorMessage(
+          response.body,
+          "Failed: ${response.statusCode}",
+        ),
+      );
       return false;
     } catch (e) {
       return false;

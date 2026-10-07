@@ -25,7 +25,7 @@ class HomeScreenController extends GetxController {
   DateTime selectedDate = DateTime.now();
   String authToken = "";
   final AuthController authController = Get.put(AuthController());
-  List<MessModel> messes =[ ];
+  List<MessModel> messes = [];
   String? selectedMessId;
   @override
   void onInit() {
@@ -149,6 +149,9 @@ class HomeScreenController extends GetxController {
         "phone": phone ?? user!.phone,
         "email": user!.email,
         "zipcode": zipCode,
+        // BUG #3194 — without this, a newly created mess wasn't marked
+        // active, so it never showed up on the customer-facing site.
+        "is_active": true,
       }),
     );
 
