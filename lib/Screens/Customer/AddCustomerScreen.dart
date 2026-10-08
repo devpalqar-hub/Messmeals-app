@@ -1,3 +1,4 @@
+import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -34,6 +35,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
+  String selectedCountryIso = "IN";
 
   /// PLAN & WALLET
   String? selectedPlanId;
@@ -169,9 +171,14 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   }
 
   Future<void> submitCustomer() async {
+    // BUG — the country code picker was purely cosmetic before; the
+    // backend never actually received anything but the bare 10-digit
+    // number, regardless of which country was shown as selected.
+    final dialCode =
+        CountryPickerUtils.getCountryByIsoCode(selectedCountryIso).phoneCode;
     bool success = await customerController.addCustomer(
       name: nameController.text.trim(),
-      phone: phoneController.text.trim(),
+      phone: "+$dialCode${phoneController.text.trim()}",
       email: emailController.text.trim(),
       address: addressController.text.trim(),
       location: locationController.text.trim(),
@@ -267,13 +274,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     StepLine(active: currentStep > 1),
                     StepWidget(
                       number: "2",
-                      title: "Plan & Wallet",
+                      title: "Schedule",
                       active: currentStep >= 2,
                     ),
                     StepLine(active: currentStep > 2),
                     StepWidget(
                       number: "3",
-                      title: "Schedule",
+                      title: "Plan & Wallet",
                       active: currentStep >= 3,
                     ),
                     StepLine(active: currentStep > 3),
@@ -298,6 +305,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                         emailController: emailController,
                         addressController: addressController,
                         locationController: locationController,
+                        selectedCountryIso: selectedCountryIso,
+                        onCountryChanged:
+                            (iso) => setState(() => selectedCountryIso = iso),
                       ),
 
                       PlanScheduleWidget(
@@ -335,7 +345,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
                       ReviewWidget(
                         name: nameController.text,
-                        phone: phoneController.text,
+                        phone:
+                            "+${CountryPickerUtils.getCountryByIsoCode(selectedCountryIso).phoneCode} ${phoneController.text}",
                         email: emailController.text,
                         address: addressController.text,
                         location: locationController.text,

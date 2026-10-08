@@ -153,7 +153,7 @@ class ReviewWidget extends StatelessWidget {
             iconColor: Colors.orange,
             title: "Wallet & Discount",
             children: [
-              detailRow("Wallet Amount", "₹$walletAmount"),
+              detailRow("Advance Payment", "₹$walletAmount"),
               detailRow("Discount Amount", "₹$discountAmount"),
             ],
             onEditClick: () {

@@ -70,7 +70,7 @@ class WalletWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Wallet Amount",
+                  "Advance Payment",
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,

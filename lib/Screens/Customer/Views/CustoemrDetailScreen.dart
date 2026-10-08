@@ -8,12 +8,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:mess/Screens/CustomerScreen/Model/CustomerDetailedModel.dart';
-import 'package:mess/Screens/DeliveriesScreen/DeliveriesScreen.dart';
+import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
+import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class _C {
   static const surface = Colors.white;
@@ -49,9 +51,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   bool _isFetched = false;
   late CustomerDetailModel customer;
   late int _walletBalance;
-  final DeliveriesController _deliveriesController = Get.put(
-    DeliveriesController(),
-  );
 
   final List<String> _daysOfWeek = [
     "MONDAY",
@@ -83,11 +82,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         _walletBalance = customer.walletBalance ?? 0;
         _isFetched = true;
       });
-      // Search by phone rather than name — unique per customer, so this
-      // only ever pulls back this customer's own deliveries.
-      if ((customer.phone ?? '').trim().isNotEmpty) {
-        _deliveriesController.fetchDeliveries(search: customer.phone);
-      }
     }
   }
 
@@ -320,22 +314,36 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   }
 
   bool isWalletLoading = false;
-  Future<void> updateWalletBalance(int amount) async {
-    final response = await patch(
-      Uri.parse(
-        '$baseUrl/customer/update-wallet/${customer.customerProfileId}',
-      ),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': bearerToken,
-      },
-      body: json.encode({"amount": amount.toString()}),
-    );
-    if (response.statusCode == 200) {
-      customer.walletBalance = customer.walletBalance! + amount;
-      setState(() {
-        _fetchCustomer();
-      });
+
+  /// Returns whether the payment was actually saved — BUG #? the caller's
+  /// optimistic `_walletBalance` update previously had nothing to roll
+  /// back to on failure (the PATCH's response wasn't even checked beyond
+  /// a silent no-op), so a rejected payment still looked successful.
+  Future<bool> updateWalletBalance(int amount) async {
+    try {
+      final response = await patch(
+        Uri.parse(
+          '$baseUrl/customer/update-wallet/${customer.customerProfileId}',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+        body: json.encode({"amount": amount.toString()}),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await _fetchCustomer();
+        return true;
+      }
+      _showSnack(
+        'Error',
+        json.decode(response.body)["message"] ?? 'Failed to update wallet',
+        _C.red,
+      );
+      return false;
+    } catch (e) {
+      _showSnack('Error', 'An error occurred: $e', _C.red);
+      return false;
     }
   }
 
@@ -359,6 +367,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       final dynamic msg = decoded is Map ? decoded['message'] : null;
       if (msg is String && msg.isNotEmpty) return msg;
       if (msg is List && msg.isNotEmpty) return msg.join(', ');
+      if (msg is Map && msg.isNotEmpty) return msg.values.join(', ');
       return fallback;
     } catch (_) {
       return fallback;
@@ -571,10 +580,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         _fetchCustomer();
         _showSnack('', 'Subscription has been cancelled', _C.green);
       } else {
+        // Same class of bug as #3205 — `message` can come back as a
+        // nested object instead of a plain string, and `?? fallback`
+        // alone doesn't guard against that, only against null.
         _showSnack(
           "",
-          json.decode(response.body)["message"] ??
-              'Failed to apply cancellation',
+          _extractErrorMessage(response, 'Failed to apply cancellation'),
           _C.red,
         );
       }
@@ -609,8 +620,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       _buildStatsGrid(),
                       SizedBox(height: 24.h),
                       _buildSubscriptionsSection(),
-                      SizedBox(height: 24.h),
-                      _buildDeliveriesSection(),
                       SizedBox(height: 32.h),
                     ],
                   ),
@@ -814,7 +823,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ),
                   SizedBox(width: 5.w),
                   Text(
-                    'Wallet balance',
+                    'Pending Amount',
                     style: GoogleFonts.poppins(
                       fontSize: 11.5.sp,
                       color: _C.textSecondary,
@@ -857,7 +866,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 const Icon(Icons.add, size: 14, color: _C.primary),
                 SizedBox(width: 5.w),
                 Text(
-                  'Add Balance',
+                  'Pay Amount',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5.sp,
                     fontWeight: FontWeight.w600,
@@ -1071,6 +1080,22 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     ],
                   ),
                 ),
+                GestureDetector(
+                  onTap: () => _showDeliveryCalendarSheet(sub),
+                  child: Container(
+                    padding: EdgeInsets.all(6.w),
+                    margin: EdgeInsets.only(right: 8.w),
+                    decoration: BoxDecoration(
+                      color: _C.primaryLight,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Icon(
+                      Icons.calendar_month_outlined,
+                      size: 16.sp,
+                      color: _C.primary,
+                    ),
+                  ),
+                ),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
                   decoration: BoxDecoration(
@@ -1170,57 +1195,34 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  /// This customer's own delivery history — reuses the same `OrderCard`
-  /// the Deliveries tab uses, so status changes/cancel here behave
-  /// identically to the main Deliveries screen.
-  Widget _buildDeliveriesSection() => GetBuilder<DeliveriesController>(
-    builder: (ctrl) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Deliveries',
-            style: GoogleFonts.poppins(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: _C.textPrimary,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          if (ctrl.isLoading)
-            Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.h),
-                child: const CircularProgressIndicator(color: _C.primary),
-              ),
-            )
-          else if (ctrl.deliveries.isEmpty)
-            Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.h),
-                child: Text(
-                  'No deliveries found for this customer.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.sp,
-                    color: _C.textTertiary,
-                  ),
+  /// This subscription's deliveries laid out on a calendar — each day
+  /// colored by that delivery's status (green = delivered, red =
+  /// cancelled, amber = pending), using the backend's `subscriptionId`
+  /// filter so this only shows deliveries tied to this exact plan, not
+  /// every delivery this customer has ever had.
+  void _showDeliveryCalendarSheet(ActiveSubscriptions sub) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (_) => DraggableScrollableSheet(
+            initialChildSize: 0.75,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder:
+                (context, scrollController) => _SubscriptionCalendarSheet(
+                  subscriptionId: sub.id!,
+                  planName: sub.plan?.name ?? 'Plan',
+                  subscriptionCancelled: sub.status != 'ACTIVE',
+                  startDate: sub.startDate,
+                  endDate: sub.endDate,
+                  scrollController: scrollController,
                 ),
-              ),
-            )
-          else
-            ...ctrl.deliveries.map(
-              (d) => OrderCard(
-                delivery: d,
-                onRefreshNeeded:
-                    () => _deliveriesController.fetchDeliveries(
-                      search: customer.phone,
-                    ),
-              ),
-            ),
-        ],
-      );
-    },
-  );
+          ),
+    );
+  }
 
   Widget _card({required Widget child, EdgeInsets? padding}) => Container(
     padding: padding ?? EdgeInsets.all(16.w),
@@ -1295,6 +1297,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   void _showTopUpSheet() {
     final ctrl = TextEditingController();
+    // Only the amount actually owed can be collected here — never more,
+    // and if nothing is owed there's nothing to pay against.
+    final pendingAmount = _walletBalance < 0 ? -_walletBalance : 0;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1329,7 +1334,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     ),
                     SizedBox(height: 20.h),
                     Text(
-                      'Add Wallet Balance',
+                      'Pay Amount',
                       style: GoogleFonts.poppins(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w600,
@@ -1338,7 +1343,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      "Enter the amount to add to the wallet",
+                      pendingAmount > 0
+                          ? "Pending amount: ₹$pendingAmount — cannot collect more than this"
+                          : "No pending amount — nothing to collect",
                       style: GoogleFonts.poppins(
                         fontSize: 12.5.sp,
                         color: _C.textSecondary,
@@ -1347,6 +1354,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     SizedBox(height: 16.h),
                     TextField(
                       controller: ctrl,
+                      enabled: pendingAmount > 0,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       style: GoogleFonts.poppins(
@@ -1388,40 +1396,55 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       ),
                     ),
                     SizedBox(height: 12.h),
-                    Row(
-                      children:
-                          [500, 1000, 2000].map((amt) {
-                            return Expanded(
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                  right: amt == 2000 ? 0 : 8.w,
-                                ),
-                                child: GestureDetector(
-                                  onTap: () => ctrl.text = amt.toString(),
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 9.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF5F6FA),
-                                      border: Border.all(color: _C.border),
-                                      borderRadius: BorderRadius.circular(7.r),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      '+₹$amt',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12.5.sp,
-                                        color: _C.textSecondary,
-                                        fontWeight: FontWeight.w500,
+                    if (pendingAmount > 0)
+                      Row(
+                        children:
+                            // Only amounts that fit within what's actually
+                            // owed, plus the exact full pending amount.
+                            {
+                              ...[
+                                500,
+                                1000,
+                                2000,
+                              ].where((amt) => amt < pendingAmount),
+                              pendingAmount,
+                            }.toList().map((amt) {
+                              final isLast = amt == pendingAmount;
+                              return Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: isLast ? 0 : 8.w,
+                                  ),
+                                  child: GestureDetector(
+                                    onTap: () => ctrl.text = amt.toString(),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 9.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF5F6FA),
+                                        border: Border.all(color: _C.border),
+                                        borderRadius: BorderRadius.circular(
+                                          7.r,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        amt == pendingAmount
+                                            ? 'Full ₹$amt'
+                                            : '₹$amt',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12.5.sp,
+                                          color: _C.textSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
-                    ),
+                              );
+                            }).toList(),
+                      ),
                     SizedBox(height: 20.h),
                     Row(
                       children: [
@@ -1447,16 +1470,32 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                         SizedBox(width: 10.w),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
-                              final v = int.tryParse(ctrl.text) ?? 0;
-                              if (v > 0) {
-                                setState(() => _walletBalance += v);
-                                updateWalletBalance(v);
-                                Get.back();
-                              }
-                            },
+                            onPressed:
+                                pendingAmount <= 0
+                                    ? null
+                                    : () async {
+                                      final v = int.tryParse(ctrl.text) ?? 0;
+                                      if (v <= 0) return;
+                                      // Never collect more than what's
+                                      // actually owed.
+                                      if (v > pendingAmount) {
+                                        AppToast.error(
+                                          'Cannot collect more than the pending amount of ₹$pendingAmount',
+                                        );
+                                        return;
+                                      }
+                                      setState(() => _walletBalance += v);
+                                      Get.back();
+                                      final success = await updateWalletBalance(
+                                        v,
+                                      );
+                                      if (!success && mounted) {
+                                        setState(() => _walletBalance -= v);
+                                      }
+                                    },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _C.primary,
+                              disabledBackgroundColor: _C.border,
                               padding: EdgeInsets.symmetric(vertical: 12.h),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
@@ -1464,7 +1503,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                               ),
                             ),
                             child: Text(
-                              'Add funds',
+                              'Pay',
                               style: GoogleFonts.poppins(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
@@ -3340,4 +3379,384 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   void _showSnack(String title, String msg, Color _color) {
     AppToast.show(title: title, message: msg);
   }
+}
+
+/// Calendar view of one subscription's deliveries (`GET /deliveries?
+/// subscriptionId=`) — each day colored by that day's delivery status, so
+/// pausing/cancelling and the resulting gaps are visible at a glance.
+class _SubscriptionCalendarSheet extends StatefulWidget {
+  final String subscriptionId;
+  final String planName;
+  final String? startDate;
+  final String? endDate;
+  // Whether the subscription itself has been cancelled — when true, every
+  // day shows cancelled-red regardless of that day's own delivery status,
+  // since the backend doesn't retroactively update individual delivery
+  // rows when a subscription is cancelled (they'd otherwise still show
+  // their old PENDING/DELIVERED status).
+  final bool subscriptionCancelled;
+  final ScrollController scrollController;
+
+  const _SubscriptionCalendarSheet({
+    required this.subscriptionId,
+    required this.planName,
+    required this.startDate,
+    required this.endDate,
+    required this.subscriptionCancelled,
+    required this.scrollController,
+  });
+
+  @override
+  State<_SubscriptionCalendarSheet> createState() =>
+      _SubscriptionCalendarSheetState();
+}
+
+class _SubscriptionCalendarSheetState
+    extends State<_SubscriptionCalendarSheet> {
+  bool _isLoading = true;
+  // Keyed by day-only DateTime (time stripped) so lookups don't miss on
+  // time-of-day differences in the API's date strings.
+  final Map<DateTime, Delivery> _byDate = {};
+  DateTime? _focusedDay;
+  DateTime? _selectedDay;
+  late DateTime _firstDay;
+  late DateTime _lastDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _firstDay =
+        _tryParseDate(widget.startDate) ??
+        DateTime.now().subtract(const Duration(days: 30));
+    _lastDay =
+        _tryParseDate(widget.endDate) ??
+        DateTime.now().add(const Duration(days: 30));
+    _focusedDay =
+        DateTime.now().isBefore(_firstDay)
+            ? _firstDay
+            : (DateTime.now().isAfter(_lastDay) ? _lastDay : DateTime.now());
+    _fetch();
+  }
+
+  DateTime? _tryParseDate(String? value) {
+    if (value == null || value.isEmpty) return null;
+    try {
+      return DateTime.parse(value);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  DateTime _dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  Future<void> _fetch() async {
+    try {
+      final messId = Get.find<HomeScreenController>().selectedMessId;
+      if (messId == null) return;
+
+      final uri = Uri.parse('$baseUrl/deliveries').replace(
+        queryParameters: {
+          'messId': messId,
+          'subscriptionId': widget.subscriptionId,
+          'limit': '100',
+        },
+      );
+      final response = await get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final List<dynamic> dataList = jsonData['data'] ?? [];
+        for (final item in dataList) {
+          final delivery = Delivery.fromJson(item);
+          try {
+            _byDate[_dayOnly(DateTime.parse(delivery.date))] = delivery;
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      debugPrint('SUBSCRIPTION CALENDAR FETCH ERROR: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // A brighter, more attention-grabbing red than the app's usual muted
+  // _C.red — cancelled days should stand out on the calendar at a glance.
+  static const _cancelledRed = Color(0xFFFF3B5C);
+
+  Color _statusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'DELIVERED':
+      case 'COMPLETED':
+        return _C.green;
+      case 'CANCELLED':
+        return _cancelledRed;
+      case 'UNDELIVERED':
+        return _C.red;
+      case 'PENDING':
+      default:
+        return _C.amber;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      child: ListView(
+        controller: widget.scrollController,
+        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+        children: [
+          Center(
+            child: Container(
+              width: 36.w,
+              height: 4.h,
+              margin: EdgeInsets.only(bottom: 16.h),
+              decoration: BoxDecoration(
+                color: _C.border,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+          ),
+          Text(
+            '${widget.planName} — Delivery Calendar',
+            style: GoogleFonts.poppins(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w700,
+              color: _C.textPrimary,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Row(
+            children: [
+              _legendDot(_C.green, 'Delivered'),
+              SizedBox(width: 12.w),
+              _legendDot(_C.amber, 'Pending'),
+              SizedBox(width: 12.w),
+              _legendDot(_cancelledRed, 'Cancelled'),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          if (_isLoading)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 40.h),
+              child: const Center(
+                child: CircularProgressIndicator(color: _C.primary),
+              ),
+            )
+          else ...[
+            TableCalendar<Delivery>(
+              firstDay: _firstDay,
+              lastDay: _lastDay,
+              focusedDay: _focusedDay!,
+              selectedDayPredicate:
+                  (day) => _selectedDay != null && isSameDay(_selectedDay, day),
+              onDaySelected: (selected, focused) {
+                setState(() {
+                  _selectedDay = selected;
+                  _focusedDay = focused;
+                });
+              },
+              onPageChanged: (focused) => _focusedDay = focused,
+              calendarFormat: CalendarFormat.month,
+              headerStyle: const HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+              ),
+              calendarBuilders: CalendarBuilders(
+                defaultBuilder: (context, day, _) => _dayCell(day),
+                todayBuilder: (context, day, _) => _dayCell(day, isToday: true),
+                selectedBuilder:
+                    (context, day, _) => _dayCell(day, isSelected: true),
+              ),
+            ),
+            if (_selectedDay != null) _selectedDayDetails(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _legendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7.w,
+          height: 7.w,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        SizedBox(width: 4.w),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 10.5.sp,
+            color: _C.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _dayCell(
+    DateTime day, {
+    bool isToday = false,
+    bool isSelected = false,
+  }) {
+    final delivery = _byDate[_dayOnly(day)];
+    final withinRange =
+        !day.isBefore(_dayOnly(_firstDay)) && !day.isAfter(_dayOnly(_lastDay));
+    final color =
+        widget.subscriptionCancelled && withinRange
+            ? _cancelledRed
+            : (delivery != null ? _statusColor(delivery.status) : null);
+
+    return Container(
+      margin: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color:
+            isSelected
+                ? _C.primary.withValues(alpha: 0.15)
+                : color?.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+        border:
+            isToday
+                ? Border.all(color: _C.primary, width: 1.2)
+                : (color != null ? Border.all(color: color, width: 1) : null),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '${day.day}',
+        style: GoogleFonts.poppins(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w500,
+          color: _C.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _selectedDayDetails() {
+    final delivery = _byDate[_dayOnly(_selectedDay!)];
+    return Container(
+      margin: EdgeInsets.only(top: 12.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9F9FB),
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  DateFormat('dd MMM yyyy').format(_selectedDay!),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _C.textPrimary,
+                  ),
+                ),
+              ),
+              if (widget.subscriptionCancelled)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: _cancelledRed.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    'CANCELLED',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _cancelledRed,
+                    ),
+                  ),
+                )
+              else if (delivery == null)
+                Text(
+                  'No delivery',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5.sp,
+                    color: _C.textTertiary,
+                  ),
+                ),
+            ],
+          ),
+          // Breakfast / Lunch / Dinner for this day — each with its own
+          // status and its own Cancel action, independent of the other
+          // meals that day.
+          if (!widget.subscriptionCancelled &&
+              delivery != null &&
+              delivery.deliveryVariations.isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            ...delivery.deliveryVariations.map(
+              (v) => _variationRow(delivery, v),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _variationRow(Delivery delivery, DeliveryVariation v) {
+    final title = v.variation?.title ?? 'Meal';
+    final status = v.status.toUpperCase();
+    final color = _statusColor(status);
+
+    return Padding(
+      padding: EdgeInsets.only(top: 6.h),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+                color: _C.textPrimary,
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              status,
+              style: GoogleFonts.poppins(
+                fontSize: 9.5.sp,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+          // Per-meal cancel is disabled: the backend's status endpoint
+          // doesn't scope by delivery, so cancelling one customer's meal
+          // here was cancelling it for every customer sharing that meal
+          // type. Re-enable once that's fixed server-side.
+        ],
+      ),
+    );
+  }
+
+  // Per-meal cancel from the calendar is disabled — see the note in
+  // _variationRow. The backend's PATCH /deliveries/:id/variations/:id/
+  // status endpoint doesn't scope its update by the delivery id, so it
+  // was cancelling the same meal type for every customer, not just the
+  // one selected here. Restore this once that's fixed server-side.
 }

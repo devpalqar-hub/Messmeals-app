@@ -1,7 +1,9 @@
 import 'package:country_pickers/country.dart';
+import 'package:country_pickers/country_picker_dialog.dart';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
 class BasicInfoWidget extends StatelessWidget {
@@ -10,6 +12,8 @@ class BasicInfoWidget extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController addressController;
   final TextEditingController locationController;
+  final String selectedCountryIso;
+  final ValueChanged<String> onCountryChanged;
 
   const BasicInfoWidget({
     super.key,
@@ -18,11 +22,15 @@ class BasicInfoWidget extends StatelessWidget {
     required this.emailController,
     required this.addressController,
     required this.locationController,
+    required this.selectedCountryIso,
+    required this.onCountryChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    Country selectedCountry = CountryPickerUtils.getCountryByIsoCode("IN");
+    final selectedCountry = CountryPickerUtils.getCountryByIsoCode(
+      selectedCountryIso,
+    );
 
     return SingleChildScrollView(
       child: Column(
@@ -94,7 +102,7 @@ class BasicInfoWidget extends StatelessWidget {
 
           SizedBox(height: 5.h),
 
-          phoneField(phoneController, selectedCountry),
+          phoneField(context, phoneController, selectedCountry),
 
           SizedBox(height: 15.h),
 
@@ -265,7 +273,11 @@ class BasicInfoWidget extends StatelessWidget {
     );
   }
 
-  Widget phoneField(TextEditingController controller, Country country) {
+  Widget phoneField(
+    BuildContext context,
+    TextEditingController controller,
+    Country country,
+  ) {
     return Container(
       height: 50.h,
       padding: EdgeInsets.symmetric(horizontal: 14.w),
@@ -284,24 +296,49 @@ class BasicInfoWidget extends StatelessWidget {
 
           SizedBox(width: 10.w),
 
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: const Color(0xffF3F4F6),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  "+${country.phoneCode}",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder:
+                    (_) => CountryPickerDialog(
+                      isSearchable: true,
+                      titlePadding: EdgeInsets.all(16.w),
+                      searchCursorColor: AppColors.primary,
+                      searchInputDecoration: const InputDecoration(
+                        hintText: 'Search country',
+                      ),
+                      priorityList: [
+                        CountryPickerUtils.getCountryByIsoCode('IN'),
+                      ],
+                      title: Text(
+                        'Select a country',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      ),
+                      onValuePicked:
+                          (Country picked) => onCountryChanged(picked.isoCode),
+                    ),
+              );
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: const Color(0xffF3F4F6),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    "+${country.phoneCode}",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
 
-                Icon(Icons.keyboard_arrow_down, size: 18.sp),
-              ],
+                  Icon(Icons.keyboard_arrow_down, size: 18.sp),
+                ],
+              ),
             ),
           ),
 

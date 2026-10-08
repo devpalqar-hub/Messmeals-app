@@ -131,6 +131,7 @@ class DeliveriesController extends GetxController {
     String? variationId,
     String? search,
     String? partnerId,
+    String? subscriptionId,
     bool isLoadMore = false,
   }) async {
     if (isLoadMore) {
@@ -177,6 +178,10 @@ class DeliveriesController extends GetxController {
 
       if (partnerId != null && partnerId.trim().isNotEmpty) {
         queryParams['partnerId'] = partnerId.trim();
+      }
+
+      if (subscriptionId != null && subscriptionId.trim().isNotEmpty) {
+        queryParams['subscriptionId'] = subscriptionId.trim();
       }
 
       final uri = Uri.parse(
@@ -1154,6 +1159,17 @@ class _OrderCardState extends State<OrderCard> {
                                         if (confirmed != true) return;
                                       }
 
+                                      // Reverted to `variationId` — the
+                                      // backend 404s on `deliveryVar.id`
+                                      // (not recognized at that endpoint
+                                      // at all), confirming the
+                                      // cross-customer-cancellation bug is
+                                      // server-side: this endpoint isn't
+                                      // scoping its update by the
+                                      // `:deliveryId` path segment, so it
+                                      // matches every delivery sharing
+                                      // that variationId. Needs a backend
+                                      // fix, not a client one.
                                       final success = await _controller
                                           .patchVariationStatus(
                                             deliveryId: widget.delivery.id,
@@ -1376,14 +1392,15 @@ class _OrderCardState extends State<OrderCard> {
                                 final vStatus =
                                     v.status.toString().toUpperCase();
                                 return InkWell(
-                                  // Whole day is cancelled — no point editing individual meals
-                                  onTap:
-                                      _isCancelled
-                                          ? null
-                                          : () => _showStatusUpdateSheet(
-                                            context,
-                                            v,
-                                          ),
+                                  // Per-meal status changes are disabled —
+                                  // the backend's PATCH /deliveries/:id/
+                                  // variations/:id/status endpoint doesn't
+                                  // scope by delivery, so changing one
+                                  // customer's meal status here changes it
+                                  // for every customer sharing that meal
+                                  // type. Re-enable once that's fixed
+                                  // server-side (see _showStatusUpdateSheet).
+                                  onTap: null,
                                   borderRadius: BorderRadius.circular(20.r),
                                   child: Container(
                                     padding: EdgeInsets.symmetric(

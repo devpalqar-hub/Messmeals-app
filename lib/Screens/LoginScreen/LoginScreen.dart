@@ -1,3 +1,5 @@
+import 'package:country_pickers/country.dart';
+import 'package:country_pickers/country_picker_dialog.dart';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -87,7 +89,7 @@ class LoginScreen extends StatelessWidget {
                   SizedBox(height: 8.h),
 
                   /// PHONE INPUT FIELD
-                  _buildPhoneInputField(),
+                  _buildPhoneInputField(context),
 
                   SizedBox(height: 24.h),
 
@@ -156,7 +158,7 @@ class LoginScreen extends StatelessWidget {
   }
 
   /// Extracted Phone Input Field Widget
-  Widget _buildPhoneInputField() {
+  Widget _buildPhoneInputField(BuildContext context) {
     return Container(
       height: 52.h,
       decoration: BoxDecoration(
@@ -166,56 +168,65 @@ class LoginScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          /// COUNTRY PICKER
-          Container(
-            width: 92.w,
-            alignment: Alignment.center,
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: authCtrl.selectedCountry,
-                icon: Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.grey.shade500,
-                  size: 20.sp,
-                ),
-                isDense: true,
-                items:
-                    ["IN", "US", "AE"]
-                        .map(
-                          (item) => DropdownMenuItem(
-                            value: item,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 20.w,
-                                  height: 14.h,
-                                  child: CountryPickerUtils.getDefaultFlagImage(
-                                    CountryPickerUtils.getCountryByIsoCode(
-                                      item,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Text(
-                                  "+${CountryPickerUtils.getCountryByIsoCode(item).phoneCode}",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13.5.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFF111827),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                        .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    authCtrl.selectedCountry = value;
-                    authCtrl.update();
-                  }
-                },
+          /// COUNTRY PICKER — searchable, every country (was hardcoded to
+          /// just IN/US/AE behind a plain dropdown).
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder:
+                    (_) => CountryPickerDialog(
+                      isSearchable: true,
+                      titlePadding: EdgeInsets.all(16.w),
+                      searchCursorColor: AppColors.primary,
+                      searchInputDecoration: const InputDecoration(
+                        hintText: 'Search country',
+                      ),
+                      priorityList: [
+                        CountryPickerUtils.getCountryByIsoCode('IN'),
+                      ],
+                      title: Text(
+                        'Select a country',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      ),
+                      onValuePicked: (Country country) {
+                        authCtrl.selectedCountry = country.isoCode;
+                        authCtrl.update();
+                      },
+                    ),
+              );
+            },
+            child: Container(
+              width: 92.w,
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 20.w,
+                    height: 14.h,
+                    child: CountryPickerUtils.getDefaultFlagImage(
+                      CountryPickerUtils.getCountryByIsoCode(
+                        authCtrl.selectedCountry,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    authCtrl.countryCode,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  SizedBox(width: 2.w),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Colors.grey.shade500,
+                    size: 20.sp,
+                  ),
+                ],
               ),
             ),
           ),
@@ -280,7 +291,10 @@ class LoginScreen extends StatelessWidget {
                   // looked up a bare 10-digit number it has no record of.
                   final fullPhone = "${authCtrl.countryCode}$phone";
 
-                  bool success = await authCtrl.sendOtp(fullPhone, silent: true);
+                  bool success = await authCtrl.sendOtp(
+                    fullPhone,
+                    silent: true,
+                  );
                   if (success) {
                     // Not always fullPhone — sendOtp may have fallen back to
                     // the bare digits for an older account stored without a

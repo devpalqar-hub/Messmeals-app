@@ -67,7 +67,9 @@ class DeliveryVariation {
   final String id;
   final String deliveryId;
   final String variationId;
-  final String status;
+  // Mutable so callers can optimistically reflect a status change (e.g.
+  // cancelling a single meal) without refetching the whole delivery.
+  String status;
   final String createdAt;
   final String updatedAt;
   final MealVariation? variation; // Nested object detail

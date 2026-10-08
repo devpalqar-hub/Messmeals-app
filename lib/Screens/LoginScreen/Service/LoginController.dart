@@ -12,6 +12,7 @@ import 'package:mess/main.dart';
 import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
+
 // import 'package:mess/Screens/Utils/Roles.dart'; // delivery-partner module disabled
 
 String bearerToken = "";
@@ -80,16 +81,31 @@ class AuthController extends GetxController {
     debugPrint("✅ STATUS: ${response.statusCode}");
     debugPrint("✅ RESPONSE: ${response.body}");
 
-    final data = jsonDecode(response.body);
+    // A non-JSON or empty body (server error page, timed-out proxy, etc.)
+    // used to throw here and get swallowed by sendOtp's catch-all into an
+    // unhelpful "Something went wrong" with no indication of what
+    // actually failed. Surface the real status code instead.
+    dynamic data;
+    try {
+      data = jsonDecode(response.body);
+    } catch (_) {
+      lastErrorMessage =
+          "Server error (${response.statusCode}). Please try again.";
+      lastLoginUserNotFound = false;
+      return false;
+    }
 
     if ((response.statusCode == 200 || response.statusCode == 201) &&
+        data is Map &&
         data["sessionId"] != null) {
       sessionId = data["sessionId"];
       lastUsedPhone = phone;
       return true;
     }
 
-    final message = (data["message"] ?? "User not registered").toString();
+    final message =
+        ((data is Map ? data["message"] : null) ?? "User not registered")
+            .toString();
     lastErrorMessage = message;
 
     final lowerMsg = message.toLowerCase();
