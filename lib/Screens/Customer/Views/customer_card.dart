@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_core/src/get_main.dart' show Get;
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:mess/Screens/Customer/Views/CustoemrDetailScreen.dart';
+import 'package:mess/Screens/Customer/Views/CustomerDetailScreen.dart';
 import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';

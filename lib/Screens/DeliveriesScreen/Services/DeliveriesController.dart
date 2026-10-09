@@ -12,17 +12,17 @@ class DeliveriesController extends GetxController {
   final HomeScreenController dashboardController =
       Get.find<HomeScreenController>();
 
-  // Standard variables instead of .obs
+  
   bool isLoading = false;
   List<Delivery> deliveries = [];
   int page = 1;
   int limit = 10;
 
-  /// ✅ Fetch Deliveries
+  
   Future<void> fetchDeliveries({DateTime? date, String? status}) async {
     try {
       isLoading = true;
-      update(); // Notify UI to show loader
+      update(); 
 
       final messId = dashboardController.selectedMessId;
       if (messId == null) {
@@ -70,11 +70,11 @@ class DeliveriesController extends GetxController {
       AppToast.error('Failed to load deliveries');
     } finally {
       isLoading = false;
-      update(); // Notify UI to refresh data
+      update(); 
     }
   }
 
-  /// ✅ Generate Deliveries by Date
+  
   Future<void> generateDeliveriesByDate(DateTime date) async {
     try {
       isLoading = true;
@@ -102,7 +102,7 @@ class DeliveriesController extends GetxController {
     }
   }
 
-  /// ✅ Update Delivery Status
+  
   Future<bool> updateDeliveryStatus(String deliveryId, String newStatus) async {
     try {
       isLoading = true;
@@ -141,7 +141,7 @@ class DeliveriesController extends GetxController {
     }
   }
 
-  /// ✅ Search Deliveries
+  
   Future<void> searchDeliveries({DateTime? date, String? status}) async {
     await fetchDeliveries(date: date, status: status);
   }

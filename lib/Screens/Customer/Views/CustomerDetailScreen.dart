@@ -52,6 +52,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   late CustomerDetailModel customer;
   late int _walletBalance;
 
+  // Subscriptions / Deliveries / Payments tabs on the redesigned screen.
+  int _selectedTab = 0;
+
+  bool _deliveriesLoading = false;
+  List<Delivery> _deliveries = [];
+
   final List<String> _daysOfWeek = [
     "MONDAY",
     "TUESDAY",
@@ -82,6 +88,43 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         _walletBalance = customer.walletBalance ?? 0;
         _isFetched = true;
       });
+      // Search by phone rather than name — unique per customer, so this
+      // only ever pulls back this customer's own deliveries, across all
+      // of their subscriptions.
+      if ((customer.phone ?? '').trim().isNotEmpty) {
+        _fetchDeliveries();
+      }
+    }
+  }
+
+  Future<void> _fetchDeliveries() async {
+    setState(() => _deliveriesLoading = true);
+    try {
+      final messId = Get.find<HomeScreenController>().selectedMessId;
+      if (messId == null) return;
+      final uri = Uri.parse('$baseUrl/deliveries').replace(
+        queryParameters: {
+          'messId': messId,
+          'search': customer.phone,
+          'limit': '100',
+        },
+      );
+      final res = await get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+      );
+      if (res.statusCode == 200) {
+        final jsonData = json.decode(res.body);
+        final List<dynamic> dataList = jsonData['data'] ?? [];
+        _deliveries = dataList.map((e) => Delivery.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint('FETCH CUSTOMER DELIVERIES ERROR: $e');
+    } finally {
+      if (mounted) setState(() => _deliveriesLoading = false);
     }
   }
 
@@ -548,19 +591,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   String _fmtCurrency(int v) => '₹${NumberFormat('#,##,###').format(v)}';
 
   // ✅ FIX: NEW helper — computes real "Member since" from createdAt
-  String _memberSince() {
-    if (customer.createdAt == null || customer.createdAt!.isEmpty) return 'N/A';
+  String _fmtMemberSinceDate() {
+    if (customer.createdAt == null || customer.createdAt!.isEmpty) {
+      return 'N/A';
+    }
     try {
-      final created = DateTime.parse(customer.createdAt!);
-      final now = DateTime.now();
-      final months =
-          (now.year - created.year) * 12 + (now.month - created.month);
-      if (months < 1) return 'New';
-      if (months < 12) return '${months} mo';
-      final years = months ~/ 12;
-      final remMonths = months % 12;
-      if (remMonths == 0) return '${years} yr';
-      return '${years}y ${remMonths}m';
+      return _fmtDate(customer.createdAt!);
     } catch (_) {
       return 'N/A';
     }
@@ -615,11 +651,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     children: [
                       _buildProfileCard(),
                       SizedBox(height: 12.h),
-                      _buildWalletCard(),
-                      SizedBox(height: 12.h),
-                      _buildStatsGrid(),
-                      SizedBox(height: 24.h),
-                      _buildSubscriptionsSection(),
+                      _buildStatsRow(),
+                      SizedBox(height: 16.h),
+                      _buildTabBar(),
+                      SizedBox(height: 16.h),
+                      switch (_selectedTab) {
+                        0 => _buildSubscriptionsSection(),
+                        1 => _buildDeliveriesTab(),
+                        _ => _buildPaymentsTab(),
+                      },
                       SizedBox(height: 32.h),
                     ],
                   ),
@@ -702,6 +742,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 (customer.address?.isNotEmpty ?? false)
                     ? customer.address!
                     : 'No address provided',
+              ),
+              SizedBox(height: 5.h),
+              _infoRow(
+                Icons.calendar_today_outlined,
+                'Member since ${_fmtMemberSinceDate()}',
               ),
               SizedBox(height: 10.h),
               _statusBadge(),
@@ -881,89 +926,416 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     ),
   );
 
-  // ✅ FIX: _memberSince() replaces the hardcoded '6 mo'
-  Widget _buildStatsGrid() => GridView.count(
-    crossAxisCount: 2,
-    crossAxisSpacing: 10.w,
-    mainAxisSpacing: 10.h,
-    childAspectRatio: 1.6,
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    children: [
-      _statCard(
-        'Days left',
-        '${customer.noOfDaysToEnd ?? 0}',
-        Icons.timer_outlined,
-        _C.amberLight,
-        _C.amber,
-      ),
-      _statCard(
-        'Total orders',
-        '${customer.totalOrders ?? 0}',
-        Icons.shopping_bag_outlined,
-        _C.greenLight,
-        _C.green,
-      ),
-      _statCard(
-        'Total spent',
-        _fmtCurrency(customer.totalSpent ?? 0),
-        Icons.account_balance_wallet_outlined,
-        _C.primaryLight,
-        _C.primary,
-      ),
-      _statCard(
-        'Member since',
-        _memberSince(),
-        Icons.calendar_month_outlined,
-        _C.pinkLight,
-        _C.pink,
-      ),
-    ],
-  );
+  Widget _buildStatsRow() {
+    final activePlanCount =
+        customer.activeSubscriptions
+            ?.where((s) => s.status == 'ACTIVE')
+            .length ??
+        0;
+    return Row(
+      children: [
+        Expanded(
+          child: _statChip(
+            'Active Plan',
+            '$activePlanCount',
+            Icons.assignment_outlined,
+            _C.greenLight,
+            _C.green,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: _statChip(
+            'Days Left',
+            '${customer.noOfDaysToEnd ?? 0}',
+            Icons.timer_outlined,
+            _C.amberLight,
+            _C.amber,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: _statChip(
+            'Total Spent',
+            _fmtCurrency(customer.totalSpent ?? 0),
+            Icons.account_balance_wallet_outlined,
+            _C.redLight,
+            _C.red,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: _statChip(
+            'Total Deliveries',
+            '${customer.totalOrders ?? 0}',
+            Icons.local_shipping_outlined,
+            _C.primaryLight,
+            _C.primaryMid,
+          ),
+        ),
+      ],
+    );
+  }
 
-  Widget _statCard(
+  Widget _statChip(
     String label,
     String value,
     IconData icon,
     Color bgColor,
     Color iconColor,
-  ) => _card(
-    padding: EdgeInsets.all(12.w),
+  ) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(10.r),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          width: 30.w,
-          height: 30.w,
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(6.r),
+        Icon(icon, size: 15.sp, color: iconColor),
+        SizedBox(height: 6.h),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+            fontSize: 13.5.sp,
+            fontWeight: FontWeight.w700,
+            color: _C.textPrimary,
           ),
-          child: Icon(icon, size: 15.sp, color: iconColor),
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: _C.textPrimary,
-              ),
-            ),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 11.sp,
-                color: _C.textSecondary,
-              ),
-            ),
-          ],
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(fontSize: 9.5.sp, color: _C.textSecondary),
         ),
       ],
     ),
+  );
+
+  Widget _buildTabBar() {
+    const tabs = ['Subscriptions', 'Deliveries', 'Payments'];
+    const icons = [
+      Icons.assignment_outlined,
+      Icons.local_shipping_outlined,
+      Icons.account_balance_wallet_outlined,
+    ];
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (i) {
+          final isActive = _selectedTab == i;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedTab = i),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 9.h),
+                decoration: BoxDecoration(
+                  color: isActive ? _C.surface : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8.r),
+                  boxShadow:
+                      isActive
+                          ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                          : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icons[i],
+                      size: 13.sp,
+                      color: isActive ? _C.primary : _C.textTertiary,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      tabs[i],
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isActive ? _C.textPrimary : _C.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Deliveries tab — Today / Upcoming / Recent, derived from the single
+  // _deliveries fetch (all of this customer's deliveries, across every
+  // subscription they've ever had).
+  // ---------------------------------------------------------------------
+  Widget _buildDeliveriesTab() {
+    if (_deliveriesLoading) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 40.h),
+        child: const Center(
+          child: CircularProgressIndicator(color: _C.primary),
+        ),
+      );
+    }
+    if (_deliveries.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 40.h),
+        child: Center(
+          child: Text(
+            'No deliveries found for this customer.',
+            style: GoogleFonts.poppins(fontSize: 13.sp, color: _C.textTertiary),
+          ),
+        ),
+      );
+    }
+
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    DateTime? dateOf(Delivery d) {
+      try {
+        return DateTime.parse(d.date);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final sorted = [..._deliveries]..sort((a, b) {
+      final da = dateOf(a) ?? todayOnly;
+      final db = dateOf(b) ?? todayOnly;
+      return da.compareTo(db);
+    });
+
+    Delivery? todayDelivery;
+    for (final d in sorted) {
+      final dd = dateOf(d);
+      if (dd != null && dd.isAtSameMomentAs(todayOnly)) {
+        todayDelivery = d;
+        break;
+      }
+    }
+    final upcoming =
+        sorted
+            .where((d) {
+              final dd = dateOf(d);
+              return dd != null && dd.isAfter(todayOnly);
+            })
+            .take(5)
+            .toList();
+    final recent =
+        sorted
+            .where((d) {
+              final dd = dateOf(d);
+              return dd != null && !dd.isAfter(todayOnly);
+            })
+            .toList()
+            .reversed
+            .take(5)
+            .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (todayDelivery != null) ...[
+          Text(
+            "Today's Delivery",
+            style: GoogleFonts.poppins(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: _C.textPrimary,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          _deliveryListRow(todayDelivery, icon: Icons.local_shipping_outlined),
+          SizedBox(height: 20.h),
+        ],
+        if (upcoming.isNotEmpty) ...[
+          Text(
+            'Upcoming Deliveries',
+            style: GoogleFonts.poppins(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: _C.textPrimary,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          SizedBox(
+            height: 70.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: upcoming.length,
+              separatorBuilder: (_, __) => SizedBox(width: 8.w),
+              itemBuilder: (_, i) => _upcomingDayChip(upcoming[i]),
+            ),
+          ),
+          SizedBox(height: 20.h),
+        ],
+        if (recent.isNotEmpty) ...[
+          Text(
+            'Recent Deliveries',
+            style: GoogleFonts.poppins(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: _C.textPrimary,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          ...recent.map(
+            (d) => Padding(
+              padding: EdgeInsets.only(bottom: 8.h),
+              child: _deliveryListRow(d, icon: Icons.calendar_today_outlined),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _deliveryListRow(Delivery d, {required IconData icon}) {
+    final meta = _deliveryStatusMeta(d.status);
+    String dateLabel = d.date;
+    try {
+      dateLabel = DateFormat('dd MMM yyyy').format(DateTime.parse(d.date));
+    } catch (_) {}
+    final mealTitle =
+        d.deliveryVariations.isNotEmpty
+            ? d.deliveryVariations
+                .map((v) => v.variation?.title)
+                .whereType<String>()
+                .join(', ')
+            : '';
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: _C.border),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 15.sp, color: _C.textTertiary),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dateLabel,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _C.textPrimary,
+                  ),
+                ),
+                if (mealTitle.isNotEmpty)
+                  Text(
+                    mealTitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      color: _C.textSecondary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: meta.light,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              meta.label,
+              style: GoogleFonts.poppins(
+                fontSize: 9.5.sp,
+                fontWeight: FontWeight.w600,
+                color: meta.color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _upcomingDayChip(Delivery d) {
+    DateTime? dd;
+    try {
+      dd = DateTime.parse(d.date);
+    } catch (_) {}
+    final meta = _deliveryStatusMeta(d.status);
+    return Container(
+      width: 68.w,
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: _C.border),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            dd != null ? DateFormat('dd').format(dd) : '-',
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+              color: _C.textPrimary,
+            ),
+          ),
+          Text(
+            dd != null ? DateFormat('EEE').format(dd) : '',
+            style: GoogleFonts.poppins(fontSize: 9.sp, color: _C.textSecondary),
+          ),
+          SizedBox(height: 4.h),
+          Container(
+            width: 5.w,
+            height: 5.w,
+            decoration: BoxDecoration(
+              color: meta.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _DeliveryStatusMeta _deliveryStatusMeta(String status) {
+    switch (status.toUpperCase()) {
+      case 'DELIVERED':
+      case 'COMPLETED':
+        return _DeliveryStatusMeta('Delivered', _C.green, _C.greenLight);
+      case 'CANCELLED':
+      case 'UNDELIVERED':
+        return _DeliveryStatusMeta('Cancelled', _C.red, _C.redLight);
+      case 'PENDING':
+      default:
+        return _DeliveryStatusMeta('Scheduled', _C.amber, _C.amberLight);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Payments tab — outstanding amount + Pay Amount action (the one real
+  // wallet endpoint we have). An itemized Payment History list needs its
+  // own backend endpoint, which doesn't exist yet — not faked here.
+  // ---------------------------------------------------------------------
+  Widget _buildPaymentsTab() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [_buildWalletCard()],
   );
 
   Widget _buildSubscriptionsSection() => Column(
@@ -1153,39 +1525,58 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           Container(height: 0.5, color: _C.border),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: _actionButton(
-                    'Pause',
-                    Icons.pause_circle_outline_rounded,
-                    _C.amber,
-                    _C.amberLight,
-                    _C.amberBorder,
-                    () => _handlePause(sub.id!),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _actionButton(
+                        'Pause Delivery',
+                        Icons.pause_circle_outline_rounded,
+                        _C.amber,
+                        _C.amberLight,
+                        _C.amberBorder,
+                        () => _handlePause(sub.id!),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _actionButton(
+                        'Renew',
+                        Icons.autorenew_rounded,
+                        _C.primary,
+                        _C.primaryLight,
+                        _C.primaryMid,
+                        () => _handleRenew(sub),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: _actionButton(
-                    'Renew',
-                    Icons.autorenew_rounded,
-                    _C.primary,
-                    _C.primaryLight,
-                    _C.primaryMid,
-                    () => _handleRenew(sub),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: _actionButton(
-                    'Cancel',
-                    Icons.cancel_outlined,
-                    _C.red,
-                    _C.redLight,
-                    _C.redBorder,
-                    () => _handleCancel(sub.id!),
-                  ),
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _actionButton(
+                        'Cancel All Meals',
+                        Icons.event_busy_outlined,
+                        _C.red,
+                        _C.redLight,
+                        _C.redBorder,
+                        () => _handleCancel(sub.id!),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _actionButton(
+                        'Cancel Plan',
+                        Icons.cancel_outlined,
+                        _C.red,
+                        _C.redLight,
+                        _C.redBorder,
+                        () => _confirmCancelPlan(sub.id!),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1525,6 +1916,41 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   void _handlePause(String subId) => _showPauseSheet(subId);
   void _handleRenew(ActiveSubscriptions sub) => _showRenewSheet(sub);
   void _handleCancel(String subId) => _showCancelSheet(subId);
+
+  /// "Cancel Plan" — stops the whole subscription outright, as opposed to
+  /// "Cancel All Meals" which only cancels a chosen date range. Confirmed
+  /// up front since there's no undo once the backend applies it.
+  Future<void> _confirmCancelPlan(String subId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            title: const Text('Cancel this plan?'),
+            content: const Text(
+              'This stops the entire subscription immediately. This cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Yes, Cancel Plan',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+    );
+    if (confirmed == true) {
+      await _cancelFullSubcription(subId: subId);
+    }
+  }
 
   void _showAddPlanSheet() {
     final PlanController planController = Get.put(PlanController());
@@ -3759,4 +4185,11 @@ class _SubscriptionCalendarSheetState
   // status endpoint doesn't scope its update by the delivery id, so it
   // was cancelling the same meal type for every customer, not just the
   // one selected here. Restore this once that's fixed server-side.
+}
+
+class _DeliveryStatusMeta {
+  final String label;
+  final Color color;
+  final Color light;
+  const _DeliveryStatusMeta(this.label, this.color, this.light);
 }

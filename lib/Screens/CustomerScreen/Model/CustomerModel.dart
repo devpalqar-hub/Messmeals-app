@@ -35,8 +35,6 @@ class CustomerModel {
 
 
 
-
-
   CustomerModel({
     required this.id,
     required this.customerProfileId,
@@ -77,8 +75,7 @@ class CustomerModel {
   }
 }
 
-/// Summary stats for the Customers page header — active subscriptions, how many are
-/// ending within 7 days, and the total amount owed back to the mess.
+
 class CustomerSummaryModel {
   final int activeSubscriptionsCount;
   final int endingSoonCount;

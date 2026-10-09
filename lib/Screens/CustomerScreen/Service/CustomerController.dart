@@ -41,7 +41,7 @@ class CustomerController extends GetxController {
     }
   }
 
-  /// 📊 Fetch summary stats (active subscriptions / ending soon / amount to collect)
+  
   Future<void> fetchCustomerSummary() async {
     final messId = dashboardController.selectedMessId;
     if (messId == null) return;
@@ -220,12 +220,7 @@ class CustomerController extends GetxController {
         return true;
       }
 
-      // Surface the backend's real reason for ANY failure, not just
-      // 400/409 — a 403 (or anything else) used to fall through to a bare
-      // "Failed: 403" with the actual cause thrown away, making it
-      // impossible to tell a permission issue from a session/validation
-      // one. `message` can also come back as a List (e.g. validator-style
-      // field errors), which `?? fallback` alone doesn't guard against.
+      
       Fluttertoast.showToast(
         msg: _extractErrorMessage(
           response.body,

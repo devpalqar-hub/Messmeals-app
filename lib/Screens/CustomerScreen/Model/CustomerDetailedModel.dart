@@ -11,7 +11,7 @@ class CustomerDetailModel {
   int? noOfDaysToEnd;
   int? totalOrders;
   int? totalSpent;
-  String? createdAt; // ← ADDED
+  String? createdAt; 
   List<ActiveSubscriptions>? activeSubscriptions;
 
   CustomerDetailModel({
