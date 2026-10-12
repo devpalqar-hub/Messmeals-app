@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mess/Screens/Utils/TiffinBoxIcon.dart';
 import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/TourStop.dart';
 import 'package:mess/Screens/Utils/TourKeys.dart';
 import 'package:mess/Screens/Utils/TourTooltipActions.dart';
 import 'package:showcaseview/showcaseview.dart';
+
+Widget tintedIcon(String assetPath, Color color, double size) {
+  return ColorFiltered(
+    colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+    child: Image.asset(assetPath, width: size, height: size),
+  );
+}
 
 class BottomBar extends StatelessWidget {
   final int selectedIndex;
@@ -19,42 +25,38 @@ class BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Reverted from the custom icon set — those PNGs were hand-cropped
-    // from a screenshot with a lot of blank padding baked around each
-    // glyph, so at nav-icon size they rendered as faint, illegible
-    // squares. Needs cleanly-cropped source assets before trying again.
     final items = [
       {
         'icon':
-            (Color c, double s) => Icon(Icons.home_outlined, color: c, size: s),
+            (Color c, double s) => tintedIcon('assets/icons/homes.png', c, s),
         'label': 'Home',
       },
       {
         'icon':
             (Color c, double s) =>
-                Icon(Icons.group_outlined, color: c, size: s),
+                tintedIcon('assets/icons/customers.png', c, s),
         'label': 'Customers',
       },
       {
         'icon':
             (Color c, double s) =>
-                Icon(Icons.delivery_dining_outlined, color: c, size: s),
+                tintedIcon('assets/icons/partners.png', c, s),
         'label': 'Partners',
       },
       {
-        'icon': (Color c, double s) => TiffinBoxIcon(color: c, size: s),
+        'icon':
+            (Color c, double s) =>
+                tintedIcon('assets/icons/delivered.png', c, s),
         'label': 'Deliveries',
       },
       {
         'icon':
-            (Color c, double s) =>
-                Icon(Icons.assignment_outlined, color: c, size: s),
+            (Color c, double s) => tintedIcon('assets/icons/plans.png', c, s),
         'label': 'Plans',
       },
       {
         'icon':
-            (Color c, double s) =>
-                Icon(Icons.restaurant_menu_outlined, color: c, size: s),
+            (Color c, double s) => tintedIcon('assets/icons/menu.png', c, s),
         'label': 'Menu',
       },
     ];

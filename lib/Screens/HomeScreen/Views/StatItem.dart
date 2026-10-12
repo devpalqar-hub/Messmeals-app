@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mess/Screens/Utils/Bottombar.dart';
 
 class StatItem extends StatelessWidget {
   final IconData icon;
@@ -165,14 +166,16 @@ class RevenueCard extends StatelessWidget {
 
 class QuickActionCard extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
   final Color iconColor;
   final Color iconBgColor;
 
   const QuickActionCard({
     super.key,
     required this.label,
-    required this.icon,
+    this.icon,
+    this.iconAsset,
     required this.iconColor,
     required this.iconBgColor,
   });
@@ -205,7 +208,12 @@ class QuickActionCard extends StatelessWidget {
               color: iconBgColor,
               borderRadius: BorderRadius.circular(8), // Soft rounded inner box
             ),
-            child: Icon(icon, color: iconColor, size: 20),
+            child: Center(
+              child:
+                  iconAsset != null
+                      ? tintedIcon(iconAsset!, iconColor, 20)
+                      : Icon(icon, color: iconColor, size: 20),
+            ),
           ),
           const SizedBox(height: 10),
           Text(

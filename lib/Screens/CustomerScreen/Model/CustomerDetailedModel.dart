@@ -11,7 +11,8 @@ class CustomerDetailModel {
   int? noOfDaysToEnd;
   int? totalOrders;
   int? totalSpent;
-  String? createdAt; 
+  int? outstandingPayment;
+  String? createdAt;
   List<ActiveSubscriptions>? activeSubscriptions;
 
   CustomerDetailModel({
@@ -27,6 +28,7 @@ class CustomerDetailModel {
     this.noOfDaysToEnd,
     this.totalOrders,
     this.totalSpent,
+    this.outstandingPayment,
     this.createdAt, // ← ADDED
     this.activeSubscriptions,
   });
@@ -44,6 +46,7 @@ class CustomerDetailModel {
     noOfDaysToEnd = json['noOfDaysToEnd'];
     totalOrders = json['totalOrders'];
     totalSpent = json['totalSpent'];
+    outstandingPayment = json['outstandingPayment'];
     // ← ADDED: try both common backend field names
     createdAt = json['createdAt'] ?? json['created_at'] ?? json['joinedAt'];
     if (json['activeSubscriptions'] != null) {
@@ -68,6 +71,7 @@ class CustomerDetailModel {
     data['noOfDaysToEnd'] = this.noOfDaysToEnd;
     data['totalOrders'] = this.totalOrders;
     data['totalSpent'] = this.totalSpent;
+    data['outstandingPayment'] = this.outstandingPayment;
     data['createdAt'] = this.createdAt; // ← ADDED
     if (this.activeSubscriptions != null) {
       data['activeSubscriptions'] =

@@ -137,6 +137,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   bool _deliveriesLoading = false;
   List<DeliveryVariationRow> _deliveryRows = [];
+  DateTime? _selectedDeliveryDate;
 
   bool _transactionsLoading = false;
   List<WalletTransaction> _transactions = [];
@@ -628,10 +629,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
+        // `subscriptionId` isn't a valid body field here either — same
+        // "[property subscriptionId should not exist]" rejection as the
+        // cancel-subscription endpoint, since it's already in the URL path.
         body: json.encode({
           "pause_start_date": startDate,
           "pause_end_date": endDate,
-          "subscriptionId": subId,
         }),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -662,10 +665,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   }) async {
     final url = Uri.parse('$baseUrl/customer/cancel-subscription/$subId');
     try {
-      final Map<String, dynamic> payload = {
-        "date": startDate,
-        "subscriptionId": subId,
-      };
+      // `subscriptionId` isn't a valid body field here — it's already in
+      // the URL path, and sending it too gets rejected with "[property
+      // subscriptionId should not exist]" by the backend's validator.
+      final Map<String, dynamic> payload = {"date": startDate};
       if (endDate != null) payload["cancellation_end_date"] = endDate;
       final response = await patch(
         url,
@@ -1159,8 +1162,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         SizedBox(width: 8.w),
         Expanded(
           child: _statChip(
-            'Total Spent',
-            _fmtCurrency(customer.totalSpent ?? 0),
+            'Outstanding',
+            _fmtCurrency(customer.outstandingPayment ?? 0),
             Icons.account_balance_wallet_outlined,
             _C.redLight,
             _C.red,
@@ -1330,9 +1333,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     }
     final sortedDates = byDate.keys.toList()..sort();
 
-    final todayRows = byDate[todayOnly];
     final upcomingDates =
-        sortedDates.where((d) => d.isAfter(todayOnly)).take(5).toList();
+        sortedDates.where((d) => !d.isBefore(todayOnly)).take(6).toList();
     final recentDates =
         sortedDates
             .where((d) => !d.isAfter(todayOnly))
@@ -1341,26 +1343,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             .take(5)
             .toList();
 
+    // Default to today's chip when it has deliveries, otherwise the first
+    // upcoming date, so something is always shown below the chip row.
+    _selectedDeliveryDate ??=
+        byDate.containsKey(todayOnly)
+            ? todayOnly
+            : (upcomingDates.isNotEmpty ? upcomingDates.first : null);
+    final selectedRows =
+        _selectedDeliveryDate != null ? byDate[_selectedDeliveryDate] : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (todayRows != null) ...[
-          Text(
-            "Today's Delivery",
-            style: GoogleFonts.poppins(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: _C.textPrimary,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          _deliveryListRow(
-            todayOnly,
-            todayRows,
-            icon: Icons.local_shipping_outlined,
-          ),
-          SizedBox(height: 20.h),
-        ],
         if (upcomingDates.isNotEmpty) ...[
           Text(
             'Upcoming Deliveries',
@@ -1381,9 +1375,28 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   (_, i) => _upcomingDayChip(
                     upcomingDates[i],
                     byDate[upcomingDates[i]]!,
+                    isToday: upcomingDates[i] == todayOnly,
+                    isSelected: upcomingDates[i] == _selectedDeliveryDate,
+                    onTap:
+                        () => setState(
+                          () => _selectedDeliveryDate = upcomingDates[i],
+                        ),
                   ),
             ),
           ),
+          SizedBox(height: 12.h),
+          if (selectedRows != null)
+            Column(
+              children:
+                  selectedRows
+                      .map(
+                        (r) => Padding(
+                          padding: EdgeInsets.only(bottom: 8.h),
+                          child: _variationDeliveryRow(r),
+                        ),
+                      )
+                      .toList(),
+            ),
           SizedBox(height: 20.h),
         ],
         if (recentDates.isNotEmpty) ...[
@@ -1396,13 +1409,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             ),
           ),
           SizedBox(height: 8.h),
-          ...recentDates.map(
-            (d) => Padding(
-              padding: EdgeInsets.only(bottom: 8.h),
-              child: _deliveryListRow(
-                d,
-                byDate[d]!,
-                icon: Icons.calendar_today_outlined,
+          ...recentDates.expand(
+            (d) => byDate[d]!.map(
+              (r) => Padding(
+                padding: EdgeInsets.only(bottom: 8.h),
+                child: _variationDeliveryRow(r),
               ),
             ),
           ),
@@ -1411,107 +1422,194 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  Widget _deliveryListRow(
-    DateTime date,
-    List<DeliveryVariationRow> rows, {
-    required IconData icon,
-  }) {
-    // All rows for one date share the same parent delivery's status.
-    final meta = _deliveryStatusMeta(rows.first.deliveryStatus);
-    final dateLabel = DateFormat('dd MMM yyyy').format(date);
-    final mealTitle = rows.map((r) => r.variationTitle).join(', ');
+  // One row per meal/variation — each individually tappable to view and
+  // cancel its own status, rather than one row aggregating a whole day's
+  // meals under a single status.
+  Widget _variationDeliveryRow(DeliveryVariationRow row) {
+    final meta = _deliveryStatusMeta(row.status);
+    final isCancelled = row.status.toUpperCase() == 'CANCELLED';
+    String dateLabel;
+    try {
+      dateLabel = DateFormat(
+        'dd MMM yyyy',
+      ).format(DateTime.parse(row.date).toUtc());
+    } catch (_) {
+      dateLabel = row.date;
+    }
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
-      decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: _C.border),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 15.sp, color: _C.textTertiary),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  dateLabel,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.5.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _C.textPrimary,
-                  ),
+    return InkWell(
+      onTap: isCancelled ? null : () => _confirmCancelDeliveryRow(row),
+      borderRadius: BorderRadius.circular(10.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: _C.border),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 15.sp,
+              color: _C.textTertiary,
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                '$dateLabel · ${row.variationTitle}',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w600,
+                  color: _C.textPrimary,
                 ),
-                if (mealTitle.isNotEmpty)
-                  Text(
-                    mealTitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.sp,
-                      color: _C.textSecondary,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: meta.light,
-              borderRadius: BorderRadius.circular(20.r),
-            ),
-            child: Text(
-              meta.label,
-              style: GoogleFonts.poppins(
-                fontSize: 9.5.sp,
-                fontWeight: FontWeight.w600,
-                color: meta.color,
               ),
             ),
-          ),
-        ],
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: meta.light,
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Text(
+                meta.label,
+                style: GoogleFonts.poppins(
+                  fontSize: 9.5.sp,
+                  fontWeight: FontWeight.w600,
+                  color: meta.color,
+                ),
+              ),
+            ),
+            SizedBox(width: 4.w),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18.sp,
+              color: _C.textTertiary,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _upcomingDayChip(DateTime date, List<DeliveryVariationRow> rows) {
-    final meta = _deliveryStatusMeta(rows.first.deliveryStatus);
-    return Container(
-      width: 68.w,
-      padding: EdgeInsets.symmetric(vertical: 8.h),
-      decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: _C.border),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            DateFormat('dd').format(date),
-            style: GoogleFonts.poppins(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: _C.textPrimary,
+  Future<void> _confirmCancelDeliveryRow(DeliveryVariationRow row) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
             ),
-          ),
-          Text(
-            DateFormat('EEE').format(date),
-            style: GoogleFonts.poppins(fontSize: 9.sp, color: _C.textSecondary),
-          ),
-          SizedBox(height: 4.h),
-          Container(
-            width: 5.w,
-            height: 5.w,
-            decoration: BoxDecoration(
-              color: meta.color,
-              shape: BoxShape.circle,
+            title: const Text('Cancel this meal'),
+            content: Text(
+              'Cancel ${row.variationTitle} for ${DateFormat('dd MMM yyyy').format(DateTime.parse(row.date))}? It will not be prepared.',
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Yes, Cancel',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-        ],
+    );
+    if (confirmed != true) return;
+
+    try {
+      final response = await patch(
+        Uri.parse(
+          '$baseUrl/deliveries/${row.deliveryId}/variations/${row.variationId}/status',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+        body: json.encode({"status": "CANCELLED"}),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() => row.status = 'CANCELLED');
+      } else {
+        AppToast.error(_extractErrorMessage(response, 'Failed to cancel'));
+      }
+    } catch (e) {
+      AppToast.error('Failed to cancel: $e');
+    }
+  }
+
+  Widget _upcomingDayChip(
+    DateTime date,
+    List<DeliveryVariationRow> rows, {
+    required bool isToday,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 68.w,
+        padding: EdgeInsets.symmetric(vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isSelected ? _C.primary.withValues(alpha: 0.1) : _C.surface,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: isSelected ? _C.primary : _C.border,
+            width: isSelected ? 1.4 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              isToday ? 'Today' : DateFormat('dd').format(date),
+              style: GoogleFonts.poppins(
+                fontSize: isToday ? 11.sp : 14.sp,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? _C.primary : _C.textPrimary,
+              ),
+            ),
+            Text(
+              DateFormat('EEE').format(date),
+              style: GoogleFonts.poppins(
+                fontSize: 9.sp,
+                color: _C.textSecondary,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Container(
+              width: 5.w,
+              height: 5.w,
+              decoration: BoxDecoration(
+                color: _dotColor(rows.first.deliveryStatus),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  // The badge text color (_C.amber) is a dark brownish shade meant to sit
+  // on a light badge background — as a plain solid dot it just reads as
+  // brown, so the dot uses its own brighter amber instead.
+  Color _dotColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'DELIVERED':
+      case 'COMPLETED':
+        return _C.green;
+      case 'CANCELLED':
+      case 'UNDELIVERED':
+        return _C.red;
+      case 'PENDING':
+      default:
+        return const Color(0xFFF5A623);
+    }
   }
 
   _DeliveryStatusMeta _deliveryStatusMeta(String status) {

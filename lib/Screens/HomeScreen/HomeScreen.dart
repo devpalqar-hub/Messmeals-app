@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -19,6 +18,7 @@ import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/Bottombar.dart';
 import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/TourKeys.dart';
 import 'package:mess/Screens/Utils/TourStop.dart';
@@ -255,9 +255,10 @@ class Homescreen extends StatelessWidget {
                       onTap: () {
                         Get.bottomSheet(ProfileBottomSheet());
                       },
-                      child: Icon(
-                        CupertinoIcons.person_circle,
-                        color: Colors.black87,
+                      child: tintedIcon(
+                        'assets/icons/profile.png',
+                        Colors.black87,
+                        24,
                       ),
                     ),
 
@@ -309,8 +310,11 @@ class Homescreen extends StatelessWidget {
                               transition: Transition.rightToLeft,
                             );
                           },
-                          icon: const Icon(Icons.settings_outlined),
-                          color: const Color(0xFF111827),
+                          icon: tintedIcon(
+                            'assets/icons/settings.png',
+                            const Color(0xFF111827),
+                            24,
+                          ),
                         ),
                       ),
                     ),
@@ -518,7 +522,7 @@ class Homescreen extends StatelessWidget {
                                     Expanded(
                                       child: _kpiCard(
                                         onTap: () => onNavigateToTab(3),
-                                        icon: Icons.shopping_bag_outlined,
+                                        iconAsset: 'assets/icons/orders.png',
                                         iconColor: const Color(0xFF4CB051),
                                         iconBgColor: const Color(0xFFE4F3E8),
                                         label: 'Orders',
@@ -530,7 +534,7 @@ class Homescreen extends StatelessWidget {
                                     Expanded(
                                       child: _kpiCard(
                                         onTap: () => onNavigateToTab(1),
-                                        icon: Icons.group_outlined,
+                                        iconAsset: 'assets/icons/customers.png',
                                         iconColor: const Color(0xFF10938F),
                                         iconBgColor: const Color(0xFFE2F3F3),
                                         label: 'Customers',
@@ -549,7 +553,7 @@ class Homescreen extends StatelessWidget {
                                     Expanded(
                                       child: _kpiCard(
                                         onTap: () => onNavigateToTab(2),
-                                        icon: Icons.handshake_outlined,
+                                        iconAsset: 'assets/icons/partners.png',
                                         iconColor: const Color(0xFFF67C31),
                                         iconBgColor: const Color(0xFFFEF3ED),
                                         label: 'Partners',
@@ -566,7 +570,8 @@ class Homescreen extends StatelessWidget {
                                                 () => Get.to(
                                                   () => const ExpenseScreen(),
                                                 ),
-                                            icon: Icons.receipt_long_outlined,
+                                            iconAsset:
+                                                'assets/icons/expenses.png',
                                             iconColor: const Color(0xFFC0392B),
                                             iconBgColor: const Color(
                                               0xFFFBEAE8,
@@ -645,7 +650,7 @@ class Homescreen extends StatelessWidget {
                                           ),
                                       child: QuickActionCard(
                                         label: 'Add Customer',
-                                        icon: Icons.person_add_alt_1_outlined,
+                                        iconAsset: 'assets/icons/customers.png',
                                         iconColor: AppColors.primaryDark,
                                         iconBgColor: AppColors.primary
                                             .withOpacity(0.12),
@@ -696,7 +701,7 @@ class Homescreen extends StatelessWidget {
                                           ),
                                       child: QuickActionCard(
                                         label: 'Add Partner',
-                                        icon: Icons.delivery_dining,
+                                        iconAsset: 'assets/icons/partners.png',
                                         iconColor: const Color(0xFF7D39D3),
                                         iconBgColor: const Color(0xFFEFE8FB),
                                       ),
@@ -713,7 +718,7 @@ class Homescreen extends StatelessWidget {
                                         ),
                                     child: QuickActionCard(
                                       label: 'Reports',
-                                      icon: Icons.pie_chart_outline,
+                                      iconAsset: 'assets/icons/reports.png',
                                       iconColor: const Color(0xFFDC9E2C),
                                       iconBgColor: const Color(0xFFFEF5E5),
                                     ),
@@ -778,7 +783,8 @@ class Homescreen extends StatelessWidget {
                                             ),
                                         child: QuickActionCard(
                                           label: 'Expenses',
-                                          icon: Icons.receipt_long_outlined,
+                                          iconAsset:
+                                              'assets/icons/expenses.png',
                                           iconColor: const Color(0xFFC0392B),
                                           iconBgColor: const Color(0xFFFBEAE8),
                                         ),
@@ -837,10 +843,10 @@ class Homescreen extends StatelessWidget {
                                           color: Colors.white.withOpacity(0.2),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: Icon(
-                                          Icons.restaurant_menu,
-                                          color: Colors.white,
-                                          size: 24.sp,
+                                        child: tintedIcon(
+                                          'assets/icons/menu.png',
+                                          Colors.white,
+                                          24.sp,
                                         ),
                                       ),
                                       SizedBox(width: 16.w),
@@ -897,7 +903,7 @@ class Homescreen extends StatelessWidget {
   /// Compact KPI tile used in the Overview grid — icon left, value + label right.
   Widget _kpiCard({
     VoidCallback? onTap,
-    required IconData icon,
+    required String iconAsset,
     required Color iconColor,
     required Color iconBgColor,
     required String label,
@@ -929,7 +935,7 @@ class Homescreen extends StatelessWidget {
                 color: iconBgColor,
                 borderRadius: BorderRadius.circular(10.r),
               ),
-              child: Icon(icon, color: iconColor, size: 20.sp),
+              child: Center(child: tintedIcon(iconAsset, iconColor, 20.sp)),
             ),
             SizedBox(width: 10.w),
             Expanded(

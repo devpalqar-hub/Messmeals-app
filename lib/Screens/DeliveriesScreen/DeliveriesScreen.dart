@@ -981,8 +981,6 @@ class _OrderCardState extends State<OrderCard> {
     }
   }
 
-  bool get _isCancelled => widget.delivery.status.toUpperCase() == 'CANCELLED';
-
   /// Mirrors the backend's own cancel guard: today-or-future date, and not already
   /// DELIVERED / COMPLETED / CANCELLED.
   bool get _canCancel {
@@ -1322,6 +1320,97 @@ class _OrderCardState extends State<OrderCard> {
             ],
           ),
 
+          SizedBox(height: 10.h),
+
+          /// 🍱 Per-meal delivery rows — always visible: date + meal,
+          /// status, tap to change status or cancel that single meal.
+          Text(
+            "Meals for this day:",
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w600,
+              color: _C.textSecondary,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Column(
+            children:
+                variations.map((v) {
+                  final title = v.variation?.title ?? 'Meal';
+                  final vStatus = v.status.toString().toUpperCase();
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 6.h),
+                    child: InkWell(
+                      // Re-enabled per-meal status/cancel — backend's
+                      // PATCH /deliveries/:id/variations/:id/status
+                      // endpoint doesn't scope by delivery, so changing
+                      // one customer's meal here can affect every
+                      // customer sharing that meal type. Known backend
+                      // bug, kept enabled at the user's request.
+                      onTap: () => _showStatusUpdateSheet(context, v),
+                      borderRadius: BorderRadius.circular(10.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 10.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _C.background,
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: _C.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 13.sp,
+                              color: _C.textSecondary,
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                "$formattedDate · $title",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: _C.textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 3.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getStatusBg(vStatus),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Text(
+                                _statusLabel(vStatus),
+                                style: TextStyle(
+                                  fontSize: 9.5.sp,
+                                  color: _getStatusColor(vStatus),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 18.sp,
+                              color: _C.textTertiary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+          ),
+
+          SizedBox(height: 8.h),
+
           /// 🔻 EXPAND TOGGLE & HIDDEN DATA
           InkWell(
             onTap: () => setState(() => _expanded = !_expanded),
@@ -1373,97 +1462,9 @@ class _OrderCardState extends State<OrderCard> {
                         const Divider(color: _C.border, height: 1),
                         SizedBox(height: 10.h),
 
-                        /// 🍱 Variations Status
-                        Text(
-                          "Assigned Variations Status:",
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w600,
-                            color: _C.textSecondary,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Wrap(
-                          spacing: 6.w,
-                          runSpacing: 6.h,
-                          children:
-                              variations.map((v) {
-                                final title = v.variation?.title ?? 'Meal';
-                                final vStatus =
-                                    v.status.toString().toUpperCase();
-                                return InkWell(
-                                  // Per-meal status changes are disabled —
-                                  // the backend's PATCH /deliveries/:id/
-                                  // variations/:id/status endpoint doesn't
-                                  // scope by delivery, so changing one
-                                  // customer's meal status here changes it
-                                  // for every customer sharing that meal
-                                  // type. Re-enable once that's fixed
-                                  // server-side (see _showStatusUpdateSheet).
-                                  onTap: null,
-                                  borderRadius: BorderRadius.circular(20.r),
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8.w,
-                                      vertical: 4.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _getStatusBg(vStatus),
-                                      borderRadius: BorderRadius.circular(20.r),
-                                      border: Border.all(
-                                        color: _getStatusColor(
-                                          vStatus,
-                                        ).withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          "$title: ",
-                                          style: TextStyle(
-                                            fontSize: 10.sp,
-                                            color: _C.textPrimary,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        Text(
-                                          _statusLabel(vStatus),
-                                          style: TextStyle(
-                                            fontSize: 10.sp,
-                                            color: _getStatusColor(vStatus),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        if (!_isCancelled) ...[
-                                          SizedBox(width: 4.w),
-                                          Icon(
-                                            Icons.edit_outlined,
-                                            size: 10.sp,
-                                            color: _getStatusColor(vStatus),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                        ),
-
-                        SizedBox(height: 12.h),
-
                         /// 🗺️ Action Buttons
                         Row(
                           children: [
-                            Expanded(
-                              child: _actionButton(
-                                Icons.map_outlined,
-                                "Map",
-                                _C.primary,
-                                _openInMap,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
                             Expanded(
                               child: _actionButton(
                                 Icons.phone_forwarded_outlined,
@@ -1545,19 +1546,6 @@ class _OrderCardState extends State<OrderCard> {
         ),
       ),
     );
-  }
-
-  Future<void> _openInMap() async {
-    final address = widget.delivery.customer?.address;
-    if (!_has(address)) return;
-    final url = Uri.parse(
-      "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address!)}",
-    );
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      AppToast.error("Could not open maps application");
-    }
   }
 
   Future<void> _callNow() async {
