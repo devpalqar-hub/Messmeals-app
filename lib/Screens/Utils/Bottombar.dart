@@ -19,6 +19,10 @@ class BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Reverted from the custom icon set — those PNGs were hand-cropped
+    // from a screenshot with a lot of blank padding baked around each
+    // glyph, so at nav-icon size they rendered as faint, illegible
+    // squares. Needs cleanly-cropped source assets before trying again.
     final items = [
       {
         'icon':

@@ -8,7 +8,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:mess/Screens/CustomerScreen/Model/CustomerDetailedModel.dart';
-import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
@@ -39,6 +38,87 @@ class _C {
   static const textTertiary = Color(0xFF9CA3AF);
 }
 
+/// One row from `GET /deliveries/variations` — already flattened to one
+/// meal (Breakfast/Lunch/Dinner) per row, unlike the nested Delivery/
+/// DeliveryVariation shape `GET /deliveries` returns. Used for this
+/// screen's Deliveries tab and subscription calendar.
+class DeliveryVariationRow {
+  final String id;
+  String status;
+  final String variationId;
+  final String variationTitle;
+  final String deliveryId;
+  final String date;
+  final String deliveryStatus;
+  final String subscriptionId;
+
+  DeliveryVariationRow({
+    required this.id,
+    required this.status,
+    required this.variationId,
+    required this.variationTitle,
+    required this.deliveryId,
+    required this.date,
+    required this.deliveryStatus,
+    required this.subscriptionId,
+  });
+
+  factory DeliveryVariationRow.fromJson(Map<String, dynamic> json) {
+    return DeliveryVariationRow(
+      id: json['id'] ?? '',
+      status: json['status'] ?? '',
+      variationId: json['variation']?['id'] ?? '',
+      variationTitle: json['variation']?['title'] ?? 'Meal',
+      deliveryId: json['deliveryId'] ?? '',
+      date: json['date'] ?? '',
+      deliveryStatus: json['deliveryStatus'] ?? '',
+      subscriptionId: json['subscriptionId'] ?? '',
+    );
+  }
+}
+
+/// One row from `GET /customer/wallet/transactions` — the mess's whole
+/// wallet ledger (scoped by the admin's own userId, not per-customer), so
+/// the Payments tab filters these down to just this screen's customer by
+/// matching customerProfileId client-side.
+class WalletTransaction {
+  final String id;
+  final String customerProfileId;
+  final String type; // CREDIT or DEBIT
+  final String reason; // e.g. PAYMENT_RECEIVED, MONTHLY_PLAN_CHARGE
+  final String amount;
+  final String? note;
+  final String createdAt;
+
+  WalletTransaction({
+    required this.id,
+    required this.customerProfileId,
+    required this.type,
+    required this.reason,
+    required this.amount,
+    required this.note,
+    required this.createdAt,
+  });
+
+  factory WalletTransaction.fromJson(Map<String, dynamic> json) {
+    return WalletTransaction(
+      id: json['id'] ?? '',
+      customerProfileId: json['customerProfileId'] ?? '',
+      type: json['type'] ?? '',
+      reason: json['reason'] ?? '',
+      amount: json['amount']?.toString() ?? '0',
+      note: json['note'],
+      createdAt: json['createdAt'] ?? '',
+    );
+  }
+
+  /// "PAYMENT_RECEIVED" → "Payment Received".
+  String get reasonLabel => reason
+      .split('_')
+      .map((w) => w.isEmpty ? w : '${w[0]}${w.substring(1).toLowerCase()}')
+      .join(' ');
+}
+
 class CustomerDetailScreen extends StatefulWidget {
   final String customerId;
   const CustomerDetailScreen({super.key, required this.customerId});
@@ -56,7 +136,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   int _selectedTab = 0;
 
   bool _deliveriesLoading = false;
-  List<Delivery> _deliveries = [];
+  List<DeliveryVariationRow> _deliveryRows = [];
+
+  bool _transactionsLoading = false;
+  List<WalletTransaction> _transactions = [];
 
   final List<String> _daysOfWeek = [
     "MONDAY",
@@ -88,24 +171,75 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         _walletBalance = customer.walletBalance ?? 0;
         _isFetched = true;
       });
-      // Search by phone rather than name — unique per customer, so this
-      // only ever pulls back this customer's own deliveries, across all
-      // of their subscriptions.
-      if ((customer.phone ?? '').trim().isNotEmpty) {
-        _fetchDeliveries();
-      }
+      _fetchDeliveries();
+      _fetchTransactions();
+      _fetchBalance();
     }
   }
 
-  Future<void> _fetchDeliveries() async {
-    setState(() => _deliveriesLoading = true);
+  /// `GET /transactions/balance` — the ledger's own outstanding-balance
+  /// summary, replacing `customer.walletBalance` as the source for the
+  /// Pending/Excess Amount card so it matches Payment History. Keeps the
+  /// same sign convention already used everywhere else in this file:
+  /// negative = owed (balanceDue), positive = prepaid (advanceBalance).
+  /// Falls back to `customer.walletBalance` if this call fails, so the
+  /// Pay Amount flow still works even if this endpoint has issues.
+  Future<void> _fetchBalance() async {
+    final customerProfileId = customer.customerProfileId;
+    if (customerProfileId == null || customerProfileId.isEmpty) return;
     try {
       final messId = Get.find<HomeScreenController>().selectedMessId;
       if (messId == null) return;
-      final uri = Uri.parse('$baseUrl/deliveries').replace(
+
+      final uri = Uri.parse('$baseUrl/transactions/balance').replace(
         queryParameters: {
+          'customerProfileId': customerProfileId,
           'messId': messId,
-          'search': customer.phone,
+        },
+      );
+      final res = await get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+      );
+      if (res.statusCode == 200) {
+        final decoded = json.decode(res.body);
+        final body =
+            decoded is Map && decoded['data'] is Map
+                ? decoded['data']
+                : decoded;
+        final balanceDue =
+            double.tryParse(body['balanceDue']?.toString() ?? '') ?? 0;
+        final advanceBalance =
+            double.tryParse(body['advanceBalance']?.toString() ?? '') ?? 0;
+        if (mounted) {
+          setState(() {
+            _walletBalance = (advanceBalance - balanceDue).round();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('FETCH BALANCE ERROR: $e');
+    }
+  }
+
+  /// `GET /transactions` — the correct ledger endpoint, with a real
+  /// `customerProfileId` filter and role-based scoping (MESSADMIN only
+  /// sees their own mess). No client-side filtering needed, unlike the
+  /// wrong endpoint this used before (`/customer/wallet/transactions`,
+  /// which turned out unreliable).
+  Future<void> _fetchTransactions() async {
+    final customerProfileId = customer.customerProfileId;
+    if (customerProfileId == null || customerProfileId.isEmpty) return;
+
+    setState(() => _transactionsLoading = true);
+    try {
+      final uri = Uri.parse('$baseUrl/transactions').replace(
+        queryParameters: {
+          'customerProfileId': customerProfileId,
+          'page': '1',
           'limit': '100',
         },
       );
@@ -119,8 +253,57 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       if (res.statusCode == 200) {
         final jsonData = json.decode(res.body);
         final List<dynamic> dataList = jsonData['data'] ?? [];
-        _deliveries = dataList.map((e) => Delivery.fromJson(e)).toList();
+        _transactions =
+            dataList.map((e) => WalletTransaction.fromJson(e)).toList();
       }
+    } catch (e) {
+      debugPrint('FETCH TRANSACTIONS ERROR: $e');
+    } finally {
+      if (mounted) setState(() => _transactionsLoading = false);
+    }
+  }
+
+  /// `GET /deliveries/variations` has no customer/phone filter — only
+  /// subscriptionId, partnerId, variationId, messId, date, status. So this
+  /// customer's full delivery history is built by fetching once per
+  /// subscription they've ever had and merging the flattened rows.
+  Future<void> _fetchDeliveries() async {
+    final subscriptionIds =
+        (customer.activeSubscriptions ?? [])
+            .map((s) => s.id)
+            .whereType<String>()
+            .where((id) => id.isNotEmpty)
+            .toSet();
+    if (subscriptionIds.isEmpty) return;
+
+    setState(() => _deliveriesLoading = true);
+    try {
+      final messId = Get.find<HomeScreenController>().selectedMessId;
+      if (messId == null) return;
+
+      final rows = <DeliveryVariationRow>[];
+      for (final subId in subscriptionIds) {
+        final uri = Uri.parse('$baseUrl/deliveries/variations').replace(
+          queryParameters: {
+            'messId': messId,
+            'subscriptionId': subId,
+            'limit': '100',
+          },
+        );
+        final res = await get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': bearerToken,
+          },
+        );
+        if (res.statusCode == 200) {
+          final jsonData = json.decode(res.body);
+          final List<dynamic> dataList = jsonData['data'] ?? [];
+          rows.addAll(dataList.map((e) => DeliveryVariationRow.fromJson(e)));
+        }
+      }
+      _deliveryRows = rows;
     } catch (e) {
       debugPrint('FETCH CUSTOMER DELIVERIES ERROR: $e');
     } finally {
@@ -362,17 +545,32 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   /// optimistic `_walletBalance` update previously had nothing to roll
   /// back to on failure (the PATCH's response wasn't even checked beyond
   /// a silent no-op), so a rejected payment still looked successful.
+  /// Records an actual ledger payment (`POST /transactions/payment`) so it
+  /// shows up in Payment History — the old `/customer/update-wallet`
+  /// endpoint only adjusted a raw balance number with no ledger entry,
+  /// so payments made through it were invisible in the history list.
   Future<bool> updateWalletBalance(int amount) async {
     try {
-      final response = await patch(
-        Uri.parse(
-          '$baseUrl/customer/update-wallet/${customer.customerProfileId}',
-        ),
+      final messId = Get.find<HomeScreenController>().selectedMessId;
+      final subscriptionId =
+          customer.activeSubscriptions?.firstOrNull?.id ?? '';
+      if (messId == null) {
+        _showSnack('Error', 'Please select a mess first', _C.red);
+        return false;
+      }
+
+      final response = await post(
+        Uri.parse('$baseUrl/transactions/payment'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearerToken,
         },
-        body: json.encode({"amount": amount.toString()}),
+        body: json.encode({
+          "customerProfileId": customer.customerProfileId,
+          "messId": messId,
+          "subscriptionId": subscriptionId,
+          "amount": amount,
+        }),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         await _fetchCustomer();
@@ -380,7 +578,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       }
       _showSnack(
         'Error',
-        json.decode(response.body)["message"] ?? 'Failed to update wallet',
+        _extractErrorMessage(response, 'Failed to record payment'),
         _C.red,
       );
       return false;
@@ -534,8 +732,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       } else {
         _showSnack(
           "Error",
-          json.decode(response.body)["message"] ??
-              'Failed to add subscription plan',
+          _extractErrorMessage(response, 'Failed to add subscription plan'),
           _C.red,
         );
       }
@@ -551,6 +748,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     required String endDate,
     required String partnerId,
     required String discount,
+    required String scheduleType,
+    required List<String> selectedDays,
   }) async {
     final url = Uri.parse('$baseUrl/customer/renew-subscription');
     try {
@@ -568,16 +767,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           "customerProfileId": customer.customerProfileId,
           "discount": discount,
           "end_date": endDate,
+          "scheduleType": scheduleType,
+          "selectedDays": selectedDays,
         }),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         _fetchCustomer();
         _showSnack('Success', 'Subscription renewed successfully', _C.green);
       } else {
+        // Same class of bug as #3205 — `message` can come back as a
+        // nested object instead of a plain string, and `?? fallback`
+        // alone doesn't guard against that, only against null.
         _showSnack(
           "Error",
-          json.decode(response.body)["message"] ??
-              'Failed to renew subscription',
+          _extractErrorMessage(response, 'Failed to renew subscription'),
           _C.red,
         );
       }
@@ -1077,9 +1280,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   }
 
   // ---------------------------------------------------------------------
-  // Deliveries tab — Today / Upcoming / Recent, derived from the single
-  // _deliveries fetch (all of this customer's deliveries, across every
-  // subscription they've ever had).
+  // Deliveries tab — Today / Upcoming / Recent, built by grouping the
+  // flattened per-meal rows (_deliveryRows) by date, since each row is
+  // one meal, not one day.
   // ---------------------------------------------------------------------
   Widget _buildDeliveriesTab() {
     if (_deliveriesLoading) {
@@ -1090,7 +1293,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         ),
       );
     }
-    if (_deliveries.isEmpty) {
+    if (_deliveryRows.isEmpty) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: 40.h),
         child: Center(
@@ -1104,42 +1307,35 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
-    DateTime? dateOf(Delivery d) {
+    // The API sends UTC-midnight timestamps ("2026-10-10T00:00:00.000Z")
+    // that represent a calendar date, not a specific moment. Comparing
+    // that directly against local "today" (DateTime.now()) mismatched by
+    // up to a day depending on the device's timezone offset — reading the
+    // UTC y/m/d straight out and rebuilding it as a local date fixes that.
+    DateTime? dateOf(DeliveryVariationRow r) {
       try {
-        return DateTime.parse(d.date);
+        final utc = DateTime.parse(r.date).toUtc();
+        return DateTime(utc.year, utc.month, utc.day);
       } catch (_) {
         return null;
       }
     }
 
-    final sorted = [..._deliveries]..sort((a, b) {
-      final da = dateOf(a) ?? todayOnly;
-      final db = dateOf(b) ?? todayOnly;
-      return da.compareTo(db);
-    });
-
-    Delivery? todayDelivery;
-    for (final d in sorted) {
-      final dd = dateOf(d);
-      if (dd != null && dd.isAtSameMomentAs(todayOnly)) {
-        todayDelivery = d;
-        break;
-      }
+    final byDate = <DateTime, List<DeliveryVariationRow>>{};
+    for (final row in _deliveryRows) {
+      final dd = dateOf(row);
+      if (dd == null) continue;
+      final key = DateTime(dd.year, dd.month, dd.day);
+      (byDate[key] ??= []).add(row);
     }
-    final upcoming =
-        sorted
-            .where((d) {
-              final dd = dateOf(d);
-              return dd != null && dd.isAfter(todayOnly);
-            })
-            .take(5)
-            .toList();
-    final recent =
-        sorted
-            .where((d) {
-              final dd = dateOf(d);
-              return dd != null && !dd.isAfter(todayOnly);
-            })
+    final sortedDates = byDate.keys.toList()..sort();
+
+    final todayRows = byDate[todayOnly];
+    final upcomingDates =
+        sortedDates.where((d) => d.isAfter(todayOnly)).take(5).toList();
+    final recentDates =
+        sortedDates
+            .where((d) => !d.isAfter(todayOnly))
             .toList()
             .reversed
             .take(5)
@@ -1148,7 +1344,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (todayDelivery != null) ...[
+        if (todayRows != null) ...[
           Text(
             "Today's Delivery",
             style: GoogleFonts.poppins(
@@ -1158,10 +1354,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             ),
           ),
           SizedBox(height: 8.h),
-          _deliveryListRow(todayDelivery, icon: Icons.local_shipping_outlined),
+          _deliveryListRow(
+            todayOnly,
+            todayRows,
+            icon: Icons.local_shipping_outlined,
+          ),
           SizedBox(height: 20.h),
         ],
-        if (upcoming.isNotEmpty) ...[
+        if (upcomingDates.isNotEmpty) ...[
           Text(
             'Upcoming Deliveries',
             style: GoogleFonts.poppins(
@@ -1175,14 +1375,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             height: 70.h,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: upcoming.length,
+              itemCount: upcomingDates.length,
               separatorBuilder: (_, __) => SizedBox(width: 8.w),
-              itemBuilder: (_, i) => _upcomingDayChip(upcoming[i]),
+              itemBuilder:
+                  (_, i) => _upcomingDayChip(
+                    upcomingDates[i],
+                    byDate[upcomingDates[i]]!,
+                  ),
             ),
           ),
           SizedBox(height: 20.h),
         ],
-        if (recent.isNotEmpty) ...[
+        if (recentDates.isNotEmpty) ...[
           Text(
             'Recent Deliveries',
             style: GoogleFonts.poppins(
@@ -1192,10 +1396,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             ),
           ),
           SizedBox(height: 8.h),
-          ...recent.map(
+          ...recentDates.map(
             (d) => Padding(
               padding: EdgeInsets.only(bottom: 8.h),
-              child: _deliveryListRow(d, icon: Icons.calendar_today_outlined),
+              child: _deliveryListRow(
+                d,
+                byDate[d]!,
+                icon: Icons.calendar_today_outlined,
+              ),
             ),
           ),
         ],
@@ -1203,19 +1411,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  Widget _deliveryListRow(Delivery d, {required IconData icon}) {
-    final meta = _deliveryStatusMeta(d.status);
-    String dateLabel = d.date;
-    try {
-      dateLabel = DateFormat('dd MMM yyyy').format(DateTime.parse(d.date));
-    } catch (_) {}
-    final mealTitle =
-        d.deliveryVariations.isNotEmpty
-            ? d.deliveryVariations
-                .map((v) => v.variation?.title)
-                .whereType<String>()
-                .join(', ')
-            : '';
+  Widget _deliveryListRow(
+    DateTime date,
+    List<DeliveryVariationRow> rows, {
+    required IconData icon,
+  }) {
+    // All rows for one date share the same parent delivery's status.
+    final meta = _deliveryStatusMeta(rows.first.deliveryStatus);
+    final dateLabel = DateFormat('dd MMM yyyy').format(date);
+    final mealTitle = rows.map((r) => r.variationTitle).join(', ');
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
@@ -1271,12 +1475,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  Widget _upcomingDayChip(Delivery d) {
-    DateTime? dd;
-    try {
-      dd = DateTime.parse(d.date);
-    } catch (_) {}
-    final meta = _deliveryStatusMeta(d.status);
+  Widget _upcomingDayChip(DateTime date, List<DeliveryVariationRow> rows) {
+    final meta = _deliveryStatusMeta(rows.first.deliveryStatus);
     return Container(
       width: 68.w,
       padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -1289,7 +1489,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            dd != null ? DateFormat('dd').format(dd) : '-',
+            DateFormat('dd').format(date),
             style: GoogleFonts.poppins(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
@@ -1297,7 +1497,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             ),
           ),
           Text(
-            dd != null ? DateFormat('EEE').format(dd) : '',
+            DateFormat('EEE').format(date),
             style: GoogleFonts.poppins(fontSize: 9.sp, color: _C.textSecondary),
           ),
           SizedBox(height: 4.h),
@@ -1329,14 +1529,144 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   }
 
   // ---------------------------------------------------------------------
-  // Payments tab — outstanding amount + Pay Amount action (the one real
-  // wallet endpoint we have). An itemized Payment History list needs its
-  // own backend endpoint, which doesn't exist yet — not faked here.
+  // Payments tab — outstanding amount + Pay Amount action, plus the real
+  // itemized history from `GET /customer/wallet/transactions`.
   // ---------------------------------------------------------------------
-  Widget _buildPaymentsTab() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [_buildWalletCard()],
-  );
+  Widget _buildPaymentsTab() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildWalletCard(),
+        SizedBox(height: 20.h),
+        Text(
+          'Payment History',
+          style: GoogleFonts.poppins(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: _C.textPrimary,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        if (_transactionsLoading)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.h),
+            child: const Center(
+              child: CircularProgressIndicator(color: _C.primary),
+            ),
+          )
+        else if (_transactions.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.h),
+            child: Center(
+              child: Text(
+                'No payment history yet.',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp,
+                  color: _C.textTertiary,
+                ),
+              ),
+            ),
+          )
+        else
+          ...(List.of(_transactions)..sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+          )).map((t) => _transactionRow(t)),
+      ],
+    );
+  }
+
+  Widget _transactionRow(WalletTransaction t) {
+    final isCredit = t.type.toUpperCase() == 'CREDIT';
+    final color = isCredit ? _C.green : _C.red;
+    String dateLabel = t.createdAt;
+    try {
+      dateLabel = DateFormat(
+        'dd MMM yyyy  •  hh:mm a',
+      ).format(DateTime.parse(t.createdAt).toLocal());
+    } catch (_) {}
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: _C.border)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isCredit
+                ? Icons.arrow_downward_rounded
+                : Icons.arrow_upward_rounded,
+            size: 16.sp,
+            color: color,
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.reasonLabel,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _C.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  dateLabel,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.5.sp,
+                    color: _C.textSecondary,
+                  ),
+                ),
+                if ((t.note ?? '').isNotEmpty)
+                  Text(
+                    t.note!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5.sp,
+                      color: _C.textTertiary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${isCredit ? '+' : '-'}₹${t.amount}',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: _C.textPrimary,
+                ),
+              ),
+              SizedBox(height: 3.h),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  isCredit ? 'Received' : 'Charged',
+                  style: GoogleFonts.poppins(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSubscriptionsSection() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -3247,6 +3577,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                                         discountCtrl.text.isEmpty
                                             ? "0"
                                             : discountCtrl.text,
+                                    // Renewing keeps the same schedule the
+                                    // subscription already had — the
+                                    // backend requires this field but
+                                    // there's nothing on this sheet to
+                                    // change it, so carry it over as-is.
+                                    scheduleType:
+                                        sub.scheduletype ?? 'EVERYDAY',
+                                    selectedDays:
+                                        sub.seletedDays
+                                            ?.map((d) => d.toString())
+                                            .toList() ??
+                                        [],
                                   );
                                   Get.back();
                                 },
@@ -3841,8 +4183,9 @@ class _SubscriptionCalendarSheetState
     extends State<_SubscriptionCalendarSheet> {
   bool _isLoading = true;
   // Keyed by day-only DateTime (time stripped) so lookups don't miss on
-  // time-of-day differences in the API's date strings.
-  final Map<DateTime, Delivery> _byDate = {};
+  // time-of-day differences in the API's date strings. Each day can have
+  // several rows — one per meal (Breakfast/Lunch/Dinner).
+  final Map<DateTime, List<DeliveryVariationRow>> _byDate = {};
   DateTime? _focusedDay;
   DateTime? _selectedDay;
   late DateTime _firstDay;
@@ -3880,7 +4223,7 @@ class _SubscriptionCalendarSheetState
       final messId = Get.find<HomeScreenController>().selectedMessId;
       if (messId == null) return;
 
-      final uri = Uri.parse('$baseUrl/deliveries').replace(
+      final uri = Uri.parse('$baseUrl/deliveries/variations').replace(
         queryParameters: {
           'messId': messId,
           'subscriptionId': widget.subscriptionId,
@@ -3899,9 +4242,9 @@ class _SubscriptionCalendarSheetState
         final jsonData = json.decode(response.body);
         final List<dynamic> dataList = jsonData['data'] ?? [];
         for (final item in dataList) {
-          final delivery = Delivery.fromJson(item);
+          final row = DeliveryVariationRow.fromJson(item);
           try {
-            _byDate[_dayOnly(DateTime.parse(delivery.date))] = delivery;
+            (_byDate[_dayOnly(DateTime.parse(row.date))] ??= []).add(row);
           } catch (_) {}
         }
       }
@@ -3980,7 +4323,7 @@ class _SubscriptionCalendarSheetState
               ),
             )
           else ...[
-            TableCalendar<Delivery>(
+            TableCalendar<DeliveryVariationRow>(
               firstDay: _firstDay,
               lastDay: _lastDay,
               focusedDay: _focusedDay!,
@@ -4038,13 +4381,15 @@ class _SubscriptionCalendarSheetState
     bool isToday = false,
     bool isSelected = false,
   }) {
-    final delivery = _byDate[_dayOnly(day)];
+    final rows = _byDate[_dayOnly(day)];
     final withinRange =
         !day.isBefore(_dayOnly(_firstDay)) && !day.isAfter(_dayOnly(_lastDay));
     final color =
         widget.subscriptionCancelled && withinRange
             ? _cancelledRed
-            : (delivery != null ? _statusColor(delivery.status) : null);
+            : (rows != null && rows.isNotEmpty
+                ? _statusColor(rows.first.deliveryStatus)
+                : null);
 
     return Container(
       margin: EdgeInsets.all(4.w),
@@ -4072,7 +4417,7 @@ class _SubscriptionCalendarSheetState
   }
 
   Widget _selectedDayDetails() {
-    final delivery = _byDate[_dayOnly(_selectedDay!)];
+    final rows = _byDate[_dayOnly(_selectedDay!)];
     return Container(
       margin: EdgeInsets.only(top: 12.h),
       padding: EdgeInsets.all(12.w),
@@ -4111,7 +4456,7 @@ class _SubscriptionCalendarSheetState
                     ),
                   ),
                 )
-              else if (delivery == null)
+              else if (rows == null || rows.isEmpty)
                 Text(
                   'No delivery',
                   style: GoogleFonts.poppins(
@@ -4121,25 +4466,23 @@ class _SubscriptionCalendarSheetState
                 ),
             ],
           ),
-          // Breakfast / Lunch / Dinner for this day — each with its own
-          // status and its own Cancel action, independent of the other
-          // meals that day.
+          // Breakfast / Lunch / Dinner for this day — status only, no
+          // per-meal cancel (see the note on _variationRow below).
           if (!widget.subscriptionCancelled &&
-              delivery != null &&
-              delivery.deliveryVariations.isNotEmpty) ...[
+              rows != null &&
+              rows.isNotEmpty) ...[
             SizedBox(height: 10.h),
-            ...delivery.deliveryVariations.map(
-              (v) => _variationRow(delivery, v),
-            ),
+            ...rows.map((r) => _variationRow(r)),
           ],
         ],
       ),
     );
   }
 
-  Widget _variationRow(Delivery delivery, DeliveryVariation v) {
-    final title = v.variation?.title ?? 'Meal';
-    final status = v.status.toUpperCase();
+  Widget _variationRow(DeliveryVariationRow row) {
+    final title = row.variationTitle;
+    final status = row.status.toUpperCase();
+    final isCancelled = status == 'CANCELLED';
     final color = _statusColor(status);
 
     return Padding(
@@ -4171,20 +4514,85 @@ class _SubscriptionCalendarSheetState
               ),
             ),
           ),
-          // Per-meal cancel is disabled: the backend's status endpoint
-          // doesn't scope by delivery, so cancelling one customer's meal
-          // here was cancelling it for every customer sharing that meal
-          // type. Re-enable once that's fixed server-side.
+          SizedBox(width: 8.w),
+          GestureDetector(
+            onTap: isCancelled ? null : () => _confirmCancelVariation(row),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w600,
+                color: isCancelled ? _C.textTertiary : _cancelledRed,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // Per-meal cancel from the calendar is disabled — see the note in
-  // _variationRow. The backend's PATCH /deliveries/:id/variations/:id/
-  // status endpoint doesn't scope its update by the delivery id, so it
-  // was cancelling the same meal type for every customer, not just the
-  // one selected here. Restore this once that's fixed server-side.
+  Future<void> _confirmCancelVariation(DeliveryVariationRow row) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            title: const Text('Cancel this meal'),
+            content: Text(
+              'Cancel ${row.variationTitle} for ${DateFormat('dd MMM yyyy').format(DateTime.parse(row.date))}? It will not be prepared.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Yes, Cancel',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      final response = await patch(
+        Uri.parse(
+          '$baseUrl/deliveries/${row.deliveryId}/variations/${row.variationId}/status',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearerToken,
+        },
+        body: json.encode({"status": "CANCELLED"}),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() => row.status = 'CANCELLED');
+      } else {
+        AppToast.error(_extractErrorMessage(response, 'Failed to cancel'));
+      }
+    } catch (e) {
+      AppToast.error('Failed to cancel: $e');
+    }
+  }
+
+  String _extractErrorMessage(dynamic response, String fallback) {
+    try {
+      final decoded = json.decode(response.body);
+      final dynamic msg = decoded is Map ? decoded['message'] : null;
+      if (msg is String && msg.isNotEmpty) return msg;
+      if (msg is List && msg.isNotEmpty) return msg.join(', ');
+      if (msg is Map && msg.isNotEmpty) return msg.values.join(', ');
+      return fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
 }
 
 class _DeliveryStatusMeta {
