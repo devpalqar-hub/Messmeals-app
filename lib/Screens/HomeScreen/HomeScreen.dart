@@ -257,8 +257,8 @@ class Homescreen extends StatelessWidget {
                       },
                       child: tintedIcon(
                         'assets/icons/profile.png',
-                        Colors.black87,
-                        24,
+                        Colors.black54,
+                        24.sp,
                       ),
                     ),
 
@@ -312,8 +312,9 @@ class Homescreen extends StatelessWidget {
                           },
                           icon: tintedIcon(
                             'assets/icons/settings.png',
-                            const Color(0xFF111827),
-                            24,
+                            Colors.black54,
+
+                            24.sp,
                           ),
                         ),
                       ),
@@ -330,125 +331,133 @@ class Homescreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 16.h),
+//                          SizedBox(height: 16.h),
 
                           // TOP REVENUE CARD
-                          Showcase(
-                            key: TourKeys.revenueCard,
-                            title: 'Track Your Revenue',
-                            description:
-                                'And finally — this is where you\'ll watch it all pay off. Your total earnings, updated in real time.',
-                            titleTextStyle: tourTitleStyle(),
-                            descTextStyle: tourDescStyle(),
-                            descriptionPadding: tourDescPadding(),
-                            tooltipBorderRadius: tourTooltipBorderRadius(),
-                            tooltipPadding: tourTooltipPadding(),
-                            // Matches the card's own rounded corners rather
-                            // than the generic icon-sized shape.
-                            targetBorderRadius: BorderRadius.circular(14.r),
-                            targetPadding: tourTargetPadding(),
-                            overlayColor: tourOverlayColor(),
-                            overlayOpacity: tourOverlayOpacity(),
-                            blurValue: tourBlurValue(),
-                            scaleAnimationDuration:
-                                tourScaleAnimationDuration(),
-                            scaleAnimationCurve: tourScaleAnimationCurve(),
-                            movingAnimationDuration:
-                                tourMovingAnimationDuration(),
-                            tooltipActionConfig: const TooltipActionConfig(
-                              alignment: MainAxisAlignment.spaceBetween,
-                            ),
-                            tooltipActions: tourTooltipActions(
-                              context,
-                              step: 8,
-                              total: TourKeys.sequence.length,
-                              // Full circle done — come back to the Menu tab
-                              // and ask the owner to tap it, which then
-                              // starts the create / edit / delete tour.
-                              onDone: () {
-                                Future.delayed(
-                                  const Duration(milliseconds: 400),
-                                  () {
-                                    if (context.mounted) {
-                                      ShowCaseWidget.of(
-                                        context,
-                                      ).startShowCase([TourKeys.promptMenu]);
-                                    }
-                                  },
-                                );
-                              },
-                            ),
-                            child: Container(
-                              width: double.infinity,
-                              margin: EdgeInsets.symmetric(horizontal: 10.w),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 22.w,
-                                vertical: 18.h,
+                          if (false)
+                            Showcase(
+                              key: TourKeys.revenueCard,
+                              title: 'Track Your Revenue',
+                              description:
+                                  'And finally — this is where you\'ll watch it all pay off. Your total earnings, updated in real time.',
+                              titleTextStyle: tourTitleStyle(),
+                              descTextStyle: tourDescStyle(),
+                              descriptionPadding: tourDescPadding(),
+                              tooltipBorderRadius: tourTooltipBorderRadius(),
+                              tooltipPadding: tourTooltipPadding(),
+                              // Matches the card's own rounded corners rather
+                              // than the generic icon-sized shape.
+                              targetBorderRadius: BorderRadius.circular(14.r),
+                              targetPadding: tourTargetPadding(),
+                              overlayColor: tourOverlayColor(),
+                              overlayOpacity: tourOverlayOpacity(),
+                              blurValue: tourBlurValue(),
+                              scaleAnimationDuration:
+                                  tourScaleAnimationDuration(),
+                              scaleAnimationCurve: tourScaleAnimationCurve(),
+                              movingAnimationDuration:
+                                  tourMovingAnimationDuration(),
+                              tooltipActionConfig: const TooltipActionConfig(
+                                alignment: MainAxisAlignment.spaceBetween,
                               ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14.r),
-                                gradient: LinearGradient(
-                                  colors: AppColors.primaryGradient,
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                              tooltipActions: tourTooltipActions(
+                                context,
+                                step: 8,
+                                total: TourKeys.sequence.length,
+                                // Full circle done — come back to the Menu tab
+                                // and ask the owner to tap it, which then
+                                // starts the create / edit / delete tour.
+                                onDone: () {
+                                  Future.delayed(
+                                    const Duration(milliseconds: 400),
+                                    () {
+                                      if (context.mounted) {
+                                        ShowCaseWidget.of(
+                                          context,
+                                        ).startShowCase([TourKeys.promptMenu]);
+                                      }
+                                    },
+                                  );
+                                },
+                              ),
+                              child: Container(
+                                width: double.infinity,
+                                margin: EdgeInsets.symmetric(horizontal: 10.w),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 22.w,
+                                  vertical: 18.h,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.28),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  gradient: LinearGradient(
+                                    colors: AppColors.primaryGradient,
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                ],
-                              ),
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    right: -6.w,
-                                    top: -6.h,
-                                    child: Icon(
-                                      Icons.account_balance_wallet_rounded,
-                                      size: 72.sp,
-                                      color: Colors.white.withOpacity(0.14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withOpacity(
+                                        0.28,
+                                      ),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 8),
                                     ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "Total Revenue",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white.withOpacity(0.9),
-                                        ),
+                                  ],
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      right: -6.w,
+                                      top: -6.h,
+                                      child: Icon(
+                                        Icons.account_balance_wallet_rounded,
+                                        size: 72.sp,
+                                        color: Colors.white.withOpacity(0.14),
                                       ),
-                                      SizedBox(height: 6.h),
-                                      // BUG #2435 — format to avoid long decimal overflow
-                                      Text(
-                                        "₹ ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 26.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          "Total Revenue",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white.withOpacity(
+                                              0.9,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(height: 6.h),
-                                      Text(
-                                        "Overall earnings",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12.sp,
-                                          fontWeight: FontWeight.w400,
-                                          color: Colors.white.withOpacity(0.85),
+                                        SizedBox(height: 6.h),
+                                        // BUG #2435 — format to avoid long decimal overflow
+                                        Text(
+                                          "₹ ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 26.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                        SizedBox(height: 6.h),
+                                        Text(
+                                          "Overall earnings",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w400,
+                                            color: Colors.white.withOpacity(
+                                              0.85,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
 
                           SizedBox(height: 16.h),
 
