@@ -119,34 +119,14 @@ class PlanCard extends StatelessWidget {
           ),
 
           SizedBox(height: 8.h), // Tighter spacing
-          /// PRICE ROW
-          Row(
-            children: [
-              Text(
-                "₹${price.toStringAsFixed(0)}",
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary, // Using primary color for emphasis
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
-                child: Text(
-                  "Min ₹${minPrice.toStringAsFixed(0)}",
-                  style: GoogleFonts.poppins(
-                    fontSize: 10.sp, // Reduced font size
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
+          /// PRICE ROW — the selling price is what customers actually pay
+          Text(
+            "₹${minPrice.toStringAsFixed(0)}",
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary, // Using primary color for emphasis
+            ),
           ),
 
           SizedBox(height: 10.h),

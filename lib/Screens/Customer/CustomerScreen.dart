@@ -323,7 +323,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                     if (controller.customers.isEmpty) {
                       return EmptyStateAddButton(
-                        icon: Icons.group_outlined,
+                        iconAsset: 'assets/icons/appcustomer.png',
                         title: "No customers yet",
                         subtitle: "Add your first customer to get started",
                         buttonLabel: "Add Customer",

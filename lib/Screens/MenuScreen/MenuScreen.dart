@@ -180,7 +180,7 @@ class MenuScreen extends StatelessWidget {
 
     if (controller.menus.isEmpty) {
       return EmptyStateAddButton(
-        icon: Icons.restaurant_menu_outlined,
+        iconAsset: 'assets/icons/menu.png',
         title: "No menus yet",
         subtitle: "Create your first weekly menu to get started",
         buttonLabel: "Add Menu",

@@ -183,7 +183,8 @@ class AuthController extends GetxController {
         await _onLoginSuccess(data);
         return true;
       } else {
-        safeSnack("Error", data["message"] ?? "Invalid OTP");
+        print(data);
+        safeSnack("Error", "Please enter valid otp");
         return false;
       }
     } catch (e) {

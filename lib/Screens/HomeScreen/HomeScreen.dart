@@ -475,9 +475,36 @@ class Homescreen extends StatelessWidget {
                                     color: const Color(0xFF111827),
                                   ),
                                 ),
-                                InkWell(
-                                  onTap: () => _pickDashboardDate(context),
-                                  borderRadius: BorderRadius.circular(20.r),
+                                PopupMenuButton<DashboardDateFilter>(
+                                  onSelected: (filter) {
+                                    if (filter == DashboardDateFilter.custom) {
+                                      _pickDashboardDate(context);
+                                    } else {
+                                      ctrl.applyDateFilter(filter);
+                                    }
+                                  },
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                  itemBuilder:
+                                      (context) => [
+                                        _dashboardFilterMenuItem(
+                                          DashboardDateFilter.thisWeek,
+                                          'This Week',
+                                        ),
+                                        _dashboardFilterMenuItem(
+                                          DashboardDateFilter.thisMonth,
+                                          'This Month',
+                                        ),
+                                        _dashboardFilterMenuItem(
+                                          DashboardDateFilter.lastMonth,
+                                          'Last Month',
+                                        ),
+                                        _dashboardFilterMenuItem(
+                                          DashboardDateFilter.custom,
+                                          'Custom',
+                                        ),
+                                      ],
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 10.w,
@@ -502,14 +529,18 @@ class Homescreen extends StatelessWidget {
                                         ),
                                         SizedBox(width: 6.w),
                                         Text(
-                                          DateFormat(
-                                            'dd MMM yyyy',
-                                          ).format(ctrl.selectedDate),
+                                          _dashboardFilterLabel(),
                                           style: GoogleFonts.poppins(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.w600,
                                             color: AppColors.primaryDark,
                                           ),
+                                        ),
+                                        SizedBox(width: 2.w),
+                                        Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          size: 16.sp,
+                                          color: AppColors.primaryDark,
                                         ),
                                       ],
                                     ),
@@ -575,7 +606,7 @@ class Homescreen extends StatelessWidget {
                                   children: [
                                     Expanded(
                                       child: _kpiCard(
-                                        onTap: () => onNavigateToTab(3),
+                                        onTap: () => onNavigateToTab(5),
                                         iconAsset: 'assets/icons/orders.png',
                                         iconColor: const Color(0xFF4CB051),
                                         iconBgColor: const Color(0xFFE4F3E8),
@@ -587,8 +618,9 @@ class Homescreen extends StatelessWidget {
                                     SizedBox(width: 10.w),
                                     Expanded(
                                       child: _kpiCard(
-                                        onTap: () => onNavigateToTab(1),
-                                        iconAsset: 'assets/icons/customers.png',
+                                        onTap: () => onNavigateToTab(4),
+                                        iconAsset:
+                                            'assets/icons/appcustomer.png',
                                         iconColor: const Color(0xFF10938F),
                                         iconBgColor: const Color(0xFFE2F3F3),
                                         label: 'Customers',
@@ -606,7 +638,7 @@ class Homescreen extends StatelessWidget {
                                   children: [
                                     Expanded(
                                       child: _kpiCard(
-                                        onTap: () => onNavigateToTab(2),
+                                        onTap: () => onNavigateToTab(3),
                                         iconAsset: 'assets/icons/partners.png',
                                         iconColor: const Color(0xFFF67C31),
                                         iconBgColor: const Color(0xFFFEF3ED),
@@ -704,7 +736,8 @@ class Homescreen extends StatelessWidget {
                                           ),
                                       child: QuickActionCard(
                                         label: 'Add Customer',
-                                        iconAsset: 'assets/icons/customers.png',
+                                        iconAsset:
+                                            'assets/icons/appcustomer.png',
                                         iconColor: AppColors.primaryDark,
                                         iconBgColor: AppColors.primary
                                             .withOpacity(0.12),
@@ -898,7 +931,7 @@ class Homescreen extends StatelessWidget {
                                           shape: BoxShape.circle,
                                         ),
                                         child: tintedIcon(
-                                          'assets/icons/menu.png',
+                                          'assets/icons/preference.png',
                                           Colors.white,
                                           24.sp,
                                         ),
@@ -954,10 +987,38 @@ class Homescreen extends StatelessWidget {
     );
   }
 
+  PopupMenuItem<DashboardDateFilter> _dashboardFilterMenuItem(
+    DashboardDateFilter filter,
+    String label,
+  ) {
+    return PopupMenuItem(
+      value: filter,
+      child: Text(label, style: GoogleFonts.poppins(fontSize: 13.sp)),
+    );
+  }
+
+  String _dashboardFilterLabel() {
+    switch (ctrl.selectedDateFilter) {
+      case DashboardDateFilter.thisWeek:
+        return 'This Week';
+      case DashboardDateFilter.thisMonth:
+        return 'This Month';
+      case DashboardDateFilter.lastMonth:
+        return 'Last Month';
+      case DashboardDateFilter.custom:
+        return ctrl.selectedEndDate == null
+            ? DateFormat('dd MMM yyyy').format(ctrl.selectedDate)
+            : '${DateFormat('dd MMM').format(ctrl.selectedDate)} - ${DateFormat('dd MMM yyyy').format(ctrl.selectedEndDate!)}';
+    }
+  }
+
   Future<void> _pickDashboardDate(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showDateRangePicker(
       context: context,
-      initialDate: ctrl.selectedDate,
+      initialDateRange: DateTimeRange(
+        start: ctrl.selectedDate,
+        end: ctrl.selectedEndDate ?? ctrl.selectedDate,
+      ),
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -969,7 +1030,13 @@ class Homescreen extends StatelessWidget {
         );
       },
     );
-    if (picked != null) ctrl.updateDate(picked);
+    if (picked != null) {
+      ctrl.applyDateFilter(
+        DashboardDateFilter.custom,
+        customStart: picked.start,
+        customEnd: picked.end,
+      );
+    }
   }
 
   /// Compact KPI tile used in the Overview grid — icon left, value + label right.

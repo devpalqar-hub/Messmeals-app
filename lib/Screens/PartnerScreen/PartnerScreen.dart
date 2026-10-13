@@ -190,7 +190,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
     // No partners at all
     if (controller.partners.isEmpty && !controller.isLoading) {
       return EmptyStateAddButton(
-        icon: Icons.local_shipping_outlined,
+        iconAsset: 'assets/icons/partners.png',
         title: "No partners yet",
         subtitle: "Add your first delivery partner to get started",
         buttonLabel: "Add Partner",

@@ -179,7 +179,7 @@ class PlanScreen extends StatelessWidget {
 
     if (controller.plans.isEmpty) {
       return EmptyStateAddButton(
-        icon: Icons.assignment_outlined,
+        iconAsset: 'assets/icons/plans.png',
         title: "No plans yet",
         subtitle: "Create your first mess plan to get started",
         buttonLabel: "Add Plan",

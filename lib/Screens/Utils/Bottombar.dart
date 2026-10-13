@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/TourStop.dart';
@@ -9,7 +10,12 @@ import 'package:showcaseview/showcaseview.dart';
 Widget tintedIcon(String assetPath, Color color, double size) {
   return ColorFiltered(
     colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-    child: Image.asset(assetPath, width: size, height: size),
+    child: Image.asset(
+      assetPath,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+    ),
   );
 }
 
@@ -33,52 +39,56 @@ class BottomBar extends StatelessWidget {
       },
       {
         'icon':
-            (Color c, double s) =>
-                tintedIcon('assets/icons/customers.png', c, s),
-        'label': 'Customers',
+            (Color c, double s) => tintedIcon('assets/icons/menu.png', c, s),
+        'label': 'Menu',
+      },
+      {
+        'icon':
+            (Color c, double s) => tintedIcon('assets/icons/plans.png', c, s),
+        'label': 'Plans',
+        'iconSize': 20.0.sp,
       },
       {
         'icon':
             (Color c, double s) =>
                 tintedIcon('assets/icons/partners.png', c, s),
         'label': 'Partners',
+        'iconSize': 28.0.sp,
+      },
+      {
+        'icon':
+            (Color c, double s) =>
+                tintedIcon('assets/icons/appcustomer.png', c, s),
+        'label': 'Customers',
+        'iconSize': 23.0.sp,
       },
       {
         'icon':
             (Color c, double s) =>
                 tintedIcon('assets/icons/delivered.png', c, s),
         'label': 'Deliveries',
-      },
-      {
-        'icon':
-            (Color c, double s) => tintedIcon('assets/icons/plans.png', c, s),
-        'label': 'Plans',
-      },
-      {
-        'icon':
-            (Color c, double s) => tintedIcon('assets/icons/menu.png', c, s),
-        'label': 'Menu',
+        'iconSize': 23.0.sp,
       },
     ];
 
     // The Home tour spotlights the Menu, Plans and Deliveries tabs
     // individually (steps 2, 3 and 6 of 8).
-    const tourStepForIndex = {5: 2, 4: 3, 3: 6};
+    const tourStepForIndex = {1: 2, 2: 3, 5: 6};
     final tourKeyForIndex = {
-      5: TourKeys.bottomNavMenu,
-      4: TourKeys.bottomNavPlans,
-      3: TourKeys.bottomNavDeliveries,
+      1: TourKeys.bottomNavMenu,
+      2: TourKeys.bottomNavPlans,
+      5: TourKeys.bottomNavDeliveries,
     };
 
     // Every feature tab also carries a "Tap here to learn …" prompt, shown
     // after the Home tour and after each previous feature walkthrough;
     // tapping it opens the tab and starts that feature's walkthrough.
     const promptTourForIndex = {
-      5: AppTourController.menuTour,
-      4: AppTourController.plansTour,
-      2: AppTourController.partnersTour,
-      1: AppTourController.customersTour,
-      3: AppTourController.deliveriesTour,
+      1: AppTourController.menuTour,
+      2: AppTourController.plansTour,
+      3: AppTourController.partnersTour,
+      4: AppTourController.customersTour,
+      5: AppTourController.deliveriesTour,
     };
     const promptTextForTour = {
       AppTourController.menuTour: (
@@ -120,11 +130,16 @@ class BottomBar extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center, // ✅ center items
               children: [
-                (item['icon'] as Widget Function(Color, double))(
-                  isSelected ? const Color(0xFF7ED321) : Colors.grey,
-                  20, // ✅ FIX 2 → smaller icon
+                Container(
+                  height: 26,
+                  width: 26,
+                  alignment: Alignment.center,
+                  child: (item['icon'] as Widget Function(Color, double))(
+                    isSelected ? const Color(0xFF7ED321) : Colors.grey,
+                    (item['iconSize'] as double?) ??
+                        20, // ✅ FIX 2 → smaller icon
+                  ),
                 ),
-                const SizedBox(height: 2), // ✅ less gap
                 Text(
                   item['label'] as String,
                   style: GoogleFonts.poppins(

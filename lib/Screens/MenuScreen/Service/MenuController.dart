@@ -27,7 +27,9 @@ class MessMenuController extends GetxController {
   List<MenuModel> get filteredMenus {
     if (searchQuery.isEmpty) return menus;
     final query = searchQuery.toLowerCase();
-    return menus.where((menu) => menu.name.toLowerCase().contains(query)).toList();
+    return menus
+        .where((menu) => menu.name.toLowerCase().contains(query))
+        .toList();
   }
 
   @override
@@ -102,41 +104,47 @@ class MessMenuController extends GetxController {
           entry.key: entry.value.map((e) => e.toJson()).toList(),
       };
 
-      final response = await (isEdit
-          ? http.patch(
-              uri,
-              headers: {
-                "Authorization": bearerToken,
-                "Content-Type": "application/json",
-              },
-              body: jsonEncode(body),
-            )
-          : http.post(
-              uri,
-              headers: {
-                "Authorization": bearerToken,
-                "Content-Type": "application/json",
-              },
-              body: jsonEncode(body),
-            ));
+      final response =
+          await (isEdit
+              ? http.patch(
+                uri,
+                headers: {
+                  "Authorization": bearerToken,
+                  "Content-Type": "application/json",
+                },
+                body: jsonEncode(body),
+              )
+              : http.post(
+                uri,
+                headers: {
+                  "Authorization": bearerToken,
+                  "Content-Type": "application/json",
+                },
+                body: jsonEncode(body),
+              ));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         await refreshMenus();
 
         Fluttertoast.showToast(
-          msg: isEdit ? "Menu updated successfully" : "Menu created successfully",
+          msg:
+              isEdit
+                  ? "Menu updated successfully"
+                  : "Menu created successfully",
         );
 
         return true;
       }
 
-      String message = isEdit ? "Failed to update menu" : "Failed to create menu";
+      String message =
+          isEdit ? "Failed to update menu" : "Failed to create menu";
       try {
         final decoded = jsonDecode(response.body);
         if (decoded is Map && decoded['message'] != null) {
-          message = decoded['message'] is List
-              ? (decoded['message'] as List).join(', ')
-              : decoded['message'].toString();
+          message =
+              decoded['message'] is List
+                  ? (decoded['message'] as List).join(', ')
+                  : decoded['message'].toString();
         }
       } catch (_) {}
 

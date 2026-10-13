@@ -1152,7 +1152,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         SizedBox(width: 8.w),
         Expanded(
           child: _statChip(
-            'Days Left',
+            'Expires In',
             '${customer.noOfDaysToEnd ?? 0}',
             Icons.timer_outlined,
             _C.amberLight,

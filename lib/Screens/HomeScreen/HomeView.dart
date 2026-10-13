@@ -32,11 +32,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     screens = [
       Homescreen(onNavigateToTab: onTabTapped),
-      CustomersScreen(),
-      PartnerScreen(),
-      DeliveriesScreen(),
-      PlanScreen(),
       MenuScreen(),
+      PlanScreen(),
+      PartnerScreen(),
+      CustomersScreen(),
+      DeliveriesScreen(),
     ];
   }
 

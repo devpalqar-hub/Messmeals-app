@@ -13,6 +13,8 @@ import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+enum DashboardDateFilter { thisWeek, thisMonth, lastMonth, custom }
+
 class HomeScreenController extends GetxController {
   // Standard variables instead of Rx
   DashboardModel? dashboardData;
@@ -22,7 +24,15 @@ class HomeScreenController extends GetxController {
   bool isLoading = false;
   bool isVariationLoading = false;
   bool profileLoadFailed = false;
-  DateTime selectedDate = DateTime.now();
+
+  // Defaults to "This Month" (1st of this month → today)
+  DateTime selectedDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime? selectedEndDate = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
+  DashboardDateFilter selectedDateFilter = DashboardDateFilter.thisMonth;
   String authToken = "";
   final AuthController authController = Get.put(AuthController());
   List<MessModel> messes = [];
@@ -125,7 +135,9 @@ class HomeScreenController extends GetxController {
   // Helper to refresh everything and update UI
   void refreshAllData() {
     fetchDashboardStats();
-    fetchVariationCount(selectedDate);
+    // Variation counts are a single-day lookup — use the last date of the
+    // selected range so they reflect the most recent day in scope.
+    fetchVariationCount(selectedEndDate ?? selectedDate);
   }
 
   bool addMessLoading = false;
@@ -279,7 +291,16 @@ class HomeScreenController extends GetxController {
       final token = await _getToken();
       final messId = selectedMessId;
 
-      final url = Uri.parse('$baseUrl/auth/stats?messId=$messId');
+      final date1 = _formatDate(selectedDate);
+      final date2 = selectedEndDate != null ? _formatDate(selectedEndDate!) : null;
+
+      final url = Uri.parse('$baseUrl/auth/stats').replace(
+        queryParameters: {
+          if (messId != null) 'messId': messId,
+          'date1': date1,
+          if (date2 != null) 'date2': date2,
+        },
+      );
 
       final response = await http.get(
         url,
@@ -342,10 +363,44 @@ class HomeScreenController extends GetxController {
     }
   }
 
-  void updateDate(DateTime newDate) {
-    selectedDate = newDate;
-    fetchVariationCount(newDate);
-    // update() is called inside fetchVariationCount finally block
+  String _formatDate(DateTime date) =>
+      "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+  /// Applies a preset ("This Week" / "This Month" / "Last Month") or a custom
+  /// range to the dashboard, then refetches revenue stats + variation count.
+  void applyDateFilter(
+    DashboardDateFilter filter, {
+    DateTime? customStart,
+    DateTime? customEnd,
+  }) {
+    selectedDateFilter = filter;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    switch (filter) {
+      case DashboardDateFilter.thisWeek:
+        selectedDate = today.subtract(Duration(days: today.weekday - 1));
+        selectedEndDate = today;
+        break;
+      case DashboardDateFilter.thisMonth:
+        selectedDate = DateTime(today.year, today.month, 1);
+        selectedEndDate = today;
+        break;
+      case DashboardDateFilter.lastMonth:
+        selectedDate = DateTime(today.year, today.month - 1, 1);
+        selectedEndDate = DateTime(today.year, today.month, 0); // last day of previous month
+        break;
+      case DashboardDateFilter.custom:
+        selectedDate = customStart ?? selectedDate;
+        selectedEndDate =
+            (customEnd != null && customEnd != customStart) ? customEnd : null;
+        break;
+    }
+
+    fetchDashboardStats();
+    // Variation counts are a single-day lookup — use the last date of the
+    // selected range so they reflect the most recent day in scope.
+    fetchVariationCount(selectedEndDate ?? selectedDate);
   }
 
   Future<void> _handleLogout() async {

@@ -183,6 +183,9 @@ class QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Fixed height so every card lines up regardless of whether its
+      // label wraps to one or two lines (e.g. "Reports" vs "Add Customer").
+      height: 108,
       padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 8.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -198,7 +201,7 @@ class QuickActionCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
@@ -219,6 +222,8 @@ class QuickActionCard extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 12.sp,
               color: Color(0xFF111827), // Dark Gray

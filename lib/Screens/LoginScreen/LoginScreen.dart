@@ -1,5 +1,4 @@
-import 'package:country_pickers/country.dart';
-import 'package:country_pickers/country_picker_dialog.dart';
+import 'package:country_pickers/countries.dart';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -35,24 +34,43 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   SizedBox(height: 56.h),
 
-                  /// BRAND WORDMARK
-                  Text(
-                    "Messmeals",
-                    style: GoogleFonts.poppins(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    "ADMIN PORTAL",
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 2,
-                      color: Colors.grey.shade500,
-                    ),
+                  /// BRAND LOGO + WORDMARK
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Image.asset(
+                      //   "assets/appLogo.png",
+                      //   height: 40.h,
+                      //   width: 40.h,
+                      //   scale: 1.4,
+                      //   // fit: BoxFit.contain,
+                      // ),
+                      SizedBox(width: 10.w),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Messmeals",
+                            style: GoogleFonts.poppins(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF111827),
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            "ADMIN PORTAL",
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 2,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
 
                   SizedBox(height: 48.h),
@@ -168,68 +186,10 @@ class LoginScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          /// COUNTRY PICKER — searchable, every country (was hardcoded to
-          /// just IN/US/AE behind a plain dropdown).
-          GestureDetector(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder:
-                    (_) => CountryPickerDialog(
-                      isSearchable: true,
-                      titlePadding: EdgeInsets.all(16.w),
-                      searchCursorColor: AppColors.primary,
-                      searchInputDecoration: const InputDecoration(
-                        hintText: 'Search country',
-                      ),
-                      priorityList: [
-                        CountryPickerUtils.getCountryByIsoCode('IN'),
-                      ],
-                      title: Text(
-                        'Select a country',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                      ),
-                      onValuePicked: (Country country) {
-                        authCtrl.selectedCountry = country.isoCode;
-                        authCtrl.update();
-                      },
-                    ),
-              );
-            },
-            child: Container(
-              width: 92.w,
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 20.w,
-                    height: 14.h,
-                    child: CountryPickerUtils.getDefaultFlagImage(
-                      CountryPickerUtils.getCountryByIsoCode(
-                        authCtrl.selectedCountry,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    authCtrl.countryCode,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13.5.sp,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                  SizedBox(width: 2.w),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Colors.grey.shade500,
-                    size: 20.sp,
-                  ),
-                ],
-              ),
-            ),
-          ),
+          /// COUNTRY PICKER — inline dropdown anchored to the field itself
+          /// (every country, India pinned first), instead of a full-screen
+          /// picker dialog.
+          _CountryCodeField(authCtrl: authCtrl),
 
           /// VERTICAL DIVIDER
           Container(height: 22.h, width: 1, color: Colors.grey.shade200),
@@ -506,6 +466,190 @@ class LoginScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Country code picker, shown as a lightweight dropdown anchored directly
+/// under the phone field — no picker dialog, and no PopupMenuButton (its
+/// forced ~300ms route animation plus eagerly building all ~200 country
+/// rows up front made it feel slow to open). This instead uses a plain
+/// [OverlayEntry] with a virtualized [ListView.builder], so it opens
+/// immediately and only builds the rows actually on screen.
+class _CountryCodeField extends StatefulWidget {
+  const _CountryCodeField({required this.authCtrl});
+  final AuthController authCtrl;
+
+  @override
+  State<_CountryCodeField> createState() => _CountryCodeFieldState();
+}
+
+class _CountryCodeFieldState extends State<_CountryCodeField> {
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+
+  /// Gap kept between the field and the dropdown so it doesn't sit flush
+  /// against it.
+  static const double _dropdownGap = 8;
+
+  void _toggleDropdown() {
+    if (_overlayEntry != null) {
+      _closeDropdown();
+    } else {
+      _openDropdown();
+    }
+  }
+
+  void _openDropdown() {
+    final box = context.findRenderObject() as RenderBox;
+    final fieldSize = box.size;
+
+    final india = CountryPickerUtils.getCountryByIsoCode('IN');
+    final countries = [india, ...countryList.where((c) => c.isoCode != 'IN')];
+
+    _overlayEntry = OverlayEntry(
+      builder: (overlayContext) {
+        return Stack(
+          children: [
+            // Tap-outside-to-dismiss barrier.
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _closeDropdown,
+              ),
+            ),
+            CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: Offset(0, fieldSize.height + _dropdownGap.h),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 6,
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Container(
+                    width: 220.w,
+                    constraints: BoxConstraints(maxHeight: 320.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: ListView.builder(
+                      padding: EdgeInsets.symmetric(vertical: 6.h),
+                      shrinkWrap: true,
+                      itemCount: countries.length,
+                      itemBuilder: (_, i) {
+                        final country = countries[i];
+                        return InkWell(
+                          onTap: () {
+                            widget.authCtrl.selectedCountry = country.isoCode;
+                            widget.authCtrl.update();
+                            _closeDropdown();
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 8.h,
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20.w,
+                                  height: 14.h,
+                                  child: CountryPickerUtils.getDefaultFlagImage(
+                                    country,
+                                  ),
+                                ),
+                                SizedBox(width: 10.w),
+                                Expanded(
+                                  child: Text(
+                                    country.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(fontSize: 13.sp),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  '+${country.phoneCode}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13.sp,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() {});
+  }
+
+  void _closeDropdown() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _overlayEntry?.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _toggleDropdown,
+        child: Container(
+          width: 92.w,
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 20.w,
+                height: 14.h,
+                child: CountryPickerUtils.getDefaultFlagImage(
+                  CountryPickerUtils.getCountryByIsoCode(
+                    widget.authCtrl.selectedCountry,
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                widget.authCtrl.countryCode,
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF111827),
+                ),
+              ),
+              SizedBox(width: 2.w),
+              Icon(
+                _overlayEntry != null
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: Colors.grey.shade500,
+                size: 20.sp,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

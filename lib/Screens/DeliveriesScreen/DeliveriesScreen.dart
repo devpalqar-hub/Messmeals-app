@@ -18,6 +18,7 @@ import 'package:mess/Screens/Utils/TourKeys.dart';
 import 'package:mess/Screens/Utils/TourStop.dart';
 import 'package:mess/Screens/DeliveriesScreen/Views/GenerateCard.dart';
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
+import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
 
 /// =========================================================================
 /// 🎨 COLOR PALETTE DESIGN SYSTEM
@@ -580,15 +581,11 @@ class _DeliveriesScreenState extends State<DeliveriesScreen> {
                               ),
                             )
                             : controller.deliveries.isEmpty
-                            ? Center(
-                              child: Text(
-                                "No deliveries found matching filters",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: _C.textTertiary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                            ? EmptyStateAddButton(
+                              iconAsset: 'assets/icons/delivered.png',
+                              title: "No deliveries found",
+                              subtitle:
+                                  "No deliveries match the current filters",
                             )
                             : ListView.builder(
                               controller: _scrollController,
