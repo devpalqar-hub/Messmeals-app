@@ -1334,14 +1334,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     final sortedDates = byDate.keys.toList()..sort();
 
     final upcomingDates =
-        sortedDates.where((d) => !d.isBefore(todayOnly)).take(6).toList();
-    final recentDates =
-        sortedDates
-            .where((d) => !d.isAfter(todayOnly))
-            .toList()
-            .reversed
-            .take(5)
-            .toList();
+        sortedDates.where((d) => !d.isBefore(todayOnly)).toList();
 
     // Default to today's chip when it has deliveries, otherwise the first
     // upcoming date, so something is always shown below the chip row.
@@ -1398,25 +1391,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       .toList(),
             ),
           SizedBox(height: 20.h),
-        ],
-        if (recentDates.isNotEmpty) ...[
-          Text(
-            'Recent Deliveries',
-            style: GoogleFonts.poppins(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: _C.textPrimary,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          ...recentDates.expand(
-            (d) => byDate[d]!.map(
-              (r) => Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: _variationDeliveryRow(r),
-              ),
-            ),
-          ),
         ],
       ],
     );
@@ -1549,13 +1523,25 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    // Whole-day cancelled only when every meal for that day is — checked
+    // against each row's own status, not the parent delivery's status,
+    // since the backend doesn't keep that one in sync with per-meal cancels.
+    final isDayCancelled =
+        rows.isNotEmpty &&
+        rows.every((r) => r.status.toUpperCase() == 'CANCELLED');
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 68.w,
         padding: EdgeInsets.symmetric(vertical: 8.h),
         decoration: BoxDecoration(
-          color: isSelected ? _C.primary.withValues(alpha: 0.1) : _C.surface,
+          color:
+              isSelected
+                  ? _C.primary.withValues(alpha: 0.1)
+                  : isDayCancelled
+                  ? Colors.grey.shade200
+                  : _C.surface,
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(
             color: isSelected ? _C.primary : _C.border,
@@ -1570,7 +1556,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               style: GoogleFonts.poppins(
                 fontSize: isToday ? 11.sp : 14.sp,
                 fontWeight: FontWeight.w700,
-                color: isSelected ? _C.primary : _C.textPrimary,
+                color:
+                    isSelected
+                        ? _C.primary
+                        : isDayCancelled
+                        ? Colors.grey.shade500
+                        : _C.textPrimary,
+                decoration: isDayCancelled ? TextDecoration.lineThrough : null,
+                decorationColor: _cancelledRedChipColor,
+                decorationThickness: 2,
               ),
             ),
             Text(
@@ -1585,7 +1579,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               width: 5.w,
               height: 5.w,
               decoration: BoxDecoration(
-                color: _dotColor(rows.first.deliveryStatus),
+                color:
+                    isDayCancelled
+                        ? Colors.grey.shade400
+                        : _dotColor(rows.first.deliveryStatus),
                 shape: BoxShape.circle,
               ),
             ),
@@ -1594,6 +1591,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       ),
     );
   }
+
+  static const _cancelledRedChipColor = Color(0xFFFF3B5C);
 
   // The badge text color (_C.amber) is a dark brownish shade meant to sit
   // on a light badge background — as a plain solid dot it just reads as
@@ -4488,6 +4487,10 @@ class _SubscriptionCalendarSheetState
             : (rows != null && rows.isNotEmpty
                 ? _statusColor(rows.first.deliveryStatus)
                 : null);
+    // A cancelled day reads as disabled (muted grey circle) with its number
+    // struck through in red — enough on its own to say "cancelled" without
+    // a separate badge cluttering the cell.
+    final isCancelled = color == _cancelledRed;
 
     return Container(
       margin: EdgeInsets.all(4.w),
@@ -4495,12 +4498,16 @@ class _SubscriptionCalendarSheetState
         color:
             isSelected
                 ? _C.primary.withValues(alpha: 0.15)
+                : isCancelled
+                ? Colors.grey.shade200
                 : color?.withValues(alpha: 0.12),
         shape: BoxShape.circle,
         border:
             isToday
                 ? Border.all(color: _C.primary, width: 1.2)
-                : (color != null ? Border.all(color: color, width: 1) : null),
+                : (color != null && !isCancelled
+                    ? Border.all(color: color, width: 1)
+                    : null),
       ),
       alignment: Alignment.center,
       child: Text(
@@ -4508,7 +4515,10 @@ class _SubscriptionCalendarSheetState
         style: GoogleFonts.poppins(
           fontSize: 12.sp,
           fontWeight: FontWeight.w500,
-          color: _C.textPrimary,
+          color: isCancelled ? Colors.grey.shade500 : _C.textPrimary,
+          decoration: isCancelled ? TextDecoration.lineThrough : null,
+          decorationColor: _cancelledRed,
+          decorationThickness: 2,
         ),
       ),
     );

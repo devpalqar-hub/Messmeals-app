@@ -32,9 +32,7 @@ class MealsAnalyticsController extends GetxController {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF10938F), // Matching your Teal theme
-            ),
+            colorScheme: const ColorScheme.light(primary: Color(0xFF7ED321)),
           ),
           child: child!,
         );

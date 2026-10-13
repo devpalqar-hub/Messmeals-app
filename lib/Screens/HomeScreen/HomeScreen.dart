@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 import 'package:mess/Screens/ExpenseScreen/ExpenseScreen.dart';
@@ -16,7 +17,6 @@ import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/MealBreakDownScreen/MealBreakDownScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
-import 'package:mess/Screens/SubscriptionScreen/SubscriptionScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/Bottombar.dart';
 import 'package:mess/Screens/Utils/AppTourController.dart';
@@ -331,7 +331,7 @@ class Homescreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-//                          SizedBox(height: 16.h),
+                          //                          SizedBox(height: 16.h),
 
                           // TOP REVENUE CARD
                           if (false)
@@ -464,13 +464,58 @@ class Homescreen extends StatelessWidget {
                           // REVENUE SUMMARY — grouped with the hero card since both are financial figures
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10.w),
-                            child: Text(
-                              'Revenue Summary',
-                              style: GoogleFonts.poppins(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF111827),
-                              ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Revenue Summary',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF111827),
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () => _pickDashboardDate(context),
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10.w,
+                                      vertical: 6.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20.r),
+                                      border: Border.all(
+                                        color: AppColors.primary.withOpacity(
+                                          0.4,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today_rounded,
+                                          size: 13.sp,
+                                          color: AppColors.primaryDark,
+                                        ),
+                                        SizedBox(width: 6.w),
+                                        Text(
+                                          DateFormat(
+                                            'dd MMM yyyy',
+                                          ).format(ctrl.selectedDate),
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.primaryDark,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           SizedBox(height: 10.h),
@@ -722,7 +767,7 @@ class Homescreen extends StatelessWidget {
                                   child: InkWell(
                                     onTap:
                                         () => Get.to(
-                                          () => SubscriptionScreen(),
+                                          () => MealsAnalyticsScreen(),
                                           transition: Transition.rightToLeft,
                                         ),
                                     child: QuickActionCard(
@@ -907,6 +952,24 @@ class Homescreen extends StatelessWidget {
             );
       },
     );
+  }
+
+  Future<void> _pickDashboardDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: ctrl.selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: AppColors.primary),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) ctrl.updateDate(picked);
   }
 
   /// Compact KPI tile used in the Overview grid — icon left, value + label right.
