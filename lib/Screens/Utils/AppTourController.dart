@@ -42,7 +42,7 @@ class AppTourController {
   /// (as if it was never seen), so tour changes can be checked without
   /// reinstalling. Set to false to go back to "show once per install".
   /// MUST be false in a release build.
-  static const bool alwaysShowTours = true;
+  static const bool alwaysShowTours = false;
 
   /// The feature walkthrough the owner just asked for by tapping its
   /// prompt. The destination screen consumes it via [startIfRequested].
