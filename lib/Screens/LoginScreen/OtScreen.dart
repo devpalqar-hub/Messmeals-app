@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:pinput/pinput.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/LoginScreen/Service/SignUpController.dart';
+import 'package:mess/Screens/Onboarding/OnboardingCongratsScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 /// Simple, minimal OTP verification screen — matches LoginScreen's plain
 /// white background, flat brand-green accents, and no decorative chrome.
@@ -161,10 +162,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           district: sc.selectedDistrict?.name ?? '',
           otp: otp,
         );
-        if (ok) Get.offAll(() => DashboardScreen());
+        if (ok) {
+          // Backend has no country field for a mess yet, so this is kept
+          // locally and used purely to pick the currency symbol (₹ for
+          // India, Riyal for GCC countries) shown throughout the app.
+          await setCurrencyCountry(sc.selectedCountryIso);
+          Get.offAll(() => const OnboardingCongratsScreen());
+        }
       } else {
-        final ok = await authCtrl.verifyOtp(widget.phoneNumber, otp);
-        if (ok) Get.offAll(() => DashboardScreen());
+        // verifyOtp() already navigates on success via _onLoginSuccess,
+        // routing to the delivery-partner or admin dashboard based on
+        // role — doing it again here unconditionally was overriding that
+        // with the admin dashboard regardless of role, which then failed
+        // to load (and silently logged back out) for non-admin accounts.
+        await authCtrl.verifyOtp(widget.phoneNumber, otp);
       }
     } catch (e) {
       AppToast.error(e.toString());

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 import 'package:mess/Screens/DeliveriesScreen/Services/DeliveriesController.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class OrderCard extends StatefulWidget {
   final Delivery delivery;
@@ -107,7 +108,7 @@ class _OrderCardState extends State<OrderCard> with TickerProviderStateMixin {
                   SizedBox(height: 6),
 
                   Text(
-                    "₹${plan?.price ?? 0}",
+                    "$currencySymbol${plan?.price ?? 0}",
                     style: TextStyle(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.bold,

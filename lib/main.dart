@@ -6,16 +6,16 @@ import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/OnboardingScreen/Service/onboarding_controller.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppTourController.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 import 'package:mess/Screens/Utils/routes.dart';
 import 'package:mess/dashbaord_binding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:showcaseview/showcaseview.dart';
 
-String baseUrl = "https://api.messmeals.com";
-// String baseUrl = "https://staging-api.messmeals.com";
+//String baseUrl = "https://api.messmeals.com";
+String baseUrl = "https://staging-api.messmeals.com";
 String? login;
-// Delivery-partner module disabled — role no longer read/used.
-// String? userRole;
+String? userRole;
 bool onboardingSeen = false;
 
 Future<void> main() async {
@@ -25,8 +25,9 @@ Future<void> main() async {
   SharedPreferences pref = await SharedPreferences.getInstance();
   bearerToken = "Bearer " + (pref.getString("token") ?? "");
   login = pref.getString("LOGIN");
-  // userRole = pref.getString("userRole"); // delivery-partner module disabled
+  userRole = pref.getString("userRole");
   onboardingSeen = pref.getBool(onboardingSeenKey) ?? false;
+  await loadCurrencyPreference();
   runApp(const MessMeals());
 }
 

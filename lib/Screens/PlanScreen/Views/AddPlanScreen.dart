@@ -14,6 +14,7 @@ import 'package:mess/Screens/PlanScreen/Service/VariationController.dart';
 import 'package:mess/Screens/MenuScreen/Service/MenuController.dart';
 import 'package:mess/Screens/MenuScreen/Views/AddMenuScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class AddPlanScreen extends StatefulWidget {
   final bool isEdit;
@@ -421,7 +422,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        title("Price (₹)"),
+                                        title("Price ($currencySymbol)"),
                                         SizedBox(height: 10.h),
                                         commonTextField(
                                           controller: priceCtrl,
@@ -437,7 +438,9 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        title("Selling Price (₹)"),
+                                        title(
+                                          "Selling Price ($currencySymbol)",
+                                        ),
                                         SizedBox(height: 10.h),
                                         commonTextField(
                                           controller: minPriceCtrl,
@@ -576,15 +579,17 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                         sectionCard(
                           child: GetBuilder<MessMenuController>(
                             builder: (menuCtrl) {
-                              final messMenus = menuCtrl.menus
-                                  .where((m) => m.isActive)
-                                  .toList();
+                              final messMenus =
+                                  menuCtrl.menus
+                                      .where((m) => m.isActive)
+                                      .toList();
 
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       title("Assign Menus"),
                                       GestureDetector(
@@ -621,7 +626,9 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                   ),
                                   SizedBox(height: 15.h),
                                   if (menuCtrl.isLoading)
-                                    const Center(child: CircularProgressIndicator())
+                                    const Center(
+                                      child: CircularProgressIndicator(),
+                                    )
                                   else if (messMenus.isEmpty)
                                     Text(
                                       "No menus created for this mess yet.",
@@ -634,63 +641,87 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                     Wrap(
                                       spacing: 10.w,
                                       runSpacing: 10.h,
-                                      children: messMenus.map((menu) {
-                                        final isSelected = selectedMenuIds.contains(menu.id);
-                                        return GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              if (isSelected) {
-                                                selectedMenuIds.remove(menu.id);
-                                              } else {
-                                                selectedMenuIds.add(menu.id);
-                                              }
-                                            });
-                                          },
-                                          child: AnimatedContainer(
-                                            duration: const Duration(milliseconds: 200),
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 16.w,
-                                              vertical: 10.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: isSelected
-                                                  ? AppColors.primary.withOpacity(0.1)
-                                                  : Colors.white,
-                                              borderRadius: BorderRadius.circular(10.r),
-                                              border: Border.all(
-                                                color: isSelected
-                                                    ? AppColors.primary
-                                                    : Colors.grey.shade300,
-                                              ),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  isSelected
-                                                      ? Icons.check_circle
-                                                      : Icons.radio_button_unchecked,
-                                                  size: 16.sp,
-                                                  color: isSelected
-                                                      ? AppColors.primary
-                                                      : Colors.grey,
+                                      children:
+                                          messMenus.map((menu) {
+                                            final isSelected = selectedMenuIds
+                                                .contains(menu.id);
+                                            return GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  if (isSelected) {
+                                                    selectedMenuIds.remove(
+                                                      menu.id,
+                                                    );
+                                                  } else {
+                                                    selectedMenuIds.add(
+                                                      menu.id,
+                                                    );
+                                                  }
+                                                });
+                                              },
+                                              child: AnimatedContainer(
+                                                duration: const Duration(
+                                                  milliseconds: 200,
                                                 ),
-                                                SizedBox(width: 8.w),
-                                                Text(
-                                                  menu.name,
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 12.sp,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: isSelected
-                                                        ? AppColors.primary
-                                                        : Colors.black87,
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 16.w,
+                                                  vertical: 10.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      isSelected
+                                                          ? AppColors.primary
+                                                              .withOpacity(0.1)
+                                                          : Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        10.r,
+                                                      ),
+                                                  border: Border.all(
+                                                    color:
+                                                        isSelected
+                                                            ? AppColors.primary
+                                                            : Colors
+                                                                .grey
+                                                                .shade300,
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      isSelected
+                                                          ? Icons.check_circle
+                                                          : Icons
+                                                              .radio_button_unchecked,
+                                                      size: 16.sp,
+                                                      color:
+                                                          isSelected
+                                                              ? AppColors
+                                                                  .primary
+                                                              : Colors.grey,
+                                                    ),
+                                                    SizedBox(width: 8.w),
+                                                    Text(
+                                                      menu.name,
+                                                      style: GoogleFonts.poppins(
+                                                        fontSize: 12.sp,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color:
+                                                            isSelected
+                                                                ? AppColors
+                                                                    .primary
+                                                                : Colors
+                                                                    .black87,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
                                     ),
                                 ],
                               );
@@ -794,9 +825,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                                 color:
                                                     isSelected
                                                         ? AppColors.primary
-                                                        : Colors
-                                                            .grey
-                                                            .shade300,
+                                                        : Colors.grey.shade300,
                                               ),
                                             ),
                                             child: Text(

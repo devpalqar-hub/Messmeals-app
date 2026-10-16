@@ -6,6 +6,7 @@ import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/TourKeys.dart';
 import 'package:mess/Screens/Utils/TourStop.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class PlanCard extends StatelessWidget {
   final String title;
@@ -121,7 +122,7 @@ class PlanCard extends StatelessWidget {
           SizedBox(height: 8.h), // Tighter spacing
           /// PRICE ROW — the selling price is what customers actually pay
           Text(
-            "₹${minPrice.toStringAsFixed(0)}",
+            "$currencySymbol${minPrice.toStringAsFixed(0)}",
             style: GoogleFonts.poppins(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,

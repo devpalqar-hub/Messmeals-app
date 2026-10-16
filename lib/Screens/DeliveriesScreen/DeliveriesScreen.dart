@@ -19,6 +19,7 @@ import 'package:mess/Screens/Utils/TourStop.dart';
 import 'package:mess/Screens/DeliveriesScreen/Views/GenerateCard.dart';
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
 import 'package:mess/Screens/Utils/EmptyStateAddButton.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 /// =========================================================================
 /// 🎨 COLOR PALETTE DESIGN SYSTEM
@@ -1301,7 +1302,7 @@ class _OrderCardState extends State<OrderCard> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "₹${plan?.price ?? 0}",
+                    "$currencySymbol${plan?.price ?? 0}",
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.bold,

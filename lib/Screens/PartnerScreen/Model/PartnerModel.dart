@@ -24,17 +24,17 @@ class Partner {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       isActive: json['is_active'] ?? false,
-      deliveryPartnerProfile: json['deliveryPartnerProfile'] != null
-          ? PartnerProfile.fromJson(json['deliveryPartnerProfile'])
-          : null,
-      stats: json['stats'] != null ? PartnerStats.fromJson(json['stats']) : null,
+      deliveryPartnerProfile:
+          json['deliveryPartnerProfile'] != null
+              ? PartnerProfile.fromJson(json['deliveryPartnerProfile'])
+              : null,
+      stats:
+          json['stats'] != null ? PartnerStats.fromJson(json['stats']) : null,
     );
   }
 
   // ✅ ONLY ADD THIS (nothing else changed)
-  Partner copyWith({
-    bool? isActive,
-  }) {
+  Partner copyWith({bool? isActive}) {
     return Partner(
       id: id,
       name: name,
@@ -63,6 +63,50 @@ class PartnerProfile {
       id: json['id'] ?? '',
       address: json['address'] ?? '',
       deliveryRegion: json['deliveryRegion'] ?? '',
+    );
+  }
+}
+
+/// One subscription currently assigned to a delivery partner — from `GET
+/// /deliveries/partner/{partnerId}/subscriptions`.
+class AssignedSubscription {
+  final String id;
+  final String planName;
+  final String price;
+  final String customerName;
+  final String customerPhone;
+
+  AssignedSubscription({
+    required this.id,
+    required this.planName,
+    required this.price,
+    required this.customerName,
+    required this.customerPhone,
+  });
+
+  factory AssignedSubscription.fromJson(Map<String, dynamic> json) {
+    final plan =
+        json['plan'] is Map ? json['plan'] as Map<String, dynamic> : null;
+    final customerProfile =
+        json['CustomerProfile'] is Map
+            ? json['CustomerProfile'] as Map<String, dynamic>
+            : null;
+    final user =
+        customerProfile?['user'] is Map
+            ? customerProfile!['user'] as Map<String, dynamic>
+            : null;
+
+    return AssignedSubscription(
+      id: (json['id'] ?? '').toString(),
+      planName: (plan?['planName'] ?? '').toString(),
+      price:
+          (json['discountedPrice'] ??
+                  json['totalPrice'] ??
+                  plan?['price'] ??
+                  '0')
+              .toString(),
+      customerName: (user?['name'] ?? 'Customer').toString(),
+      customerPhone: (user?['phone'] ?? '').toString(),
     );
   }
 }

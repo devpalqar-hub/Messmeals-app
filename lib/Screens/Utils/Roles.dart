@@ -1,6 +1,3 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 /// User roles returned by the backend on `role` (login response / UserModel).
 ///
 /// Confirmed against a real staging login response for a delivery-agent
@@ -10,5 +7,3 @@ const String kDeliveryAgentRole = 'DELIVERYAGENT';
 bool isDeliveryAgentRole(String? role) {
   return role?.trim().toUpperCase() == kDeliveryAgentRole;
 }
-
-*/

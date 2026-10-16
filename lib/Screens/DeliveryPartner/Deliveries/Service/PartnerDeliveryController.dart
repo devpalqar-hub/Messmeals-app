@@ -1,6 +1,3 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -25,8 +22,8 @@ class PartnerDeliveryController extends GetxController {
   List<PartnerDeliveryModel> todayDeliveries = [];
 
   int get assignedToday => todayDeliveries.length;
-  int get completedToday =>
-      todayDeliveries.where((d) => d.status == 'COMPLETED').length;
+  int get deliveredToday =>
+      todayDeliveries.where((d) => d.status == 'DELIVERED').length;
   int get pendingToday =>
       todayDeliveries.where((d) => d.status == 'PENDING').length;
   List<PartnerDeliveryModel> get recentDeliveries =>
@@ -52,30 +49,48 @@ class PartnerDeliveryController extends GetxController {
     fetchDeliveries();
   }
 
-  /// [status] — PENDING / COMPLETED / CANCELLED, empty = all.
+  /// Groups flattened `/deliveries/variations` rows (one row per meal) back
+  /// into one model per `deliveryId`, preserving the order deliveries first
+  /// appeared in.
+  List<PartnerDeliveryModel> _groupVariationRows(List rows) {
+    final grouped = <String, List<Map<String, dynamic>>>{};
+    final order = <String>[];
+    for (final e in rows) {
+      final row = Map<String, dynamic>.from(e);
+      final deliveryId = (row['deliveryId'] ?? '').toString();
+      if (deliveryId.isEmpty) continue;
+      if (!grouped.containsKey(deliveryId)) order.add(deliveryId);
+      (grouped[deliveryId] ??= []).add(row);
+    }
+    return order
+        .map((id) => PartnerDeliveryModel.fromVariationGroup(grouped[id]!))
+        .toList();
+  }
+
+  /// [status] — PENDING / DELIVERED / UNDELIVERED / CANCELLED, empty = all.
   /// [date] — a specific day, null = no date filter.
   Future<void> fetchDeliveries({String status = '', DateTime? date}) async {
     isLoading = true;
     update();
 
     try {
-      final uri = Uri.parse('$baseUrl/delivery-agent/my/deliveries').replace(
+      final uri = Uri.parse('$baseUrl/deliveries/variations').replace(
         queryParameters: {
-          'status': status,
-          'date': date != null ? DateFormat('yyyy-MM-dd').format(date) : '',
+          if (status.isNotEmpty) 'status': status,
+          if (date != null) 'date': DateFormat('yyyy-MM-dd').format(date),
           'page': '1',
-          'limit': '50',
+          'limit': '200',
         },
       );
 
-      final response = await http.get(uri, headers: _headers);
+      final response = await http
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final List list =
-            decoded is List ? decoded : (decoded['data'] ?? decoded['deliveries'] ?? []);
-        deliveries =
-            list.map((e) => PartnerDeliveryModel.fromJson(Map<String, dynamic>.from(e))).toList();
+        final List rows = decoded['data'] ?? [];
+        deliveries = _groupVariationRows(rows);
         errorMessage = '';
       } else {
         errorMessage = 'Failed to load deliveries';
@@ -96,23 +111,22 @@ class PartnerDeliveryController extends GetxController {
     update();
 
     try {
-      final uri = Uri.parse('$baseUrl/delivery-agent/my/deliveries').replace(
+      final uri = Uri.parse('$baseUrl/deliveries/variations').replace(
         queryParameters: {
-          'status': '',
           'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
           'page': '1',
-          'limit': '50',
+          'limit': '200',
         },
       );
 
-      final response = await http.get(uri, headers: _headers);
+      final response = await http
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final List list =
-            decoded is List ? decoded : (decoded['data'] ?? decoded['deliveries'] ?? []);
-        todayDeliveries =
-            list.map((e) => PartnerDeliveryModel.fromJson(Map<String, dynamic>.from(e))).toList();
+        final List rows = decoded['data'] ?? [];
+        todayDeliveries = _groupVariationRows(rows);
       }
     } catch (e) {
       debugPrint('FETCH TODAY SUMMARY ERROR: $e');
@@ -129,12 +143,19 @@ class PartnerDeliveryController extends GetxController {
 
     try {
       final uri = Uri.parse('$baseUrl/delivery-agent/my/deliveries/$id');
-      final response = await http.get(uri, headers: _headers);
+      final response = await http
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final data = decoded is Map && decoded['data'] is Map ? decoded['data'] : decoded;
-        selectedDelivery = PartnerDeliveryModel.fromJson(Map<String, dynamic>.from(data));
+        final data =
+            decoded is Map && decoded['data'] is Map
+                ? decoded['data']
+                : decoded;
+        selectedDelivery = PartnerDeliveryModel.fromJson(
+          Map<String, dynamic>.from(data),
+        );
       } else {
         // Fall back to whatever we already have in the list, if any.
         selectedDelivery = deliveries.firstWhereOrNull((d) => d.id == id);
@@ -148,21 +169,34 @@ class PartnerDeliveryController extends GetxController {
     }
   }
 
-  Future<bool> markCompleted(String id) async {
+  /// [status] — 'DELIVERED' or 'UNDELIVERED'.
+  ///
+  /// Uses the delivery-agent-scoped status endpoint (the general admin one,
+  /// `PATCH /deliveries/:id/status`, was rejecting a delivery-agent token).
+  /// Swagger doesn't document this endpoint's request body (empty schema),
+  /// so the field names below (`deliveryId`/`status`) are a best guess —
+  /// confirm against a real request/response before relying on this.
+  Future<bool> updateDeliveryStatus(String id, String status) async {
     isUpdatingStatus = true;
     update();
 
     try {
-      final uri = Uri.parse('$baseUrl/deliveries/$id/status');
-      final response = await http.patch(
-        uri,
-        headers: _headers,
-        body: jsonEncode({"status": "COMPLETED"}),
-      );
+      final uri = Uri.parse('$baseUrl/delivery-agent/update/status');
+      final response = await http
+          .put(
+            uri,
+            headers: _headers,
+            body: jsonEncode({"deliveryId": id, "status": status}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final index = deliveries.indexWhere((d) => d.id == id);
-        AppToast.success('Delivery marked as completed');
+        AppToast.success(
+          status == 'DELIVERED'
+              ? 'Delivery marked as delivered'
+              : 'Delivery marked as undelivered',
+        );
         await Future.wait([fetchDeliveries(), fetchTodaySummary()]);
         if (selectedDelivery?.id == id) {
           await fetchDeliveryDetail(id);
@@ -173,7 +207,7 @@ class PartnerDeliveryController extends GetxController {
       AppToast.error('Failed to update delivery');
       return false;
     } catch (e) {
-      debugPrint('MARK COMPLETED ERROR: $e');
+      debugPrint('UPDATE DELIVERY STATUS ERROR: $e');
       AppToast.error('Something went wrong');
       return false;
     } finally {
@@ -192,5 +226,3 @@ class PartnerDeliveryController extends GetxController {
     "Authorization": bearerToken,
   };
 }
-
-*/

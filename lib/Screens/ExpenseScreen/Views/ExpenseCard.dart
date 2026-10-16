@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class ExpenseCard extends StatelessWidget {
   final String title;
@@ -121,7 +122,7 @@ class ExpenseCard extends StatelessWidget {
               ),
               SizedBox(width: 8.w),
               Text(
-                "₹${amount.toStringAsFixed(0)}",
+                "$currencySymbol${amount.toStringAsFixed(0)}",
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
@@ -143,7 +144,7 @@ class ExpenseCard extends StatelessWidget {
                 _badge(categoryName, AppColors.primary),
               if (!isFullyPaid && balanceDue > 0)
                 _badge(
-                  "Due ₹${balanceDue.toStringAsFixed(0)}",
+                  "Due $currencySymbol${balanceDue.toStringAsFixed(0)}",
                   Colors.red.shade400,
                 ),
             ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class WalletWidget extends StatelessWidget {
   final TextEditingController walletController;
@@ -111,7 +112,7 @@ class WalletWidget extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            "₹",
+            "$currencySymbol",
             style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
           ),
           SizedBox(width: 12.w),

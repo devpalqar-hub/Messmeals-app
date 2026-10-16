@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class ReviewWidget extends StatelessWidget {
   // Basic info
@@ -153,8 +154,8 @@ class ReviewWidget extends StatelessWidget {
             iconColor: Colors.orange,
             title: "Wallet & Discount",
             children: [
-              detailRow("Advance Payment", "₹$walletAmount"),
-              detailRow("Discount Amount", "₹$discountAmount"),
+              detailRow("Advance Payment", "$currencySymbol$walletAmount"),
+              detailRow("Discount Amount", "$currencySymbol$discountAmount"),
             ],
             onEditClick: () {
               ChangeStep(2);

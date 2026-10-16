@@ -1,9 +1,14 @@
+import 'package:country_pickers/country.dart';
+import 'package:country_pickers/country_picker_dialog.dart';
+import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
+
 // import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 
 class AddMessBottomSheet extends StatefulWidget {
@@ -21,6 +26,8 @@ class _AddMessBottomSheetState extends State<AddMessBottomSheet> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _zipController = TextEditingController();
+
+  String _selectedCountryIso = 'IN';
 
   @override
   void dispose() {
@@ -43,6 +50,11 @@ class _AddMessBottomSheetState extends State<AddMessBottomSheet> {
         phone: _phoneController.text.trim(),
         address: _addressController.text.trim(),
       );
+
+      // Backend has no country field for a mess yet, so this is kept
+      // locally and used purely to pick the currency symbol (₹ for India,
+      // Riyal for GCC countries) shown throughout the app.
+      setCurrencyCountry(_selectedCountryIso);
     }
   }
 
@@ -167,6 +179,91 @@ class _AddMessBottomSheetState extends State<AddMessBottomSheet> {
                           ),
                         ),
                       ],
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // Country — determines the currency symbol (₹ for
+                    // India, Riyal for GCC countries) shown throughout the
+                    // app for this mess.
+                    Text(
+                      "Country *",
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    InkWell(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder:
+                              (_) => CountryPickerDialog(
+                                isSearchable: true,
+                                titlePadding: EdgeInsets.all(16.w),
+                                searchCursorColor: PrimaryColor,
+                                searchInputDecoration: const InputDecoration(
+                                  hintText: 'Search country',
+                                ),
+                                priorityList: [
+                                  CountryPickerUtils.getCountryByIsoCode('IN'),
+                                ],
+                                title: Text(
+                                  'Select a country',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                onValuePicked:
+                                    (Country picked) => setState(
+                                      () =>
+                                          _selectedCountryIso = picked.isoCode,
+                                    ),
+                              ),
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 20.w,
+                              height: 14.h,
+                              child: CountryPickerUtils.getDefaultFlagImage(
+                                CountryPickerUtils.getCountryByIsoCode(
+                                  _selectedCountryIso,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                CountryPickerUtils.getCountryByIsoCode(
+                                  _selectedCountryIso,
+                                ).name,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13.sp,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Colors.grey[600],
+                              size: 18.sp,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     SizedBox(height: 12.h),
 

@@ -1,14 +1,9 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/DeliveryPartner/Deliveries/Models/PartnerDeliveryModel.dart';
 import 'package:mess/Screens/DeliveryPartner/Deliveries/Service/PartnerDeliveryController.dart';
-import 'package:mess/Screens/DeliveryPartner/Deliveries/Views/DeliveryDetailScreen.dart';
-import 'package:mess/Screens/DeliveryPartner/Earnings/Service/MockEarningsController.dart';
 import 'package:mess/Screens/DeliveryPartner/Profile/Service/DeliveryProfileController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
@@ -21,7 +16,6 @@ class DeliveryHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final deliveryCtrl = Get.put(PartnerDeliveryController());
     final profileCtrl = Get.put(DeliveryProfileController());
-    final earningsCtrl = Get.put(MockEarningsController());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       deliveryCtrl.fetchTodaySummary();
@@ -40,18 +34,21 @@ class DeliveryHomeScreen extends StatelessWidget {
                   /// ---------- GREETING ----------
                   Row(
                     children: [
-                      Container(
-                        height: 44.w,
-                        width: 44.w,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.person,
-                          color: AppColors.primary,
-                          size: 22.sp,
+                      GestureDetector(
+                        onTap: () => onNavigateToTab(2),
+                        child: Container(
+                          height: 44.w,
+                          width: 44.w,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.person,
+                            color: AppColors.primary,
+                            size: 22.sp,
+                          ),
                         ),
                       ),
                       SizedBox(width: 12.w),
@@ -84,11 +81,6 @@ class DeliveryHomeScreen extends StatelessWidget {
                             );
                           },
                         ),
-                      ),
-                      Icon(
-                        Icons.notifications_none_rounded,
-                        color: Colors.grey.shade600,
-                        size: 24.sp,
                       ),
                     ],
                   ),
@@ -130,82 +122,12 @@ class DeliveryHomeScreen extends StatelessWidget {
                         Row(
                           children: [
                             _homeStat("${ctrl.assignedToday}", "Assigned"),
-                            _homeStat("${ctrl.completedToday}", "Completed"),
+                            _homeStat("${ctrl.deliveredToday}", "Delivered"),
                             _homeStat("${ctrl.pendingToday}", "Pending"),
                           ],
                         ),
                       ],
                     ),
-                  ),
-
-                  SizedBox(height: 14.h),
-
-                  /// ---------- TODAY'S EARNINGS ----------
-                  GetBuilder<MockEarningsController>(
-                    builder: (eCtrl) {
-                      return InkWell(
-                        onTap: () => onNavigateToTab(3),
-                        borderRadius: BorderRadius.circular(12.r),
-                        child: Container(
-                          padding: EdgeInsets.all(14.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(8.w),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10.r),
-                                ),
-                                child: Icon(
-                                  Icons.account_balance_wallet_outlined,
-                                  color: AppColors.primary,
-                                  size: 18.sp,
-                                ),
-                              ),
-                              SizedBox(width: 10.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Today's Earnings",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11.sp,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    Text(
-                                      "₹${eCtrl.todayEarnings.toStringAsFixed(0)}",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 15.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF111827),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey.shade400,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
                   ),
 
                   SizedBox(height: 20.h),
@@ -255,12 +177,7 @@ class DeliveryHomeScreen extends StatelessWidget {
                     )
                   else
                     ...ctrl.recentDeliveries.map(
-                      (d) => _RecentDeliveryTile(
-                        delivery: d,
-                        onTap: () {
-                          Get.to(() => DeliveryDetailScreen(deliveryId: d.id));
-                        },
-                      ),
+                      (d) => _RecentDeliveryTile(delivery: d),
                     ),
                 ],
               ),
@@ -306,14 +223,14 @@ class DeliveryHomeScreen extends StatelessWidget {
 
 class _RecentDeliveryTile extends StatelessWidget {
   final PartnerDeliveryModel delivery;
-  final VoidCallback onTap;
 
-  const _RecentDeliveryTile({required this.delivery, required this.onTap});
+  const _RecentDeliveryTile({required this.delivery});
 
   Color get _statusColor {
     switch (delivery.status) {
-      case 'COMPLETED':
+      case 'DELIVERED':
         return AppColors.success;
+      case 'UNDELIVERED':
       case 'CANCELLED':
         return Colors.red.shade400;
       default:
@@ -323,84 +240,78 @@ class _RecentDeliveryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10.r),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 8.h),
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Row(
-          children: [
-            Container(
-              height: 36.w,
-              width: 36.w,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                delivery.customerName.isNotEmpty
-                    ? delivery.customerName[0].toUpperCase()
-                    : '?',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
+    return Container(
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 36.w,
+            width: 36.w,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              delivery.customerName.isNotEmpty
+                  ? delivery.customerName[0].toUpperCase()
+                  : '?',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
               ),
             ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    delivery.customerName,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF111827),
-                    ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  delivery.customerName,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
                   ),
-                  Text(
-                    delivery.mealSummary.isNotEmpty
-                        ? "${delivery.mealSummary} • ${delivery.planName}"
-                        : delivery.planName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.sp,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: _statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6.r),
-              ),
-              child: Text(
-                delivery.status[0] + delivery.status.substring(1).toLowerCase(),
-                style: GoogleFonts.poppins(
-                  fontSize: 9.sp,
-                  fontWeight: FontWeight.w600,
-                  color: _statusColor,
                 ),
+                Text(
+                  delivery.mealSummary.isNotEmpty
+                      ? "${delivery.mealSummary} • ${delivery.planName}"
+                      : delivery.planName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.sp,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: _statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Text(
+              delivery.status[0] + delivery.status.substring(1).toLowerCase(),
+              style: GoogleFonts.poppins(
+                fontSize: 9.sp,
+                fontWeight: FontWeight.w600,
+                color: _statusColor,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
-
-*/

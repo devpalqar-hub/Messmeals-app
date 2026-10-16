@@ -1,6 +1,3 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -20,7 +17,9 @@ class DeliveriesListScreen extends StatefulWidget {
 }
 
 class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
-  final PartnerDeliveryController controller = Get.put(PartnerDeliveryController());
+  final PartnerDeliveryController controller = Get.put(
+    PartnerDeliveryController(),
+  );
 
   /// Upcoming/Today/Completed/All — mixes date and status presets, matching
   /// the design; "Upcoming" = future PENDING deliveries.
@@ -46,8 +45,8 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
         statusFilter = '';
         dateFilter = today;
         break;
-      case 'Completed':
-        statusFilter = 'COMPLETED';
+      case 'Delivered':
+        statusFilter = 'DELIVERED';
         dateFilter = null;
         break;
       default:
@@ -82,7 +81,7 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children:
-                      ['Upcoming', 'Today', 'Completed', 'All'].map((tab) {
+                      ['Upcoming', 'Today', 'Delivered', 'All'].map((tab) {
                         final isSelected = activeTab == tab;
                         return Padding(
                           padding: EdgeInsets.only(right: 8.w),
@@ -94,10 +93,16 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
                                 vertical: 9.h,
                               ),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppColors.primary : Colors.white,
+                                color:
+                                    isSelected
+                                        ? AppColors.primary
+                                        : Colors.white,
                                 borderRadius: BorderRadius.circular(20.r),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                                  color:
+                                      isSelected
+                                          ? AppColors.primary
+                                          : Colors.grey.shade300,
                                 ),
                               ),
                               child: Text(
@@ -105,7 +110,10 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: isSelected ? Colors.white : Colors.black87,
+                                  color:
+                                      isSelected
+                                          ? Colors.white
+                                          : Colors.black87,
                                 ),
                               ),
                             ),
@@ -124,7 +132,10 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
                   hintText: "Search by customer name or address...",
                   hintStyle: TextStyle(fontSize: 13.sp),
                   prefixIcon: Icon(Icons.search, size: 20.sp),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 12.h,
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -137,7 +148,10 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.r),
-                    borderSide: BorderSide(color: AppColors.primary, width: 1.2),
+                    borderSide: BorderSide(
+                      color: AppColors.primary,
+                      width: 1.2,
+                    ),
                   ),
                 ),
               ),
@@ -156,14 +170,20 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
                       return Center(
                         child: Text(
                           "No deliveries found",
-                          style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey.shade500),
+                          style: GoogleFonts.poppins(
+                            fontSize: 13.sp,
+                            color: Colors.grey.shade500,
+                          ),
                         ),
                       );
                     }
 
                     return RefreshIndicator(
                       onRefresh:
-                          () => controller.fetchDeliveries(status: statusFilter, date: dateFilter),
+                          () => controller.fetchDeliveries(
+                            status: statusFilter,
+                            date: dateFilter,
+                          ),
                       child: ListView.separated(
                         itemCount: list.length,
                         separatorBuilder: (_, __) => SizedBox(height: 8.h),
@@ -172,8 +192,13 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen> {
                           return _DeliveryListTile(
                             delivery: d,
                             onTap: () async {
-                              await Get.to(() => DeliveryDetailScreen(deliveryId: d.id));
-                              controller.fetchDeliveries(status: statusFilter, date: dateFilter);
+                              await Get.to(
+                                () => DeliveryDetailScreen(deliveryId: d.id),
+                              );
+                              controller.fetchDeliveries(
+                                status: statusFilter,
+                                date: dateFilter,
+                              );
                             },
                           );
                         },
@@ -207,8 +232,9 @@ class _DeliveryListTile extends StatelessWidget {
 
   Color get _statusColor {
     switch (delivery.status) {
-      case 'COMPLETED':
+      case 'DELIVERED':
         return AppColors.success;
+      case 'UNDELIVERED':
       case 'CANCELLED':
         return Colors.red.shade400;
       default:
@@ -245,8 +271,13 @@ class _DeliveryListTile extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Text(
-                delivery.customerName.isNotEmpty ? delivery.customerName[0].toUpperCase() : '?',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: AppColors.primary),
+                delivery.customerName.isNotEmpty
+                    ? delivery.customerName[0].toUpperCase()
+                    : '?',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
               ),
             ),
             SizedBox(width: 10.w),
@@ -296,7 +327,10 @@ class _DeliveryListTile extends StatelessWidget {
                         : delivery.planName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey.shade500),
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      color: Colors.grey.shade500,
+                    ),
                   ),
                 ],
               ),
@@ -306,7 +340,10 @@ class _DeliveryListTile extends StatelessWidget {
               children: [
                 Text(
                   delivery.time ?? _formattedDate,
-                  style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey.shade600),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.sp,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
                 SizedBox(height: 6.h),
                 Container(
@@ -316,7 +353,8 @@ class _DeliveryListTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    delivery.status[0] + delivery.status.substring(1).toLowerCase(),
+                    delivery.status[0] +
+                        delivery.status.substring(1).toLowerCase(),
                     style: GoogleFonts.poppins(
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w600,
@@ -332,5 +370,3 @@ class _DeliveryListTile extends StatelessWidget {
     );
   }
 }
-
-*/

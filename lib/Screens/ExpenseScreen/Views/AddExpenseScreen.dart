@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:mess/Screens/ExpenseCategoryScreen/Service/ExpenseCategoryController.dart';
 import 'package:mess/Screens/ExpenseScreen/Service/ExpenseController.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final bool isEdit;
@@ -104,9 +105,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       lastDate: DateTime(2100),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(
-            context,
-          ).copyWith(colorScheme: const ColorScheme.light(primary: AppColors.primary)),
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: AppColors.primary),
+          ),
           child: child!,
         );
       },
@@ -213,7 +214,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           ? null
                           : () async {
                             if (titleCtrl.text.trim().isEmpty) {
-                              Fluttertoast.showToast(msg: "Please enter a title");
+                              Fluttertoast.showToast(
+                                msg: "Please enter a title",
+                              );
                               return;
                             }
 
@@ -246,7 +249,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               }
                               if (amount != null && paidAmount > amount) {
                                 Fluttertoast.showToast(
-                                  msg: "Paid amount can't exceed the total amount",
+                                  msg:
+                                      "Paid amount can't exceed the total amount",
                                 );
                                 return;
                               }
@@ -266,7 +270,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               title: titleCtrl.text.trim(),
                               amount: amount,
                               paidAmount: paidAmount,
-                              date: DateFormat('yyyy-MM-dd').format(selectedDate),
+                              date: DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(selectedDate),
                               isPending: isPending,
                               description: descCtrl.text.trim(),
                               receiptUrl: receiptUrl,
@@ -348,7 +354,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         ],
 
                         SizedBox(height: 16.h),
-                        _label(isPending ? "Amount (₹)" : "Amount (₹) *"),
+                        _label(
+                          isPending
+                              ? "Amount ($currencySymbol)"
+                              : "Amount ($currencySymbol) *",
+                        ),
                         SizedBox(height: 10.h),
                         TextField(
                           controller: amountCtrl,
@@ -363,7 +373,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
                         if (!isPending) ...[
                           SizedBox(height: 16.h),
-                          _label("Paid Amount (₹)"),
+                          _label("Paid Amount ($currencySymbol)"),
                           SizedBox(height: 10.h),
                           TextField(
                             controller: paidAmountCtrl,
@@ -417,7 +427,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                 ),
                                 SizedBox(width: 10.w),
                                 Text(
-                                  DateFormat('dd MMM yyyy').format(selectedDate),
+                                  DateFormat(
+                                    'dd MMM yyyy',
+                                  ).format(selectedDate),
                                   style: TextStyle(fontSize: 14.sp),
                                 ),
                               ],
@@ -523,7 +535,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         _label("Receipt"),
                         SizedBox(height: 12.h),
                         GestureDetector(
-                          onTap: controller.isUploadingReceipt ? null : _pickReceipt,
+                          onTap:
+                              controller.isUploadingReceipt
+                                  ? null
+                                  : _pickReceipt,
                           child: Container(
                             width: double.infinity,
                             padding: EdgeInsets.all(16.w),
@@ -567,7 +582,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                       ],
                                     )
                                     : Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.add_a_photo_outlined,

@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/LoginScreen/Model/DistrictModel.dart';
 import 'package:mess/Screens/LoginScreen/OtScreen.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:country_pickers/country.dart';
+import 'package:country_pickers/country_picker_dialog.dart';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:mess/Screens/LoginScreen/Service/SignUpController.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
@@ -72,136 +74,128 @@ class SignUpScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// BACK BUTTON
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// BACK BUTTON
 
-                        /// HEADER SECTION (Logo + Titles)
-                        // Row(
-                        //   crossAxisAlignment: CrossAxisAlignment.center,
-                        //   children: [
-                        //     Container(
-                        //       width: 54.w,
-                        //       height: 54.w,
-                        //       decoration: BoxDecoration(
-                        //         shape: BoxShape.circle,
-                        //         color: primaryGreen.withOpacity(0.15),
-                        //       ),
-                        //       child: Icon(
-                        //         Icons.restaurant,
-                        //         color: primaryGreen,
-                        //         size: 28.sp,
-                        //       ),
-                        //     ),
-                        //     SizedBox(width: 16.w),
-                        //   Column(
-                        //     crossAxisAlignment: CrossAxisAlignment.start,
-                        //     children: [
+                /// HEADER SECTION (Logo + Titles)
+                // Row(
+                //   crossAxisAlignment: CrossAxisAlignment.center,
+                //   children: [
+                //     Container(
+                //       width: 54.w,
+                //       height: 54.w,
+                //       decoration: BoxDecoration(
+                //         shape: BoxShape.circle,
+                //         color: primaryGreen.withOpacity(0.15),
+                //       ),
+                //       child: Icon(
+                //         Icons.restaurant,
+                //         color: primaryGreen,
+                //         size: 28.sp,
+                //       ),
+                //     ),
+                //     SizedBox(width: 16.w),
+                //   Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
 
-                        //       SizedBox(height: 4.h),
-                        //       Text(
-                        //         "Fill your details to get started",
-                        //         style: GoogleFonts.inter(
-                        //           fontSize: 14.sp,
-                        //           color: Colors.grey.shade500,
-                        //           fontWeight: FontWeight.w500,
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ],
-                        // ),
-                        SizedBox(height: 30.h),
+                //       SizedBox(height: 4.h),
+                //       Text(
+                //         "Fill your details to get started",
+                //         style: GoogleFonts.inter(
+                //           fontSize: 14.sp,
+                //           color: Colors.grey.shade500,
+                //           fontWeight: FontWeight.w500,
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ],
+                // ),
+                SizedBox(height: 30.h),
 
-                        /// FORM FIELDS
-                        _textField(
-                          label: "Full Name",
-                          controller: nameController,
-                          icon: Icons.person_outline_rounded,
-                        ),
-                        SizedBox(height: 16.h),
-
-                        _phoneField(),
-                        SizedBox(height: 16.h),
-
-                        _textField(
-                          label: "Email Address",
-                          controller: emailController,
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        SizedBox(height: 16.h),
-
-                        _textField(
-                          label: "Mess Name",
-                          controller: messNameController,
-                          icon: Icons.storefront_outlined,
-                        ),
-                        SizedBox(height: 16.h),
-
-                        // _districtDropdown(),
-                        // SizedBox(height: 16.h),
-                        _textField(
-                          label: "Complete Address",
-                          controller: addressController,
-                          icon: Icons.location_on_outlined,
-                        ),
-                        SizedBox(height: 16.h),
-
-                        _textField(
-                          label: "Postal Code",
-                          controller: pincodeController,
-                          icon: Icons.numbers,
-                          keyboardType: TextInputType.number,
-                        ),
-
-                        const Spacer(), // Pushes the button to the bottom
-
-                        SizedBox(height: 20.h),
-
-                        /// LOGIN REDIRECT
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Already have an account? ",
-                              style: GoogleFonts.inter(
-                                fontSize: 14.sp,
-                                color: Colors.grey.shade600,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => Get.back(),
-                              child: Text(
-                                "Log In",
-                                style: GoogleFonts.inter(
-                                  color: primaryGreen,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14.sp,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 24.h),
-                      ],
-                    ),
-                  ),
+                /// FORM FIELDS
+                _textField(
+                  label: "Full Name",
+                  controller: nameController,
+                  icon: Icons.person_outline_rounded,
                 ),
-              ),
-            );
-          },
+                SizedBox(height: 16.h),
+
+                _phoneField(),
+                SizedBox(height: 16.h),
+
+                _textField(
+                  label: "Email Address",
+                  controller: emailController,
+                  icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                SizedBox(height: 16.h),
+
+                _textField(
+                  label: "Mess Name",
+                  controller: messNameController,
+                  icon: Icons.storefront_outlined,
+                ),
+                SizedBox(height: 16.h),
+
+                _countryField(context),
+                SizedBox(height: 16.h),
+
+                // _districtDropdown(),
+                // SizedBox(height: 16.h),
+                _textField(
+                  label: "Complete Address",
+                  controller: addressController,
+                  icon: Icons.location_on_outlined,
+                ),
+                SizedBox(height: 16.h),
+
+                _textField(
+                  label: "Postal Code",
+                  controller: pincodeController,
+                  icon: Icons.numbers,
+                  keyboardType: TextInputType.number,
+                ),
+
+                SizedBox(height: 30.h),
+
+                /// LOGIN REDIRECT
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Already have an account? ",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Get.back(),
+                      child: Text(
+                        "Log In",
+                        style: GoogleFonts.inter(
+                          color: primaryGreen,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 24.h),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -247,7 +241,9 @@ class SignUpScreen extends StatelessWidget {
     );
 
     if (success) {
-      Get.to(() => OtpVerificationScreen(phoneNumber: fullPhone, isSignup: true));
+      Get.to(
+        () => OtpVerificationScreen(phoneNumber: fullPhone, isSignup: true),
+      );
     }
   }
 
@@ -403,6 +399,93 @@ class SignUpScreen extends StatelessWidget {
     );
   }
 
+  /// COUNTRY FIELD — determines the currency symbol (₹ for India, Riyal for
+  /// GCC countries) shown throughout the app for this mess. Separate from
+  /// the phone field's country-code picker (that one only covers IN/US/AE
+  /// and is purely for the phone prefix).
+  Widget _countryField(BuildContext context) {
+    return GetBuilder<SignupController>(
+      builder: (ctrl) {
+        final country = CountryPickerUtils.getCountryByIsoCode(
+          ctrl.selectedCountryIso,
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Country",
+              style: GoogleFonts.inter(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151),
+              ),
+            ),
+            SizedBox(height: 6.h),
+            InkWell(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder:
+                      (_) => CountryPickerDialog(
+                        isSearchable: true,
+                        titlePadding: EdgeInsets.all(16.w),
+                        searchCursorColor: primaryGreen,
+                        searchInputDecoration: const InputDecoration(
+                          hintText: 'Search country',
+                        ),
+                        priorityList: [
+                          CountryPickerUtils.getCountryByIsoCode('IN'),
+                        ],
+                        title: Text(
+                          'Select a country',
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                        ),
+                        onValuePicked:
+                            (Country picked) =>
+                                ctrl.selectCountry(picked.isoCode),
+                      ),
+                );
+              },
+              borderRadius: BorderRadius.circular(12.r),
+              child: Container(
+                height: 52.h,
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: inputFillColor,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 22.w,
+                      height: 16.h,
+                      child: CountryPickerUtils.getDefaultFlagImage(country),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Text(
+                        country.name,
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.grey.shade600,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   /// STANDARDIZED DISTRICT DROPDOWN
   Widget _districtDropdown() {
     return GetBuilder<SignupController>(
@@ -480,87 +563,89 @@ class SignUpScreen extends StatelessWidget {
       SafeArea(
         top: false,
         child: Container(
-        height: 500.h,
-        padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(10.r),
+          height: 500.h,
+          padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
               ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              "Select District",
-              style: GoogleFonts.inter(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
+              SizedBox(height: 16.h),
+              Text(
+                "Select District",
+                style: GoogleFonts.inter(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            SizedBox(height: 16.h),
-            Expanded(
-              child: GetBuilder<SignupController>(
-                builder: (controller) {
-                  return ListView.separated(
-                    controller: scrollController,
-                    itemCount:
-                        controller.districtList.length +
-                        (controller.hasMore ? 1 : 0),
-                    separatorBuilder:
-                        (_, __) =>
-                            Divider(color: Colors.grey.shade100, height: 1),
-                    itemBuilder: (context, index) {
-                      if (index == controller.districtList.length) {
-                        return Padding(
-                          padding: EdgeInsets.all(16.h),
-                          child: const Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+              SizedBox(height: 16.h),
+              Expanded(
+                child: GetBuilder<SignupController>(
+                  builder: (controller) {
+                    return ListView.separated(
+                      controller: scrollController,
+                      itemCount:
+                          controller.districtList.length +
+                          (controller.hasMore ? 1 : 0),
+                      separatorBuilder:
+                          (_, __) =>
+                              Divider(color: Colors.grey.shade100, height: 1),
+                      itemBuilder: (context, index) {
+                        if (index == controller.districtList.length) {
+                          return Padding(
+                            padding: EdgeInsets.all(16.h),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        DistrictModel district = controller.districtList[index];
+
+                        return ListTile(
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          title: Text(
+                            district.name ?? "",
+                            style: GoogleFonts.inter(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        );
-                      }
-
-                      DistrictModel district = controller.districtList[index];
-
-                      return ListTile(
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 4.h,
-                        ),
-                        title: Text(
-                          district.name ?? "",
-                          style: GoogleFonts.inter(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w500,
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: Colors.grey.shade400,
+                            size: 20,
                           ),
-                        ),
-                        trailing: Icon(
-                          Icons.chevron_right,
-                          color: Colors.grey.shade400,
-                          size: 20,
-                        ),
-                        onTap: () {
-                          controller.selectDistrict(district);
-                          Get.back();
-                        },
-                      );
-                    },
-                  );
-                },
+                          onTap: () {
+                            controller.selectDistrict(district);
+                            Get.back();
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
       isScrollControlled: true,

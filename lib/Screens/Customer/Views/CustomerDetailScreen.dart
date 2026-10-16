@@ -10,11 +10,13 @@ import 'package:intl/intl.dart';
 import 'package:mess/Screens/CustomerScreen/Model/CustomerDetailedModel.dart';
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
+import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:mess/main.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class _C {
   static const surface = Colors.white;
@@ -156,6 +158,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   void initState() {
     super.initState();
     _fetchCustomer();
+    Get.put(PartnerController()).ensureLoaded();
   }
 
   Future<void> _fetchCustomer() async {
@@ -794,7 +797,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   String _fmtDate(String iso) =>
       DateFormat('dd MMM yyyy').format(DateTime.parse(iso));
-  String _fmtCurrency(int v) => '₹${NumberFormat('#,##,###').format(v)}';
+  String _fmtCurrency(int v) =>
+      '$currencySymbol${NumberFormat('#,##,###').format(v)}';
 
   // ✅ FIX: NEW helper — computes real "Member since" from createdAt
   String _fmtMemberSinceDate() {
@@ -1288,23 +1292,101 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   // one meal, not one day.
   // ---------------------------------------------------------------------
   Widget _buildDeliveriesTab() {
-    if (_deliveriesLoading) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: 40.h),
-        child: const Center(
-          child: CircularProgressIndicator(color: _C.primary),
+    final sub = customer.activeSubscriptions?.firstOrNull;
+
+    Widget partnerCard = const SizedBox.shrink();
+    if (sub != null) {
+      partnerCard = Padding(
+        padding: EdgeInsets.only(bottom: 16.h),
+        child: GetBuilder<PartnerController>(
+          builder:
+              (pc) => Container(
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: _C.surface,
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(color: _C.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delivery_dining_outlined,
+                      size: 18.sp,
+                      color: _C.primary,
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Delivery Partner',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10.5.sp,
+                              color: _C.textTertiary,
+                            ),
+                          ),
+                          Text(
+                            _partnerNameFor(sub.deliveryPartnerProfileId, pc),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.5.sp,
+                              fontWeight: FontWeight.w600,
+                              color: _C.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _showChangePartnerSheet(sub),
+                      child: Text(
+                        'Change',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: _C.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         ),
       );
     }
-    if (_deliveryRows.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: 40.h),
-        child: Center(
-          child: Text(
-            'No deliveries found for this customer.',
-            style: GoogleFonts.poppins(fontSize: 13.sp, color: _C.textTertiary),
+
+    if (_deliveriesLoading) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          partnerCard,
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 40.h),
+            child: const Center(
+              child: CircularProgressIndicator(color: _C.primary),
+            ),
           ),
-        ),
+        ],
+      );
+    }
+    if (_deliveryRows.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          partnerCard,
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 40.h),
+            child: Center(
+              child: Text(
+                'No deliveries found for this customer.',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp,
+                  color: _C.textTertiary,
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
@@ -1348,6 +1430,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        partnerCard,
         if (upcomingDates.isNotEmpty) ...[
           Text(
             'Upcoming Deliveries',
@@ -1735,7 +1818,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isCredit ? '+' : '-'}₹${t.amount}',
+                '${isCredit ? '+' : '-'}$currencySymbol${t.amount}',
                 style: GoogleFonts.poppins(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w700,
@@ -1868,7 +1951,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            '₹${sub.totalPrice} / month',
+                            '$currencySymbol${sub.totalPrice} / month',
                             style: GoogleFonts.poppins(
                               fontSize: 12.sp,
                               color: _C.textSecondary,
@@ -1944,7 +2027,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 SizedBox(height: 7.h),
                 _subRow(
                   Icons.payments_outlined,
-                  'Total price: ₹${sub.totalPrice}',
+                  'Total price: $currencySymbol${sub.totalPrice}',
+                ),
+                SizedBox(height: 7.h),
+                GetBuilder<PartnerController>(
+                  builder:
+                      (pc) => _subRow(
+                        Icons.delivery_dining_outlined,
+                        'Partner: ${_partnerNameFor(sub.deliveryPartnerProfileId, pc)}',
+                      ),
                 ),
               ],
             ),
@@ -2010,6 +2101,102 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  String _partnerNameFor(String? profileId, PartnerController pc) {
+    if (profileId == null || profileId.isEmpty) return 'Unassigned';
+    final match =
+        pc.partners
+            .where((p) => p.deliveryPartnerProfile?.id == profileId)
+            .toList();
+    return match.isNotEmpty ? match.first.name : 'Unassigned';
+  }
+
+  /// Mirrors the "Assigned Customers" reassign flow on the Partner Details
+  /// screen, but from the customer's side — pick a different partner for
+  /// this one subscription via `PATCH /deliveries/change/partner/subscription`.
+  void _showChangePartnerSheet(ActiveSubscriptions sub) {
+    final partnerController = Get.find<PartnerController>();
+    final options =
+        partnerController.partners
+            .where(
+              (p) =>
+                  p.deliveryPartnerProfile?.id != sub.deliveryPartnerProfileId,
+            )
+            .toList();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _C.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Change delivery partner to',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _C.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                if (options.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    child: Text(
+                      'No other partners available.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5.sp,
+                        color: _C.textTertiary,
+                      ),
+                    ),
+                  )
+                else
+                  ...options.map(
+                    (p) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.delivery_dining_outlined,
+                        color: _C.primary,
+                      ),
+                      title: Text(
+                        p.name,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        p.phone,
+                        style: GoogleFonts.poppins(fontSize: 11.5.sp),
+                      ),
+                      onTap: () async {
+                        Navigator.pop(ctx);
+                        final newPartnerId =
+                            p.deliveryPartnerProfile?.id ?? p.id;
+                        final ok = await partnerController
+                            .changeSubscriptionPartner(
+                              subscriptionId: sub.id!,
+                              newPartnerId: newPartnerId,
+                            );
+                        if (ok) _fetchCustomer();
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -2162,7 +2349,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     SizedBox(height: 4.h),
                     Text(
                       pendingAmount > 0
-                          ? "Pending amount: ₹$pendingAmount — cannot collect more than this"
+                          ? "Pending amount: $currencySymbol$pendingAmount — cannot collect more than this"
                           : "No pending amount — nothing to collect",
                       style: GoogleFonts.poppins(
                         fontSize: 12.5.sp,
@@ -2180,7 +2367,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                         color: _C.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        prefixText: '₹  ',
+                        prefixText: '$currencySymbol  ',
                         prefixStyle: GoogleFonts.poppins(
                           fontSize: 15.sp,
                           color: _C.textSecondary,
@@ -2249,8 +2436,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                                       alignment: Alignment.center,
                                       child: Text(
                                         amt == pendingAmount
-                                            ? 'Full ₹$amt'
-                                            : '₹$amt',
+                                            ? 'Full $currencySymbol$amt'
+                                            : '$currencySymbol$amt',
                                         style: GoogleFonts.poppins(
                                           fontSize: 12.5.sp,
                                           color: _C.textSecondary,
@@ -2298,7 +2485,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                                       // actually owed.
                                       if (v > pendingAmount) {
                                         AppToast.error(
-                                          'Cannot collect more than the pending amount of ₹$pendingAmount',
+                                          'Cannot collect more than the pending amount of $currencySymbol$pendingAmount',
                                         );
                                         return;
                                       }
@@ -2962,7 +3149,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              label("Discount Amount (₹)"),
+                                              label(
+                                                "Discount Amount ($currencySymbol)",
+                                              ),
                                               TextField(
                                                 controller: discountCtrl,
                                                 keyboardType:
@@ -3569,7 +3758,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                         ),
                         SizedBox(height: 16.h),
                         Text(
-                          "Discount Amount (₹)",
+                          "Discount Amount ($currencySymbol)",
                           style: GoogleFonts.poppins(
                             fontSize: 11.sp,
                             color: _C.textSecondary,
@@ -3733,8 +3922,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     isStart
                         ? (startDate ?? DateTime.now())
                         : (endDate ?? startDate ?? DateTime.now());
+                final now = DateTime.now();
                 final firstDate =
-                    isStart ? DateTime.now() : (startDate ?? DateTime.now());
+                    isStart
+                        ? DateTime(now.year - 1)
+                        : (startDate ?? DateTime(now.year - 1));
                 final picked = await showDatePicker(
                   context: context,
                   initialDate: initialDate,

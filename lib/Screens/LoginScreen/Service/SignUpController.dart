@@ -29,6 +29,16 @@ class SignupController extends GetxController {
   String otp = "";
   String zipcode = "";
 
+  // Determines the currency symbol (₹ for India, Riyal for GCC countries)
+  // shown throughout the app for this mess — backend has no country field
+  // for a mess yet, so this is only used client-side (see CurrencyService).
+  String selectedCountryIso = "IN";
+
+  void selectCountry(String isoCode) {
+    selectedCountryIso = isoCode;
+    update();
+  }
+
   // ================== FETCH DISTRICTS ==================
   Future<void> fetchDistricts({bool loadMore = false}) async {
     try {
@@ -77,228 +87,225 @@ class SignupController extends GetxController {
     update();
   }
 
- // ================== SEND OTP ==================
-Future<bool> sendOtp({
-  required String name,
-  required String ownerName,
-  required String phone,
-  required String email,
-  required String address,
-  required String messName,
-  required String zipcode,
-}) async {
-  try {
-    otpLoading = true;
-    update();
-
-    final url = Uri.parse("$baseUrl/auth/mess-owner/send-otp");
-
-    final requestBody = {
-      "name": name,
-      "ownerName": ownerName,
-      "phone": phone,
-      "email": email,
-      "address": address,
-      //"district": district,
-      "postcode": zipcode,
-      "messName": messName,
-    };
-
-    // =========================================================
-    // REQUEST DEBUG
-    // =========================================================
-
-    print("\n");
-    print("==================================================");
-    print("🚀 SEND OTP API REQUEST");
-    print("==================================================");
-
-    print("🌐 BASE URL       : $baseUrl");
-    print("🔗 ENDPOINT       : /auth/mess-owner/send-otp");
-    print("➡️ FULL URL       : $url");
-    print("📡 METHOD         : POST");
-
-    print("--------------------------------------------------");
-    print("📋 REQUEST HEADERS");
-    print("--------------------------------------------------");
-
-    final requestHeaders = {
-      "Content-Type": "application/json",
-    };
-
-    requestHeaders.forEach((key, value) {
-      print("   $key : $value");
-    });
-
-    print("--------------------------------------------------");
-    print("📦 REQUEST BODY");
-    print("--------------------------------------------------");
-
-    print("   name      : $name");
-    print("   ownerName : $ownerName");
-    print("   phone     : $phone");
-    print("   email     : $email");
-    print("   address   : $address");
-    print("   postcode  : $zipcode");
-    print("   messName  : $messName");
-
-    print("--------------------------------------------------");
-    print("📤 JSON BODY");
-    print("--------------------------------------------------");
-
-    print(jsonEncode(requestBody));
-
-    print("==================================================");
-    print("⏳ SENDING REQUEST...");
-    print("==================================================");
-
-    // =========================================================
-    // API REQUEST
-    // =========================================================
-
-    final response = await http.post(
-      url,
-      headers: requestHeaders,
-      body: jsonEncode(requestBody),
-    );
-
-    // =========================================================
-    // RESPONSE DEBUG
-    // =========================================================
-
-    print("\n");
-    print("==================================================");
-    print("📥 SEND OTP API RESPONSE");
-    print("==================================================");
-
-    print("🔢 STATUS CODE    : ${response.statusCode}");
-    print("📊 CONTENT LENGTH : ${response.contentLength}");
-    print("🔗 REQUEST URL    : ${response.request?.url}");
-
-    print("--------------------------------------------------");
-    print("📋 RESPONSE HEADERS");
-    print("--------------------------------------------------");
-
-    response.headers.forEach((key, value) {
-      print("   $key : $value");
-    });
-
-    print("--------------------------------------------------");
-    print("📄 RAW RESPONSE BODY");
-    print("--------------------------------------------------");
-
-    print(response.body);
-
-    print("==================================================");
-
-    // =========================================================
-    // PARSE RESPONSE
-    // =========================================================
-
-    dynamic data;
-
+  // ================== SEND OTP ==================
+  Future<bool> sendOtp({
+    required String name,
+    required String ownerName,
+    required String phone,
+    required String email,
+    required String address,
+    required String messName,
+    required String zipcode,
+  }) async {
     try {
-      data = jsonDecode(response.body);
+      otpLoading = true;
+      update();
 
-      print("--------------------------------------------------");
-      print("🧩 PARSED RESPONSE");
-      print("--------------------------------------------------");
+      final url = Uri.parse("$baseUrl/auth/mess-owner/send-otp");
 
-      print(data);
+      final requestBody = {
+        "name": name,
+        "ownerName": ownerName,
+        "phone": phone,
+        "email": email,
+        "address": address,
+        //"district": district,
+        "postcode": zipcode,
+        "messName": messName,
+      };
 
-      if (data is Map) {
-        data.forEach((key, value) {
-          print("   $key : $value");
-        });
-      }
-    } catch (e) {
-      print("⚠️ RESPONSE IS NOT VALID JSON");
-      print("❌ JSON PARSE ERROR: $e");
-    }
+      // =========================================================
+      // REQUEST DEBUG
+      // =========================================================
 
-    // =========================================================
-    // SUCCESS
-    // =========================================================
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
       print("\n");
       print("==================================================");
-      print("🎉 OTP SENT SUCCESSFULLY");
+      print("🚀 SEND OTP API REQUEST");
       print("==================================================");
 
+      print("🌐 BASE URL       : $baseUrl");
+      print("🔗 ENDPOINT       : /auth/mess-owner/send-otp");
+      print("➡️ FULL URL       : $url");
+      print("📡 METHOD         : POST");
+
+      print("--------------------------------------------------");
+      print("📋 REQUEST HEADERS");
+      print("--------------------------------------------------");
+
+      final requestHeaders = {"Content-Type": "application/json"};
+
+      requestHeaders.forEach((key, value) {
+        print("   $key : $value");
+      });
+
+      print("--------------------------------------------------");
+      print("📦 REQUEST BODY");
+      print("--------------------------------------------------");
+
+      print("   name      : $name");
+      print("   ownerName : $ownerName");
+      print("   phone     : $phone");
+      print("   email     : $email");
+      print("   address   : $address");
+      print("   postcode  : $zipcode");
+      print("   messName  : $messName");
+
+      print("--------------------------------------------------");
+      print("📤 JSON BODY");
+      print("--------------------------------------------------");
+
+      print(jsonEncode(requestBody));
+
+      print("==================================================");
+      print("⏳ SENDING REQUEST...");
+      print("==================================================");
+
+      // =========================================================
+      // API REQUEST
+      // =========================================================
+
+      final response = await http.post(
+        url,
+        headers: requestHeaders,
+        body: jsonEncode(requestBody),
+      );
+
+      // =========================================================
+      // RESPONSE DEBUG
+      // =========================================================
+
+      print("\n");
+      print("==================================================");
+      print("📥 SEND OTP API RESPONSE");
+      print("==================================================");
+
+      print("🔢 STATUS CODE    : ${response.statusCode}");
+      print("📊 CONTENT LENGTH : ${response.contentLength}");
+      print("🔗 REQUEST URL    : ${response.request?.url}");
+
+      print("--------------------------------------------------");
+      print("📋 RESPONSE HEADERS");
+      print("--------------------------------------------------");
+
+      response.headers.forEach((key, value) {
+        print("   $key : $value");
+      });
+
+      print("--------------------------------------------------");
+      print("📄 RAW RESPONSE BODY");
+      print("--------------------------------------------------");
+
+      print(response.body);
+
+      print("==================================================");
+
+      // =========================================================
+      // PARSE RESPONSE
+      // =========================================================
+
+      dynamic data;
+
+      try {
+        data = jsonDecode(response.body);
+
+        print("--------------------------------------------------");
+        print("🧩 PARSED RESPONSE");
+        print("--------------------------------------------------");
+
+        print(data);
+
+        if (data is Map) {
+          data.forEach((key, value) {
+            print("   $key : $value");
+          });
+        }
+      } catch (e) {
+        print("⚠️ RESPONSE IS NOT VALID JSON");
+        print("❌ JSON PARSE ERROR: $e");
+      }
+
+      // =========================================================
+      // SUCCESS
+      // =========================================================
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("\n");
+        print("==================================================");
+        print("🎉 OTP SENT SUCCESSFULLY");
+        print("==================================================");
+
+        if (data is Map) {
+          print("✅ Message : ${data["message"]}");
+        }
+
+        print("==================================================");
+
+        AppToast.success(
+          data is Map ? (data["message"] ?? "OTP sent") : "OTP sent",
+        );
+
+        return true;
+      }
+
+      // =========================================================
+      // API ERROR
+      // =========================================================
+
+      print("\n");
+      print("==================================================");
+      print("❌ SEND OTP API FAILED");
+      print("==================================================");
+
+      print("🔴 Status Code : ${response.statusCode}");
+      print("🔴 Response    : ${response.body}");
+
       if (data is Map) {
-        print("✅ Message : ${data["message"]}");
+        print("🔴 Error       : ${data["error"]}");
+        print("🔴 Message     : ${data["message"]}");
+        print("🔴 Status      : ${data["status"]}");
       }
 
       print("==================================================");
 
-      AppToast.success(
+      AppToast.error(
         data is Map
-            ? (data["message"] ?? "OTP sent")
-            : "OTP sent",
+            ? (data["message"] ?? "Failed to send OTP")
+            : "Failed to send OTP",
       );
 
-      return true;
+      return false;
+    } catch (e, stackTrace) {
+      // =========================================================
+      // EXCEPTION DEBUG
+      // =========================================================
+
+      print("\n");
+      print("==================================================");
+      print("🔥 SEND OTP EXCEPTION");
+      print("==================================================");
+
+      print("❌ ERROR TYPE : ${e.runtimeType}");
+      print("❌ ERROR      : $e");
+
+      print("--------------------------------------------------");
+      print("📚 STACK TRACE");
+      print("--------------------------------------------------");
+
+      print(stackTrace);
+
+      print("==================================================");
+
+      AppToast.error(e.toString());
+
+      return false;
+    } finally {
+      otpLoading = false;
+      update();
+
+      print("🔄 OTP LOADING : $otpLoading");
     }
-
-    // =========================================================
-    // API ERROR
-    // =========================================================
-
-    print("\n");
-    print("==================================================");
-    print("❌ SEND OTP API FAILED");
-    print("==================================================");
-
-    print("🔴 Status Code : ${response.statusCode}");
-    print("🔴 Response    : ${response.body}");
-
-    if (data is Map) {
-      print("🔴 Error       : ${data["error"]}");
-      print("🔴 Message     : ${data["message"]}");
-      print("🔴 Status      : ${data["status"]}");
-    }
-
-    print("==================================================");
-
-    AppToast.error(
-      data is Map
-          ? (data["message"] ?? "Failed to send OTP")
-          : "Failed to send OTP",
-    );
-
-    return false;
-  } catch (e, stackTrace) {
-    // =========================================================
-    // EXCEPTION DEBUG
-    // =========================================================
-
-    print("\n");
-    print("==================================================");
-    print("🔥 SEND OTP EXCEPTION");
-    print("==================================================");
-
-    print("❌ ERROR TYPE : ${e.runtimeType}");
-    print("❌ ERROR      : $e");
-
-    print("--------------------------------------------------");
-    print("📚 STACK TRACE");
-    print("--------------------------------------------------");
-
-    print(stackTrace);
-
-    print("==================================================");
-
-    AppToast.error(e.toString());
-
-    return false;
-  } finally {
-    otpLoading = false;
-    update();
-
-    print("🔄 OTP LOADING : $otpLoading");
   }
-}
+
   // ================== SIGNUP ==================
   Future<bool> signup({
     required String name,

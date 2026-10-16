@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:mess/Screens/CustomerScreen/Model/CustomerModel.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 /// Compact 3-tile summary strip for the Customers page header:
 /// active subscriptions, subscriptions ending within 7 days, and the
@@ -47,7 +48,10 @@ class CustomerSummaryCard extends StatelessWidget {
             iconColor: AppColors.error,
             iconBgColor: const Color(0xffFDECEC),
             label: "To Collect",
-            value: isLoading ? "-" : "₹${summary.totalDue.toStringAsFixed(0)}",
+            value:
+                isLoading
+                    ? "-"
+                    : "$currencySymbol${summary.totalDue.toStringAsFixed(0)}",
           ),
         ),
       ],

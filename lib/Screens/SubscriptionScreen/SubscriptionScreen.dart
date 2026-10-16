@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/SubscriptionScreen/Controller/SubscriptionControllrer.dart';
 import 'package:mess/Screens/SubscriptionScreen/Views/SubscrptionCards.dart';
 import 'package:mess/Screens/Utils/Colors.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class SubscriptionScreen extends StatelessWidget {
   SubscriptionScreen({super.key});
@@ -332,8 +333,8 @@ class SubscriptionScreen extends StatelessWidget {
           for (var data in ctrl.billingTier)
             _buildPricingRow(
               '${data.minCustomers} - ${data.maxCustomers}',
-              '₹ ${data.perCustomerRate}',
-              '₹ ${(double.parse(data.perCustomerRate!) * ctrl.billingModel!.customerCount!).toString()}',
+              '$currencySymbol ${data.perCustomerRate}',
+              '$currencySymbol ${(double.parse(data.perCustomerRate!) * ctrl.billingModel!.customerCount!).toString()}',
               isCurrent:
                   data.perCustomerRate ==
                   ctrl.billingModel!.perCustomerRate.toString(),

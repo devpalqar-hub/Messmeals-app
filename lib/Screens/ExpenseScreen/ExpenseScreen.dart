@@ -13,6 +13,7 @@ import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/TitleText.dart';
 import 'package:mess/Screens/Utils/TourKeys.dart';
 import 'package:mess/Screens/Utils/TourStop.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class ExpenseScreen extends StatelessWidget {
   const ExpenseScreen({super.key});
@@ -178,7 +179,7 @@ class ExpenseScreen extends StatelessWidget {
             Expanded(
               child: _statCard(
                 label: "Total Spend",
-                value: "₹${total.amount.toStringAsFixed(0)}",
+                value: "$currencySymbol${total.amount.toStringAsFixed(0)}",
               ),
             ),
             SizedBox(width: 12.w),
@@ -281,7 +282,7 @@ class ExpenseScreen extends StatelessWidget {
             ),
             SizedBox(height: 2.h),
             Text(
-              "₹${amount.toStringAsFixed(0)}",
+              "$currencySymbol${amount.toStringAsFixed(0)}",
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -512,13 +513,13 @@ void _showRecordPaymentDialog(
               ),
               SizedBox(height: 6.h),
               Text(
-                "${expense.title} — total ₹${expense.amount.toStringAsFixed(0)}, "
-                "already paid ₹${expense.paidAmount.toStringAsFixed(0)}",
+                "${expense.title} — total $currencySymbol${expense.amount.toStringAsFixed(0)}, "
+                "already paid $currencySymbol${expense.paidAmount.toStringAsFixed(0)}",
                 style: TextStyle(color: Colors.grey[600], fontSize: 12.sp),
               ),
               SizedBox(height: 16.h),
               Text(
-                "Total paid to date (₹)",
+                "Total paid to date ($currencySymbol)",
                 style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500),
               ),
               SizedBox(height: 8.h),

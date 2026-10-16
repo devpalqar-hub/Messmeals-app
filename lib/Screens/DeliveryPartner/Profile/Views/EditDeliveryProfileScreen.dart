@@ -1,6 +1,3 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -13,11 +10,13 @@ class EditDeliveryProfileScreen extends StatefulWidget {
   const EditDeliveryProfileScreen({super.key});
 
   @override
-  State<EditDeliveryProfileScreen> createState() => _EditDeliveryProfileScreenState();
+  State<EditDeliveryProfileScreen> createState() =>
+      _EditDeliveryProfileScreenState();
 }
 
 class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
-  final DeliveryProfileController controller = Get.find<DeliveryProfileController>();
+  final DeliveryProfileController controller =
+      Get.find<DeliveryProfileController>();
 
   final nameCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
@@ -64,7 +63,9 @@ class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
                           ? null
                           : () async {
                             if (nameCtrl.text.trim().isEmpty) {
-                              Fluttertoast.showToast(msg: "Please enter your name");
+                              Fluttertoast.showToast(
+                                msg: "Please enter your name",
+                              );
                               return;
                             }
                             final success = await controller.updateProfile(
@@ -77,14 +78,19 @@ class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
                           },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
                   ),
                   child:
                       ctrl.isSaving
                           ? SizedBox(
                             height: 22.h,
                             width: 22.w,
-                            child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
                           : Text(
                             "Save Changes",
@@ -116,7 +122,9 @@ class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            nameCtrl.text.isNotEmpty ? nameCtrl.text[0].toUpperCase() : '?',
+                            nameCtrl.text.isNotEmpty
+                                ? nameCtrl.text[0].toUpperCase()
+                                : '?',
                             style: GoogleFonts.poppins(
                               fontSize: 30.sp,
                               fontWeight: FontWeight.w700,
@@ -133,7 +141,11 @@ class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
                               color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.camera_alt, size: 14.sp, color: Colors.white),
+                            child: Icon(
+                              Icons.camera_alt,
+                              size: 14.sp,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ],
@@ -148,7 +160,10 @@ class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
                   SizedBox(height: 16.h),
                   _label("Phone Number"),
                   SizedBox(height: 8.h),
-                  _field(controller: phoneCtrl, keyboardType: TextInputType.phone),
+                  _field(
+                    controller: phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                  ),
 
                   SizedBox(height: 16.h),
                   _label("Vehicle Type"),
@@ -164,11 +179,22 @@ class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
                         isExpanded: true,
                         value: vehicleType,
                         items:
-                            ['Two Wheeler', 'Bicycle', 'Three Wheeler', 'Four Wheeler']
-                                .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                            [
+                                  'Two Wheeler',
+                                  'Bicycle',
+                                  'Three Wheeler',
+                                  'Four Wheeler',
+                                ]
+                                .map(
+                                  (v) => DropdownMenuItem(
+                                    value: v,
+                                    child: Text(v),
+                                  ),
+                                )
                                 .toList(),
                         onChanged: (value) {
-                          if (value != null) setState(() => vehicleType = value);
+                          if (value != null)
+                            setState(() => vehicleType = value);
                         },
                       ),
                     ),
@@ -182,7 +208,10 @@ class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
                   SizedBox(height: 12.h),
                   Text(
                     "Vehicle details are stored on this device only until the backend adds support for them.",
-                    style: GoogleFonts.poppins(fontSize: 10.sp, color: Colors.grey.shade500),
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.sp,
+                      color: Colors.grey.shade500,
+                    ),
                   ),
                 ],
               ),
@@ -227,5 +256,3 @@ class _EditDeliveryProfileScreenState extends State<EditDeliveryProfileScreen> {
     );
   }
 }
-
-*/

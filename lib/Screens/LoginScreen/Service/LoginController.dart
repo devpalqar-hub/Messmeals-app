@@ -8,12 +8,12 @@ import 'package:http/http.dart' as http;
 import 'package:mess/Screens/Utils/AppToast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mess/main.dart';
-// import 'package:mess/Screens/DeliveryPartner/DeliveryDashboardScreen.dart'; // delivery-partner module disabled
+import 'package:mess/Screens/DeliveryPartner/DeliveryDashboardScreen.dart';
 import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
 
-// import 'package:mess/Screens/Utils/Roles.dart'; // delivery-partner module disabled
+import 'package:mess/Screens/Utils/Roles.dart';
 
 String bearerToken = "";
 
@@ -100,6 +100,9 @@ class AuthController extends GetxController {
         data["sessionId"] != null) {
       sessionId = data["sessionId"];
       lastUsedPhone = phone;
+      debugPrint(
+        "📥 (controller instance: ${identityHashCode(this)}, sessionId set to: '$sessionId')",
+      );
       return true;
     }
 
@@ -168,27 +171,52 @@ class AuthController extends GetxController {
 
       final body = {"phone": phone, "sessionId": sessionId, "otp": otp};
 
+      debugPrint("📤 VERIFY OTP REQUEST BODY: ${jsonEncode(body)}");
+      debugPrint(
+        "📤 (controller instance: ${identityHashCode(this)}, sessionId field: '$sessionId')",
+      );
+
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(body),
       );
 
-      final data = jsonDecode(response.body);
+      debugPrint("✅ VERIFY OTP STATUS: ${response.statusCode}");
+      debugPrint("✅ VERIFY OTP RESPONSE: ${response.body}");
+
+      dynamic data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {
+        safeSnack(
+          "Error",
+          "Server error (${response.statusCode}). Please try again.",
+        );
+        return false;
+      }
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data is Map &&
           data["accessToken"] != null) {
         bearerToken = "Bearer " + data["accessToken"];
 
         await _onLoginSuccess(data);
         return true;
       } else {
-        print(data);
-        safeSnack("Error", "Please enter valid otp");
+        // Was a hardcoded "Please enter valid otp" regardless of the
+        // backend's actual reason (expired session, wrong OTP, rate
+        // limit, etc.) — surfacing the real message instead so a wrong
+        // code and every other failure aren't indistinguishable.
+        final message =
+            ((data is Map ? data["message"] : null) ?? "Please enter valid otp")
+                .toString();
+        safeSnack("Error", message);
         return false;
       }
     } catch (e) {
       debugPrint("❌ VERIFY OTP ERROR: $e");
+      safeSnack("Error", "Something went wrong. Please try again.");
       return false;
     } finally {
       isLoading = false;
@@ -201,15 +229,13 @@ class AuthController extends GetxController {
 
     token = data["accessToken"];
     bearerToken = "Bearer $token";
-    // debugPrint("🐛 RAW LOGIN user OBJECT: ${jsonEncode(data["user"])}"); // delivery-partner role debug
     currentUser = UserModel.fromJson(data["user"]);
-    // debugPrint("🐛 PARSED role = '${currentUser?.role}'"); // delivery-partner role debug
     isLoggedIn = true;
     tokenExpiry = _decodeTokenExpiry(token);
 
     await prefs.setString("token", token);
     await prefs.setString("LOGIN", "IN");
-    // await prefs.setString("userRole", currentUser?.role ?? ""); // delivery-partner module disabled
+    await prefs.setString("userRole", currentUser?.role ?? "");
     if (tokenExpiry != null) {
       await prefs.setString("tokenExpiry", tokenExpiry!.toIso8601String());
     }
@@ -217,12 +243,18 @@ class AuthController extends GetxController {
     _startAutoLogoutTimer();
     _refreshUI();
 
-    // Delivery-partner module disabled — admin dashboard only for now.
-    // if (isDeliveryAgentRole(currentUser?.role)) {
-    //   Get.offAll(() => const DeliveryDashboardScreen());
-    // } else {
-    Get.offAll(() => DashboardScreen());
-    // }
+    // TEMP DEBUG — shows exactly what role was parsed and which dashboard
+    // this login is routing to, so a misroute is visible on-screen without
+    // needing the debug console. Remove once routing is confirmed solid.
+    AppToast.success(
+      "role='${currentUser?.role}' → ${isDeliveryAgentRole(currentUser?.role) ? 'DELIVERY' : 'ADMIN'} dashboard",
+    );
+
+    if (isDeliveryAgentRole(currentUser?.role)) {
+      Get.offAll(() => const DeliveryDashboardScreen());
+    } else {
+      Get.offAll(() => DashboardScreen());
+    }
   }
 
   // --- Logic Methods ---

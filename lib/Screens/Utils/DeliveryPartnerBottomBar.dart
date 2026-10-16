@@ -1,6 +1,3 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
@@ -20,14 +17,14 @@ class DeliveryPartnerBottomBar extends StatelessWidget {
     final items = [
       {'icon': Icons.home_outlined, 'label': 'Home'},
       {'icon': Icons.local_shipping_outlined, 'label': 'Deliveries'},
-      {'icon': Icons.group_outlined, 'label': 'Customers'},
-      {'icon': Icons.account_balance_wallet_outlined, 'label': 'Earnings'},
       {'icon': Icons.person_outline, 'label': 'Profile'},
     ];
 
     return Container(
       height: 60,
-      decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(16))),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(items.length, (index) {
@@ -61,5 +58,3 @@ class DeliveryPartnerBottomBar extends StatelessWidget {
     );
   }
 }
-
-*/

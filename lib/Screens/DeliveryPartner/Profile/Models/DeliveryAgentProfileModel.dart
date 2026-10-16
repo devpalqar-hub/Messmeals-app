@@ -1,6 +1,3 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 class DeliveryAgentProfileModel {
   final String id;
   final String name;
@@ -25,7 +22,8 @@ class DeliveryAgentProfileModel {
   });
 
   factory DeliveryAgentProfileModel.fromJson(Map<String, dynamic> json) {
-    final user = json['user'] is Map ? json['user'] as Map<String, dynamic> : null;
+    final user =
+        json['user'] is Map ? json['user'] as Map<String, dynamic> : null;
     return DeliveryAgentProfileModel(
       id: (json['id'] ?? '').toString(),
       name: (user?['name'] ?? json['name'] ?? '').toString(),
@@ -52,5 +50,3 @@ class DeliveryAgentProfileModel {
     );
   }
 }
-
-*/

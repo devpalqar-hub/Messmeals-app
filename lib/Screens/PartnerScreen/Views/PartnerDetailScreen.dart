@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mess/Screens/PartnerScreen/Model/PartnerModel.dart';
 import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
 import 'package:mess/Screens/PartnerScreen/Views/AddPartnerScreen.dart';
 import 'package:mess/Screens/PartnerScreen/Views/PartnerOrdersScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class PartnerDetailsScreen extends StatelessWidget {
   final String partnerId;
@@ -20,8 +22,12 @@ class PartnerDetailsScreen extends StatelessWidget {
       body: SafeArea(
         child: GetBuilder<PartnerController>(
           initState: (_) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Get.find<PartnerController>().fetchPartnerById(partnerId);
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final c = Get.find<PartnerController>();
+              await c.fetchPartnerById(partnerId);
+              final profileId = c.selectedPartner?.deliveryPartnerProfile?.id;
+              c.fetchAssignedSubscriptions(profileId ?? partnerId);
+              if (c.partners.isEmpty) c.fetchPartners();
             });
           },
           builder: (controller) {
@@ -240,7 +246,7 @@ class PartnerDetailsScreen extends StatelessWidget {
                         iconColor: const Color(0xFF8A59F8), // Purple
                         iconBgColor: const Color(0xFFEAE5FA),
                         label: "Earnings",
-                        value: "₹${stats?.totalEarnings ?? 0}",
+                        value: "$currencySymbol${stats?.totalEarnings ?? 0}",
                       ),
                       _buildStatCard(
                         icon: Icons.access_time_outlined,
@@ -293,12 +299,216 @@ class PartnerDetailsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  SizedBox(height: 20.h),
+                  Text(
+                    "Assigned Customers",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+
+                  if (controller.isLoadingAssignedSubscriptions)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24.h),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    )
+                  else if (controller.assignedSubscriptions.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      child: Text(
+                        "No customers currently assigned to this partner.",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5.sp,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    )
+                  else
+                    ...controller.assignedSubscriptions.map(
+                      (s) => Padding(
+                        padding: EdgeInsets.only(bottom: 8.h),
+                        child: _assignedSubscriptionRow(
+                          context,
+                          s,
+                          partner.id,
+                          controller,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             );
           },
         ),
       ),
+    );
+  }
+
+  Widget _assignedSubscriptionRow(
+    BuildContext context,
+    AssignedSubscription sub,
+    String currentPartnerId,
+    PartnerController controller,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sub.customerName,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+                if (sub.customerPhone.isNotEmpty)
+                  Text(
+                    sub.customerPhone,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                if (sub.planName.isNotEmpty)
+                  Text(
+                    "${sub.planName} • $currencySymbol${sub.price}",
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed:
+                () => _showReassignSheet(
+                  context,
+                  sub,
+                  currentPartnerId,
+                  controller,
+                ),
+            child: Text(
+              "Reassign",
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReassignSheet(
+    BuildContext context,
+    AssignedSubscription sub,
+    String currentPartnerId,
+    PartnerController controller,
+  ) {
+    final options =
+        controller.partners.where((p) => p.id != currentPartnerId).toList();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Reassign ${sub.customerName} to",
+                  style: GoogleFonts.poppins(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                if (options.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    child: Text(
+                      "No other partners available.",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5.sp,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  )
+                else
+                  ...options.map(
+                    (p) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.delivery_dining_outlined,
+                        color: AppColors.primary,
+                      ),
+                      title: Text(
+                        p.name,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        p.phone,
+                        style: GoogleFonts.poppins(fontSize: 11.5.sp),
+                      ),
+                      onTap: () async {
+                        Navigator.pop(ctx);
+                        final newPartnerId =
+                            p.deliveryPartnerProfile?.id ?? p.id;
+                        final success = await controller
+                            .changeSubscriptionPartner(
+                              subscriptionId: sub.id,
+                              newPartnerId: newPartnerId,
+                            );
+                        if (success) {
+                          final profileId =
+                              controller
+                                  .selectedPartner
+                                  ?.deliveryPartnerProfile
+                                  ?.id;
+                          controller.fetchAssignedSubscriptions(
+                            profileId ?? currentPartnerId,
+                          );
+                        }
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

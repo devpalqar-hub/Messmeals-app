@@ -1,6 +1,3 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 int _toInt(dynamic v) {
   if (v == null) return 0;
   if (v is num) return v.toInt();
@@ -16,7 +13,9 @@ class PartnerDeliveryItem {
 
   factory PartnerDeliveryItem.fromJson(Map<String, dynamic> json) {
     final variation =
-        json['variation'] is Map ? json['variation'] as Map<String, dynamic> : null;
+        json['variation'] is Map
+            ? json['variation'] as Map<String, dynamic>
+            : null;
     return PartnerDeliveryItem(
       label:
           (variation?['title'] ?? json['variationTitle'] ?? json['title'] ?? '')
@@ -68,18 +67,26 @@ class PartnerDeliveryModel {
 
   factory PartnerDeliveryModel.fromJson(Map<String, dynamic> json) {
     final customer =
-        json['customer'] is Map ? json['customer'] as Map<String, dynamic> : null;
+        json['customer'] is Map
+            ? json['customer'] as Map<String, dynamic>
+            : null;
     final customerUser =
         customer?['user'] is Map
             ? customer!['user'] as Map<String, dynamic>
             : null;
-    final plan = json['plan'] is Map ? json['plan'] as Map<String, dynamic> : null;
+    final plan =
+        json['plan'] is Map ? json['plan'] as Map<String, dynamic> : null;
 
-    final rawItems = json['deliveryVariations'] ?? json['items'] ?? json['variations'];
+    final rawItems =
+        json['deliveryVariations'] ?? json['items'] ?? json['variations'];
     final items =
         rawItems is List
             ? rawItems
-                .map((e) => PartnerDeliveryItem.fromJson(Map<String, dynamic>.from(e)))
+                .map(
+                  (e) => PartnerDeliveryItem.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ),
+                )
                 .toList()
             : <PartnerDeliveryItem>[];
 
@@ -90,22 +97,82 @@ class PartnerDeliveryModel {
       time: (json['deliveryTime'] ?? json['time'] ?? json['slot'])?.toString(),
       customerId: (customer?['id'] ?? json['customerId'] ?? '').toString(),
       customerName:
-          (customerUser?['name'] ?? customer?['name'] ?? json['customerName'] ?? 'Customer')
+          (customerUser?['name'] ??
+                  customer?['name'] ??
+                  json['customerName'] ??
+                  'Customer')
               .toString(),
       customerPhone:
-          (customerUser?['phone'] ?? customer?['phone'] ?? json['customerPhone'] ?? '')
+          (customerUser?['phone'] ??
+                  customer?['phone'] ??
+                  json['customerPhone'] ??
+                  '')
               .toString(),
       address: (customer?['address'] ?? json['address'] ?? '').toString(),
       landmark: (customer?['landmark'] ?? json['landmark'])?.toString(),
       mapUrl:
-          (customer?['latitude_logitude'] ?? customer?['currentLocation'] ?? json['location'])
+          (customer?['latitude_logitude'] ??
+                  customer?['currentLocation'] ??
+                  json['location'])
               ?.toString(),
       planName: (plan?['planName'] ?? json['planName'] ?? '').toString(),
       specialInstructions:
-          (json['specialInstructions'] ?? json['notes'] ?? json['instructions'])?.toString(),
+          (json['specialInstructions'] ?? json['notes'] ?? json['instructions'])
+              ?.toString(),
+      items: items,
+    );
+  }
+
+  /// Builds one delivery from several flattened rows of `GET
+  /// /deliveries/variations` that share the same `deliveryId` — that
+  /// endpoint returns one row per meal (Breakfast/Lunch/Dinner), each
+  /// carrying the full customer/plan/mess info, so any row in the group
+  /// can supply the delivery-level fields.
+  factory PartnerDeliveryModel.fromVariationGroup(
+    List<Map<String, dynamic>> rows,
+  ) {
+    final first = rows.first;
+    final customer =
+        first['customer'] is Map
+            ? first['customer'] as Map<String, dynamic>
+            : null;
+    final customerUser =
+        customer?['user'] is Map
+            ? customer!['user'] as Map<String, dynamic>
+            : null;
+    final plan =
+        first['plan'] is Map ? first['plan'] as Map<String, dynamic> : null;
+
+    final items =
+        rows
+            .map(
+              (r) => PartnerDeliveryItem(
+                label:
+                    ((r['variation'] is Map
+                                ? (r['variation'] as Map)['title']
+                                : null) ??
+                            '')
+                        .toString(),
+                count: 1,
+              ),
+            )
+            .where((i) => i.label.isNotEmpty)
+            .toList();
+
+    return PartnerDeliveryModel(
+      id: (first['deliveryId'] ?? '').toString(),
+      status: (first['deliveryStatus'] ?? 'PENDING').toString().toUpperCase(),
+      date: (first['date'] ?? '').toString(),
+      time: null,
+      customerId: (customer?['id'] ?? '').toString(),
+      customerName: (customerUser?['name'] ?? 'Customer').toString(),
+      customerPhone: (customerUser?['phone'] ?? '').toString(),
+      address: (customer?['address'] ?? '').toString(),
+      landmark: null,
+      mapUrl: null,
+      planName: (plan?['planName'] ?? '').toString(),
+      specialInstructions: null,
       items: items,
     );
   }
 }
-
-*/

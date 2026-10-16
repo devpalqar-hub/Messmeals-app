@@ -24,6 +24,7 @@ import 'package:mess/Screens/Utils/TourKeys.dart';
 import 'package:mess/Screens/Utils/TourStop.dart';
 import 'package:mess/Screens/Utils/TourTooltipActions.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:mess/Screens/Utils/CurrencyService.dart';
 
 class Homescreen extends StatelessWidget {
   final Function(int) onNavigateToTab;
@@ -434,7 +435,7 @@ class Homescreen extends StatelessWidget {
                                         SizedBox(height: 6.h),
                                         // BUG #2435 — format to avoid long decimal overflow
                                         Text(
-                                          "₹ ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
+                                          "$currencySymbol ${_formatAmount(ctrl.dashboardData!.totalRevenue ?? 0)}",
                                           style: GoogleFonts.poppins(
                                             fontSize: 26.sp,
                                             fontWeight: FontWeight.w700,
@@ -557,7 +558,7 @@ class Homescreen extends StatelessWidget {
                                   title: 'Total Revenue',
                                   // BUG #2435 — format revenue amounts
                                   amount:
-                                      '₹${_formatAmount(ctrl.dashboardData!.totalRevenue!)}',
+                                      '$currencySymbol${_formatAmount(ctrl.dashboardData!.totalRevenue!)}',
                                   period: 'This Month',
                                   icon: Icons.trending_up,
                                   themeColor: AppColors.primaryDark,
@@ -571,7 +572,7 @@ class Homescreen extends StatelessWidget {
                                 child: RevenueCard(
                                   title: 'Pending Revenue',
                                   amount:
-                                      '₹${_formatAmount(ctrl.dashboardData!.pendingRevenue!)}',
+                                      '$currencySymbol${_formatAmount(ctrl.dashboardData!.pendingRevenue!)}',
                                   period: 'Over All',
                                   icon: Icons.access_time,
                                   themeColor: const Color(0xFFF16E22),
@@ -664,7 +665,7 @@ class Homescreen extends StatelessWidget {
                                             ),
                                             label: 'Expenses',
                                             value:
-                                                '₹${_formatAmount(expenseCtrl.listSummary.total.amount)}',
+                                                '$currencySymbol${_formatAmount(expenseCtrl.listSummary.total.amount)}',
                                           );
                                         },
                                       ),

@@ -18,6 +18,10 @@ class PartnerController extends GetxController {
   bool isLoading = false;
   bool isReady = false;
 
+  List<AssignedSubscription> assignedSubscriptions = [];
+  bool isLoadingAssignedSubscriptions = false;
+  bool isReassigning = false;
+
   int currentPage = 1;
   int totalPages = 1;
   int totalRecords = 0;
@@ -241,7 +245,10 @@ class PartnerController extends GetxController {
         return true;
       } else {
         final err = json.decode(response.body);
-        _showToast(_errorMessage(err, "Failed to update partner"), isError: true);
+        _showToast(
+          _errorMessage(err, "Failed to update partner"),
+          isError: true,
+        );
         return false;
       }
     } catch (e) {
@@ -283,7 +290,10 @@ class PartnerController extends GetxController {
         }
       } else {
         final err = json.decode(response.body);
-        _showToast(_errorMessage(err, "Failed to delete partner"), isError: true);
+        _showToast(
+          _errorMessage(err, "Failed to delete partner"),
+          isError: true,
+        );
       }
     } catch (e) {
       _showToast(e.toString(), isError: true);
@@ -296,6 +306,91 @@ class PartnerController extends GetxController {
   Future<void> refreshPartners() async {
     currentPage = 1;
     await fetchPartners();
+  }
+
+  Future<void> fetchAssignedSubscriptions(String partnerId) async {
+    isLoadingAssignedSubscriptions = true;
+    update();
+
+    try {
+      final url = Uri.parse(
+        '$baseUrl/deliveries/partner/$partnerId/subscriptions',
+      );
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': bearerToken,
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        final List list = decoded['data'] ?? [];
+        assignedSubscriptions =
+            list
+                .map(
+                  (e) => AssignedSubscription.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ),
+                )
+                .toList();
+      }
+    } catch (e) {
+      debugPrint('FETCH ASSIGNED SUBSCRIPTIONS ERROR: $e');
+    } finally {
+      isLoadingAssignedSubscriptions = false;
+      update();
+    }
+  }
+
+  /// Moves [subscriptionId] to [newPartnerId]. Swagger doesn't document this
+  /// endpoint's request body (empty schema), so the field names below are a
+  /// best guess — confirm against a real request/response before relying on
+  /// this.
+  Future<bool> changeSubscriptionPartner({
+    required String subscriptionId,
+    required String newPartnerId,
+  }) async {
+    isReassigning = true;
+    update();
+
+    try {
+      final url = Uri.parse('$baseUrl/deliveries/change/partner/subscription');
+      final response = await http
+          .patch(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': bearerToken,
+            },
+            body: json.encode({
+              'subscriptionId': subscriptionId,
+              'newPartnerId': newPartnerId,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _showToast('Partner reassigned successfully');
+        return true;
+      }
+
+      final err = json.decode(response.body);
+      _showToast(
+        _errorMessage(err, 'Failed to reassign partner'),
+        isError: true,
+      );
+      return false;
+    } catch (e) {
+      _showToast(e.toString(), isError: true);
+      return false;
+    } finally {
+      isReassigning = false;
+      update();
+    }
   }
 
   void changePage(int newPage) {

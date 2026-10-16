@@ -1,6 +1,3 @@
-// DELIVERY PARTNER MODULE — DISABLED (admin-only build for now)
-// Entire file commented out below; not wired into the app.
-/*
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -33,8 +30,9 @@ class DeliveryDetailScreen extends StatelessWidget {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'COMPLETED':
+      case 'DELIVERED':
         return AppColors.success;
+      case 'UNDELIVERED':
       case 'CANCELLED':
         return Colors.red.shade400;
       default:
@@ -77,7 +75,10 @@ class DeliveryDetailScreen extends StatelessWidget {
               return Center(
                 child: Text(
                   "Delivery not found",
-                  style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey.shade500),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    color: Colors.grey.shade500,
+                  ),
                 ),
               );
             }
@@ -98,8 +99,10 @@ class DeliveryDetailScreen extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(
-                          delivery.status == 'COMPLETED'
+                          delivery.status == 'DELIVERED'
                               ? Icons.check_circle_outline
+                              : delivery.status == 'UNDELIVERED'
+                              ? Icons.cancel_outlined
                               : Icons.access_time_rounded,
                           color: _statusColor(delivery.status),
                         ),
@@ -259,7 +262,8 @@ class DeliveryDetailScreen extends StatelessWidget {
                                     : "No address provided",
                                 style: GoogleFonts.poppins(fontSize: 12.sp),
                               ),
-                              if (delivery.landmark != null && delivery.landmark!.isNotEmpty)
+                              if (delivery.landmark != null &&
+                                  delivery.landmark!.isNotEmpty)
                                 Text(
                                   delivery.landmark!,
                                   style: GoogleFonts.poppins(
@@ -332,7 +336,9 @@ class DeliveryDetailScreen extends StatelessWidget {
                                     Expanded(
                                       child: Text(
                                         item.label,
-                                        style: GoogleFonts.poppins(fontSize: 12.sp),
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12.sp,
+                                        ),
                                       ),
                                     ),
                                     Text(
@@ -352,41 +358,88 @@ class DeliveryDetailScreen extends StatelessWidget {
 
                   SizedBox(height: 24.h),
 
-                  if (delivery.status != 'COMPLETED')
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46.h,
-                      child: ElevatedButton.icon(
-                        onPressed:
-                            ctrl.isUpdatingStatus
-                                ? null
-                                : () => controller.markCompleted(delivery.id),
-                        icon:
-                            ctrl.isUpdatingStatus
-                                ? SizedBox(
-                                  height: 18.h,
-                                  width: 18.w,
-                                  child: const CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                                : Icon(Icons.check, color: Colors.white, size: 18.sp),
-                        label: Text(
-                          "Mark as Completed",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+                  if (delivery.status != 'DELIVERED' &&
+                      delivery.status != 'UNDELIVERED')
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 46.h,
+                            child: ElevatedButton.icon(
+                              onPressed:
+                                  ctrl.isUpdatingStatus
+                                      ? null
+                                      : () => controller.updateDeliveryStatus(
+                                        delivery.id,
+                                        'DELIVERED',
+                                      ),
+                              icon:
+                                  ctrl.isUpdatingStatus
+                                      ? SizedBox(
+                                        height: 18.h,
+                                        width: 18.w,
+                                        child: const CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                      : Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 18.sp,
+                                      ),
+                              label: Text(
+                                "Delivered",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.success,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.success,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: SizedBox(
+                            height: 46.h,
+                            child: OutlinedButton.icon(
+                              onPressed:
+                                  ctrl.isUpdatingStatus
+                                      ? null
+                                      : () => controller.updateDeliveryStatus(
+                                        delivery.id,
+                                        'UNDELIVERED',
+                                      ),
+                              icon: Icon(
+                                Icons.close,
+                                color: Colors.red.shade400,
+                                size: 18.sp,
+                              ),
+                              label: Text(
+                                "Undelivered",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.red.shade400,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: Colors.red.shade400),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                 ],
               ),
@@ -399,7 +452,10 @@ class DeliveryDetailScreen extends StatelessWidget {
 
   String _formattedDateTime(PartnerDeliveryModel delivery) {
     final parsed = DateTime.tryParse(delivery.date);
-    final dateStr = parsed != null ? DateFormat('dd MMM yyyy').format(parsed) : delivery.date;
+    final dateStr =
+        parsed != null
+            ? DateFormat('dd MMM yyyy').format(parsed)
+            : delivery.date;
     return delivery.time != null ? "$dateStr • ${delivery.time}" : dateStr;
   }
 
@@ -434,5 +490,3 @@ class DeliveryDetailScreen extends StatelessWidget {
     );
   }
 }
-
-*/
