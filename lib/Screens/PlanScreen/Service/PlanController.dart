@@ -5,6 +5,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
+import 'package:mess/Screens/DeliveriesScreen/DeliveriesScreen.dart'
+    show DeliveriesController;
 import 'package:mess/Screens/HomeScreen/Service/HomeScreenController.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
 import 'package:mess/Screens/PlanScreen/Models/PlanModel.dart';
@@ -292,6 +295,17 @@ class PlanController extends GetxController {
         plans.removeWhere((p) => p.id == id);
         await dashboardController.fetchDashboardStats();
         update();
+
+        // Customers/deliveries tied to this plan's subscriptions change on
+        // the backend when a plan is deleted — without this, those screens
+        // kept showing stale pre-delete data until manually refreshed.
+        if (Get.isRegistered<CustomerController>()) {
+          Get.find<CustomerController>().refreshCustomers();
+        }
+        if (Get.isRegistered<DeliveriesController>()) {
+          Get.find<DeliveriesController>().fetchDeliveries();
+        }
+
         return true;
       }
       return false;

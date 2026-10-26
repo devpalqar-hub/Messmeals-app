@@ -12,8 +12,8 @@ import 'package:mess/dashbaord_binding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:showcaseview/showcaseview.dart';
 
-//String baseUrl = "https://api.messmeals.com";
-String baseUrl = "https://staging-api.messmeals.com";
+String baseUrl = "https://api.messmeals.com";
+//String baseUrl = "https://staging-api.messmeals.com";
 String? login;
 String? userRole;
 bool onboardingSeen = false;

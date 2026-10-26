@@ -4,6 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:mess/Screens/DeliveriesScreen/Model/DeliveryModel.dart';
+import 'package:mess/Screens/DeliveriesScreen/DeliveriesScreen.dart'
+    show DeliveriesController;
+import 'package:mess/Screens/CustomerScreen/Service/CustomerController.dart';
+import 'package:mess/Screens/ExpenseScreen/Service/ExpenseController.dart';
+import 'package:mess/Screens/MenuScreen/Service/MenuController.dart';
+import 'package:mess/Screens/PartnerScreen/Service/PartnerController.dart';
+import 'package:mess/Screens/PlanScreen/Service/PlanController.dart';
 import 'package:mess/Screens/HomeScreen/Model/DashboardModel.dart';
 import 'package:mess/Screens/HomeScreen/Model/MessModel.dart';
 import 'package:mess/Screens/HomeScreen/Model/VariationCountModel.dart';
@@ -178,6 +185,7 @@ class HomeScreenController extends GetxController {
       await fetchMyMesses();
       selectedMessId = body["data"]["id"];
       fetchDashboardStats();
+      _refetchMessScopedControllers();
     }
     update();
     print(response.body);
@@ -538,7 +546,6 @@ class HomeScreenController extends GetxController {
         "description": description,
         "address": address,
         "phone": phone,
-        "email": email,
         "is_active": isActive,
         "isPremium": isPremium,
         "is_verified": isVerified,
@@ -549,6 +556,12 @@ class HomeScreenController extends GetxController {
         "features": features,
         "images": images.map((url) => {"url": url}).toList(),
       };
+
+      // Sent only when present — an empty string fails the backend's email
+      // format validator, and a freshly signed-up mess may not have one yet.
+      if (email.trim().isNotEmpty) {
+        body["email"] = email;
+      }
 
       if (icon != null && icon.isNotEmpty) {
         body["icon"] = icon;
@@ -591,7 +604,17 @@ class HomeScreenController extends GetxController {
         return false;
       }
 
-      AppToast.error("Failed to update mess (${response.statusCode})");
+      String detail = '';
+      try {
+        final decoded = jsonDecode(response.body);
+        final msg = decoded['message'];
+        detail = msg is List ? msg.join(', ') : (msg?.toString() ?? '');
+      } catch (_) {}
+      AppToast.error(
+        detail.isNotEmpty
+            ? "Failed to update mess: $detail"
+            : "Failed to update mess (${response.statusCode})",
+      );
 
       return false;
     } catch (e) {
@@ -601,6 +624,50 @@ class HomeScreenController extends GetxController {
     } finally {
       isLoading = false;
       update();
+    }
+  }
+
+  /// DELETE /mess/{id} — used for "Delete Account", since this app's only
+  /// account-deletion endpoint is deleting the owner's mess.
+  Future<bool> deleteMess(String messId) async {
+    try {
+      final token = await _getToken();
+
+      final response = await http.delete(
+        Uri.parse('$baseUrl/mess/$messId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('DELETE MESS: ${response.statusCode} ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      }
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        await _handleLogout();
+        return false;
+      }
+
+      String detail = '';
+      try {
+        final decoded = jsonDecode(response.body);
+        final msg = decoded['message'];
+        detail = msg is List ? msg.join(', ') : (msg?.toString() ?? '');
+      } catch (_) {}
+      AppToast.error(
+        detail.isNotEmpty
+            ? "Failed to delete account: $detail"
+            : "Failed to delete account (${response.statusCode})",
+      );
+      return false;
+    } catch (e) {
+      debugPrint('DELETE MESS ERROR: $e');
+      AppToast.error(e.toString());
+      return false;
     }
   }
 
@@ -717,5 +784,31 @@ class HomeScreenController extends GetxController {
     update();
 
     refreshAllData();
+    _refetchMessScopedControllers();
+  }
+
+  /// Plans/Customers/Partners/Menu/Expenses/Deliveries each cache their own
+  /// list in a GetX singleton that only fetches once and keeps it — without
+  /// this, switching mess left every feature screen still showing whichever
+  /// mess it had last loaded instead of the one just selected.
+  void _refetchMessScopedControllers() {
+    if (Get.isRegistered<PlanController>()) {
+      Get.find<PlanController>().refreshPlans();
+    }
+    if (Get.isRegistered<CustomerController>()) {
+      Get.find<CustomerController>().refreshCustomers();
+    }
+    if (Get.isRegistered<PartnerController>()) {
+      Get.find<PartnerController>().fetchPartners();
+    }
+    if (Get.isRegistered<MessMenuController>()) {
+      Get.find<MessMenuController>().refreshMenus();
+    }
+    if (Get.isRegistered<ExpenseController>()) {
+      Get.find<ExpenseController>().refreshExpenses();
+    }
+    if (Get.isRegistered<DeliveriesController>()) {
+      Get.find<DeliveriesController>().fetchDeliveries();
+    }
   }
 }

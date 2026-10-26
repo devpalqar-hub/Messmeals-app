@@ -13,6 +13,7 @@ import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/LoginScreen/Model/UserModel.dart';
 import 'package:mess/Screens/LoginScreen/LoginScreen.dart';
 
+import 'package:mess/Screens/Utils/AppTourController.dart';
 import 'package:mess/Screens/Utils/Roles.dart';
 
 String bearerToken = "";
@@ -308,7 +309,25 @@ class AuthController extends GetxController {
 
   Future<void> _clearSessionData() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Guided-tour "seen" flags are a one-time-per-install thing, not tied
+    // to the session — clearing them on every logout was replaying the
+    // entire tour on every re-login instead of just the first one ever.
+    final tourKeys = [
+      'hasSeenAppTour',
+      for (final id in AppTourController.featureTours) 'hasSeenTour_$id',
+    ];
+    final savedTourFlags = <String, bool>{
+      for (final key in tourKeys)
+        if (prefs.getBool(key) == true) key: true,
+    };
+
     await prefs.clear();
+
+    for (final entry in savedTourFlags.entries) {
+      await prefs.setBool(entry.key, true);
+    }
+
     token = "";
     bearerToken = "";
     sessionId = "";

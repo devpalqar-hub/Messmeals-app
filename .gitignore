@@ -23,6 +23,10 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# launch.json holds the MAPBOX_ACCESS_TOKEN dart-define locally — never
+# commit it even if the rest of .vscode/ is tracked.
+.vscode/launch.json
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:mess/Screens/LoginScreen/Model/DistrictModel.dart';
 import 'package:mess/Screens/LoginScreen/OtScreen.dart';
 import 'package:mess/Screens/LoginScreen/Service/LoginController.dart';
@@ -9,6 +10,7 @@ import 'package:country_pickers/country.dart';
 import 'package:country_pickers/country_picker_dialog.dart';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:mess/Screens/LoginScreen/Service/SignUpController.dart';
+import 'package:mess/Screens/LoginScreen/Views/LocationPickerScreen.dart';
 import 'package:mess/Screens/Utils/AppToast.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -156,6 +158,9 @@ class SignUpScreen extends StatelessWidget {
                   controller: addressController,
                   icon: Icons.location_on_outlined,
                 ),
+                SizedBox(height: 16.h),
+
+                _locationField(context),
                 SizedBox(height: 16.h),
 
                 _textField(
@@ -474,6 +479,102 @@ class SignUpScreen extends StatelessWidget {
                     ),
                     Icon(
                       Icons.keyboard_arrow_down_rounded,
+                      color: Colors.grey.shade600,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// MESS LOCATION — opens the map picker and stores the picked lat/lng,
+  /// sent with signup so the mess's exact location is known server-side.
+  Widget _locationField(BuildContext context) {
+    return GetBuilder<SignupController>(
+      builder: (ctrl) {
+        final hasLocation = ctrl.hasPickedLocation;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Mess Location",
+              style: GoogleFonts.inter(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151),
+              ),
+            ),
+            SizedBox(height: 6.h),
+            InkWell(
+              onTap: () async {
+                final picked = await Get.to<PickedLocation>(
+                  () => LocationPickerScreen(
+                    initialLocation:
+                        hasLocation
+                            ? LatLng(
+                              ctrl.pickedLatitude!,
+                              ctrl.pickedLongitude!,
+                            )
+                            : null,
+                  ),
+                );
+                if (picked != null) {
+                  ctrl.setPickedLocation(
+                    picked.latLng.latitude,
+                    picked.latLng.longitude,
+                    label: picked.placeName,
+                  );
+                  if (picked.postalCode != null &&
+                      picked.postalCode!.isNotEmpty) {
+                    pincodeController.text = picked.postalCode!;
+                  }
+                }
+              },
+              borderRadius: BorderRadius.circular(12.r),
+              child: Container(
+                height: 52.h,
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: inputFillColor,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: hasLocation ? primaryGreen : Colors.grey.shade200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      hasLocation
+                          ? Icons.check_circle
+                          : Icons.map_outlined,
+                      size: 20.sp,
+                      color: hasLocation ? primaryGreen : Colors.grey.shade600,
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Text(
+                        hasLocation
+                            ? (ctrl.pickedLocationLabel?.isNotEmpty == true
+                                ? ctrl.pickedLocationLabel!
+                                : "${ctrl.pickedLatitude!.toStringAsFixed(5)}, ${ctrl.pickedLongitude!.toStringAsFixed(5)}")
+                            : "Tap to pin your mess on the map",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          color:
+                              hasLocation
+                                  ? Colors.black87
+                                  : Colors.grey.shade500,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_right_rounded,
                       color: Colors.grey.shade600,
                     ),
                   ],

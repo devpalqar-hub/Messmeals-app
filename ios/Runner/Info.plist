@@ -32,6 +32,8 @@
 		<string>Mess uses your photo library to let you choose photos for your mess cover image and gallery.</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>
 		<string>Mess saves photos to your photo library when needed.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Mess uses your location to help you pin your mess's exact spot on the map.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

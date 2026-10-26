@@ -6,8 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mess/Screens/Customer/AddCustomerScreen.dart';
 import 'package:mess/Screens/HomeScreen/HomeView.dart';
 import 'package:mess/Screens/MenuScreen/Views/AddMenuScreen.dart';
+import 'package:mess/Screens/Onboarding/OnboardingProfileSetupStep.dart';
 import 'package:mess/Screens/PlanScreen/Views/AddPlanScreen.dart';
-import 'package:mess/Screens/SettingsScreen/MessProfileSettingsScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
 /// Post-signup setup wizard — walks a new mess admin through the mess
@@ -25,6 +25,10 @@ class OnboardingWizardScreen extends StatefulWidget {
 class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
   int currentStep = 1; // 1..4
   final Map<int, bool> stepDone = {1: false, 2: false, 3: false, 4: false};
+  bool isContinuing = false;
+
+  final GlobalKey<OnboardingProfileSetupStepState> _profileFormKey =
+      GlobalKey();
 
   static const int totalSteps = 4;
 
@@ -48,11 +52,22 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
     }
   }
 
+  /// Step 1 is answered inline (see OnboardingProfileSetupStep) and must be
+  /// saved before advancing; the other steps just open the real screen and
+  /// mark themselves done when it returns, so Continue can move on freely.
+  Future<void> _onContinuePressed() async {
+    if (currentStep == 1) {
+      setState(() => isContinuing = true);
+      final ok = await _profileFormKey.currentState?.save() ?? false;
+      if (mounted) setState(() => isContinuing = false);
+      if (!ok) return;
+      if (mounted) setState(() => stepDone[1] = true);
+    }
+    _goNext();
+  }
+
   Future<void> _openStepScreen() async {
     switch (currentStep) {
-      case 1:
-        await Get.to(() => const MessProfileSettingsScreen());
-        break;
       case 2:
         await Get.to(() => const AddMenuScreen());
         break;
@@ -68,14 +83,6 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
 
   _StepContent get _content {
     switch (currentStep) {
-      case 1:
-        return _StepContent(
-          icon: Icons.storefront_outlined,
-          title: "Set up your Mess Profile",
-          subtitle:
-              "Add your logo, cover photo, food type and tags — this is what customers see first.",
-          actionLabel: "Edit Mess Profile",
-        );
       case 2:
         return _StepContent(
           icon: Icons.restaurant_menu_outlined,
@@ -105,7 +112,6 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final content = _content;
     final done = stepDone[currentStep] ?? false;
 
     return Scaffold(
@@ -177,83 +183,10 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
-                child: Column(
-                  children: [
-                    SizedBox(height: 20.h),
-                    Container(
-                      width: 72.w,
-                      height: 72.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.10),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        content.icon,
-                        color: AppColors.primaryDark,
-                        size: 32.sp,
-                      ),
-                    ),
-                    SizedBox(height: 22.h),
-                    Text(
-                      content.title,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 19.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      content.subtitle,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.5.sp,
-                        height: 1.5,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    SizedBox(height: 28.h),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50.h,
-                      child: OutlinedButton.icon(
-                        onPressed: _openStepScreen,
-                        icon: Icon(
-                          done
-                              ? Icons.check_circle
-                              : Icons.add_circle_outline,
-                          size: 18.sp,
-                          color:
-                              done ? AppColors.primary : AppColors.primaryDark,
-                        ),
-                        label: Text(
-                          done ? "${content.actionLabel} ✓" : content.actionLabel,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                done ? AppColors.primary : AppColors.primaryDark,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color:
-                                done ? AppColors.primary : Colors.grey.shade300,
-                            width: done ? 1.4 : 1,
-                          ),
-                          backgroundColor:
-                              done
-                                  ? AppColors.primary.withOpacity(0.06)
-                                  : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                child:
+                    currentStep == 1
+                        ? OnboardingProfileSetupStep(key: _profileFormKey)
+                        : _launcherCard(done),
               ),
             ),
 
@@ -266,7 +199,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
                     child: SizedBox(
                       height: 50.h,
                       child: OutlinedButton(
-                        onPressed: _goNext,
+                        onPressed: isContinuing ? null : _goNext,
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: Colors.grey.shade300),
                           shape: RoundedRectangleBorder(
@@ -290,7 +223,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
                     child: SizedBox(
                       height: 50.h,
                       child: ElevatedButton(
-                        onPressed: _goNext,
+                        onPressed: isContinuing ? null : _onContinuePressed,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           elevation: 0,
@@ -298,14 +231,26 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
                             borderRadius: BorderRadius.circular(14.r),
                           ),
                         ),
-                        child: Text(
-                          currentStep == totalSteps ? "Finish" : "Continue",
-                          style: GoogleFonts.poppins(
-                            fontSize: 14.5.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child:
+                            isContinuing
+                                ? SizedBox(
+                                  width: 20.w,
+                                  height: 20.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : Text(
+                                  currentStep == totalSteps
+                                      ? "Finish"
+                                      : "Continue",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14.5.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
                       ),
                     ),
                   ),
@@ -315,6 +260,76 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _launcherCard(bool done) {
+    final content = _content;
+    return Column(
+      children: [
+        SizedBox(height: 20.h),
+        Container(
+          width: 72.w,
+          height: 72.w,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.10),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(content.icon, color: AppColors.primaryDark, size: 32.sp),
+        ),
+        SizedBox(height: 22.h),
+        Text(
+          content.title,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+            fontSize: 19.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          content.subtitle,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+            fontSize: 12.5.sp,
+            height: 1.5,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        SizedBox(height: 28.h),
+        SizedBox(
+          width: double.infinity,
+          height: 50.h,
+          child: OutlinedButton.icon(
+            onPressed: _openStepScreen,
+            icon: Icon(
+              done ? Icons.check_circle : Icons.add_circle_outline,
+              size: 18.sp,
+              color: done ? AppColors.primary : AppColors.primaryDark,
+            ),
+            label: Text(
+              done ? "${content.actionLabel} ✓" : content.actionLabel,
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: done ? AppColors.primary : AppColors.primaryDark,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(
+                color: done ? AppColors.primary : Colors.grey.shade300,
+                width: done ? 1.4 : 1,
+              ),
+              backgroundColor:
+                  done ? AppColors.primary.withOpacity(0.06) : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -2,8 +2,12 @@ import 'package:country_pickers/country.dart';
 import 'package:country_pickers/country_picker_dialog.dart';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:mess/Screens/LoginScreen/Views/LocationPickerScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
 
 class BasicInfoWidget extends StatelessWidget {
@@ -14,6 +18,8 @@ class BasicInfoWidget extends StatelessWidget {
   final TextEditingController locationController;
   final String selectedCountryIso;
   final ValueChanged<String> onCountryChanged;
+  final String? pickedLocationLabel;
+  final void Function(double lat, double lng, String? label) onLocationPicked;
 
   const BasicInfoWidget({
     super.key,
@@ -24,6 +30,8 @@ class BasicInfoWidget extends StatelessWidget {
     required this.locationController,
     required this.selectedCountryIso,
     required this.onCountryChanged,
+    required this.onLocationPicked,
+    this.pickedLocationLabel,
   });
 
   @override
@@ -132,92 +140,87 @@ class BasicInfoWidget extends StatelessWidget {
 
           SizedBox(height: 15.h),
 
-          /// CURRENT LOCATION
-          //  title("Current Location (Optional)"),
+          /// PIN ON MAP — precise coordinates the delivery partner's app
+          /// relies on to actually find this customer; the address field
+          /// above alone isn't enough for that.
+          title("Pin Location on Map (Optional)"),
 
-          // SizedBox(height: 5.h),
+          SizedBox(height: 5.h),
 
-          // Container(
-          //   height: 45.h,
-          //   padding: EdgeInsets.symmetric(horizontal: 14.w),
-          //   decoration: BoxDecoration(
-          //     color: Colors.white,
-          //     borderRadius: BorderRadius.circular(14.r),
-          //     border: Border.all(color: const Color(0xffE5E7EB)),
-          //   ),
-          //   child: Row(
-          //     children: [
-          //       Icon(
-          //         Icons.my_location_outlined,
-          //         color: const Color(0xff6B7280),
-          //         size: 22.sp,
-          //       ),
+          _locationPickerField(context),
 
-          //       SizedBox(width: 12.w),
-
-          //       Expanded(
-          //         child: Text(
-          //           "Use current location",
-          //           style: TextStyle(
-          //             fontSize: 14.sp,
-          //             color: const Color(0xff6B7280),
-          //           ),
-          //         ),
-          //       ),
-
-          //       InkWell(
-          //         onTap: () {},
-          //         child: Container(
-          //           height: 34.h,
-          //           width: 34.h,
-          //           decoration: BoxDecoration(
-          //             color: AppColors.primary.withOpacity(0.15),
-          //             borderRadius: BorderRadius.circular(10.r),
-          //           ),
-          //           child: Icon(
-          //             Icons.gps_fixed,
-          //             color: AppColors.primary,
-          //             size: 18.sp,
-          //           ),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-
-          // SizedBox(height: 20.h),
-
-          // /// OR DIVIDER
-          // Row(
-          //   children: [
-          //     Expanded(child: Divider(color: Colors.grey.shade300)),
-
-          //     Padding(
-          //       padding: EdgeInsets.symmetric(horizontal: 12.w),
-          //       child: Text(
-          //         "or",
-          //         style: TextStyle(
-          //           color: const Color(0xff6B7280),
-          //           fontSize: 14.sp,
-          //         ),
-          //       ),
-          //     ),
-
-          //     Expanded(child: Divider(color: Colors.grey.shade300)),
-          //   ],
-          // ),
-
-          // SizedBox(height: 20.h),
-
-          // /// LAT LONG
-          // textField(
-          //   controller: locationController,
-          //   hint: "Enter latitude, longitude",
-          //   icon: Icons.map_outlined,
-          // ),
-
-          // SizedBox(height: 30.h),
+          SizedBox(height: 30.h),
         ],
+      ),
+    );
+  }
+
+  Widget _locationPickerField(BuildContext context) {
+    final hasLocation = locationController.text.trim().isNotEmpty;
+    final parts = locationController.text.split(',');
+    LatLng? initial;
+    if (parts.length == 2) {
+      final lat = double.tryParse(parts[0]);
+      final lng = double.tryParse(parts[1]);
+      if (lat != null && lng != null) initial = LatLng(lat, lng);
+    }
+
+    return InkWell(
+      onTap: () async {
+        final picked = await Get.to<PickedLocation>(
+          () => LocationPickerScreen(initialLocation: initial),
+        );
+        if (picked != null) {
+          onLocationPicked(
+            picked.latLng.latitude,
+            picked.latLng.longitude,
+            picked.placeName,
+          );
+        }
+      },
+      borderRadius: BorderRadius.circular(10.r),
+      child: Container(
+        height: 50.h,
+        padding: EdgeInsets.symmetric(horizontal: 14.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: hasLocation ? AppColors.primary : const Color(0xffE5E7EB),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              hasLocation ? Icons.check_circle : Icons.map_outlined,
+              color: hasLocation ? AppColors.primary : const Color(0xff6B7280),
+              size: 18.sp,
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                hasLocation
+                    ? (pickedLocationLabel?.isNotEmpty == true
+                        ? pickedLocationLabel!
+                        : locationController.text)
+                    : "Tap to pin this customer on the map",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13.5.sp,
+                  color:
+                      hasLocation
+                          ? const Color(0xff111827)
+                          : const Color(0xff9CA3AF),
+                ),
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_right_rounded,
+              color: const Color(0xff6B7280),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -348,6 +351,10 @@ class BasicInfoWidget extends StatelessWidget {
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
               decoration: const InputDecoration(
                 isCollapsed: true,
                 contentPadding: EdgeInsets.zero,

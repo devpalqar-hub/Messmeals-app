@@ -91,7 +91,7 @@ class PartnerDeliveryModel {
             : <PartnerDeliveryItem>[];
 
     return PartnerDeliveryModel(
-      id: (json['id'] ?? '').toString(),
+      id: (json['id'] ?? json['deliveryId'] ?? '').toString(),
       status: (json['status'] ?? 'PENDING').toString().toUpperCase(),
       date: (json['date'] ?? '').toString(),
       time: (json['deliveryTime'] ?? json['time'] ?? json['slot'])?.toString(),
@@ -169,7 +169,11 @@ class PartnerDeliveryModel {
       customerPhone: (customerUser?['phone'] ?? '').toString(),
       address: (customer?['address'] ?? '').toString(),
       landmark: null,
-      mapUrl: null,
+      mapUrl:
+          (customer?['latitude_logitude'] ??
+                  customer?['currentLocation'] ??
+                  customer?['location'])
+              ?.toString(),
       planName: (plan?['planName'] ?? '').toString(),
       specialInstructions: null,
       items: items,

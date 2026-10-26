@@ -36,6 +36,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final TextEditingController addressController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   String selectedCountryIso = "IN";
+  String? pickedLocationLabel;
 
   /// PLAN & WALLET
   String? selectedPlanId;
@@ -308,6 +309,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                         selectedCountryIso: selectedCountryIso,
                         onCountryChanged:
                             (iso) => setState(() => selectedCountryIso = iso),
+                        pickedLocationLabel: pickedLocationLabel,
+                        onLocationPicked:
+                            (lat, lng, label) => setState(() {
+                              locationController.text = "$lat,$lng";
+                              pickedLocationLabel = label;
+                            }),
                       ),
 
                       PlanScheduleWidget(

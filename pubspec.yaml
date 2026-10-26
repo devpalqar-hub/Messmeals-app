@@ -45,6 +45,9 @@ dependencies:
   country_pickers: ^3.0.1
   dotted_border: ^2.1.0
   http_parser: ^4.1.2
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  geolocator: ^13.0.1
 
   cupertino_icons: ^1.0.9
   fl_chart: ^0.66.2

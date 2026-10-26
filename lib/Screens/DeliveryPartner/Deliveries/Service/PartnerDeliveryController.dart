@@ -90,6 +90,12 @@ class PartnerDeliveryController extends GetxController {
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         final List rows = decoded['data'] ?? [];
+        if (rows.isNotEmpty) {
+          debugPrint(
+            'DELIVERIES/VARIATIONS — sample customer object: '
+            '${jsonEncode(rows.first['customer'])}',
+          );
+        }
         deliveries = _groupVariationRows(rows);
         errorMessage = '';
       } else {
@@ -137,6 +143,19 @@ class PartnerDeliveryController extends GetxController {
   }
 
   Future<void> fetchDeliveryDetail(String id) async {
+    // Prefer the copy already loaded from GET /deliveries/variations (the
+    // reliable endpoint the list screen uses) over re-fetching from GET
+    // /delivery-agent/my/deliveries/:id — that single-item endpoint shares
+    // the gaps of its list counterpart this app moved away from earlier,
+    // and was missing a usable `id`, which is why the Delivered/Undelivered
+    // buttons were sending an empty deliveryId and failing.
+    final existing = deliveries.firstWhereOrNull((d) => d.id == id);
+    if (existing != null) {
+      selectedDelivery = existing;
+      update();
+      return;
+    }
+
     isDetailLoading = true;
     selectedDelivery = null;
     update();
@@ -156,13 +175,9 @@ class PartnerDeliveryController extends GetxController {
         selectedDelivery = PartnerDeliveryModel.fromJson(
           Map<String, dynamic>.from(data),
         );
-      } else {
-        // Fall back to whatever we already have in the list, if any.
-        selectedDelivery = deliveries.firstWhereOrNull((d) => d.id == id);
       }
     } catch (e) {
       debugPrint('FETCH PARTNER DELIVERY DETAIL ERROR: $e');
-      selectedDelivery = deliveries.firstWhereOrNull((d) => d.id == id);
     } finally {
       isDetailLoading = false;
       update();
@@ -204,7 +219,8 @@ class PartnerDeliveryController extends GetxController {
         return index != -1 || true;
       }
 
-      AppToast.error('Failed to update delivery');
+      debugPrint('UPDATE DELIVERY STATUS: ${response.statusCode} ${response.body}');
+      AppToast.error('Failed to update delivery: ${_extractErrorMessage(response.body)}');
       return false;
     } catch (e) {
       debugPrint('UPDATE DELIVERY STATUS ERROR: $e');
@@ -225,4 +241,14 @@ class PartnerDeliveryController extends GetxController {
     "Content-Type": "application/json",
     "Authorization": bearerToken,
   };
+
+  String _extractErrorMessage(String responseBody) {
+    try {
+      final decoded = jsonDecode(responseBody);
+      final msg = decoded is Map ? decoded['message'] : null;
+      if (msg is List) return msg.join(', ');
+      if (msg is String && msg.isNotEmpty) return msg;
+    } catch (_) {}
+    return "please try again";
+  }
 }

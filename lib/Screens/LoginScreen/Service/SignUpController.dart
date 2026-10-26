@@ -39,6 +39,19 @@ class SignupController extends GetxController {
     update();
   }
 
+  // Mess location, picked on the map-picker screen before signup.
+  double? pickedLatitude;
+  double? pickedLongitude;
+  String? pickedLocationLabel;
+  bool get hasPickedLocation => pickedLatitude != null && pickedLongitude != null;
+
+  void setPickedLocation(double lat, double lng, {String? label}) {
+    pickedLatitude = lat;
+    pickedLongitude = lng;
+    pickedLocationLabel = label;
+    update();
+  }
+
   // ================== FETCH DISTRICTS ==================
   Future<void> fetchDistricts({bool loadMore = false}) async {
     try {
@@ -316,31 +329,49 @@ class SignupController extends GetxController {
     required String messName,
     required String district,
     required String otp,
+    double? latitude,
+    double? longitude,
   }) async {
     try {
       signupLoading = true;
       update();
 
+      final requestBody = {
+        "name": name,
+        "ownerName": ownerName,
+        "phone": phone,
+        "email": email,
+        "address": address,
+        //  "district": district,
+        "postcode": zipcode,
+        "messName": messName,
+        "otp": otp,
+        if (latitude != null) "latitude": latitude.toString(),
+        if (longitude != null) "longitude": longitude.toString(),
+      };
+      print("📦 SIGNUP REQUEST BODY: ${jsonEncode(requestBody)}");
+
       final response = await http.post(
         Uri.parse("$baseUrl/auth/mess-owner/signup"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "name": name,
-          "ownerName": ownerName,
-          "phone": phone,
-          "email": email,
-          "address": address,
-          //  "district": district,
-          "postcode": zipcode,
-          "messName": messName,
-          "otp": otp,
-        }),
+        body: jsonEncode(requestBody),
       );
 
       final data = jsonDecode(response.body);
 
+      // The backend's message field is a plain String for most errors, but
+      // a List<String> for class-validator field errors (e.g. duplicate
+      // phone/email) — passing that straight into AppToast.error, which
+      // only accepts a String, threw a type-cast error that the catch-all
+      // below replaced with a generic message instead of the real one.
+      String messageOf(dynamic raw, String fallback) {
+        if (raw is List) return raw.join(', ');
+        if (raw is String && raw.isNotEmpty) return raw;
+        return fallback;
+      }
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        AppToast.success(data["message"] ?? "Success");
+        AppToast.success(messageOf(data["message"], "Success"));
 
         // You can store token here later
         bearerToken = "Bearer " + data["accessToken"];
@@ -349,7 +380,7 @@ class SignupController extends GetxController {
         await prefs.setString("LOGIN", "IN");
         return true;
       } else {
-        AppToast.error(data["message"] ?? "Signup failed");
+        AppToast.error(messageOf(data["message"], "Signup failed"));
         return false;
       }
     } catch (e) {

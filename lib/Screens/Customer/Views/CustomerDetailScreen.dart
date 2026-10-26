@@ -337,7 +337,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       } else {
         _showSnack(
           "Error",
-          json.decode(response.body)["message"] ?? 'Failed to update details',
+          _extractErrorMessage(response, 'Failed to update details'),
           _C.red,
         );
       }
@@ -353,7 +353,24 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   /// action instead of three separate ones.
   void _showEditProfileSheet() {
     final nameCtrl = TextEditingController(text: customer.name ?? '');
-    final phoneCtrl = TextEditingController(text: customer.phone ?? '');
+
+    // customer.phone is stored with its country code (e.g. "+916583956321")
+    // but this field only ever edits the bare 10-digit local number — the
+    // field was previously pre-filled with the whole thing, which could
+    // never pass the 10-digit check below. Split off whatever precedes the
+    // last 10 digits so it can be re-attached unchanged on save.
+    final storedPhone = customer.phone ?? '';
+    final phonePrefix =
+        storedPhone.length > 10
+            ? storedPhone.substring(0, storedPhone.length - 10)
+            : '';
+    final phoneCtrl = TextEditingController(
+      text:
+          storedPhone.length > 10
+              ? storedPhone.substring(storedPhone.length - 10)
+              : storedPhone,
+    );
+
     final addressCtrl = TextEditingController(text: customer.address ?? '');
 
     Widget fieldLabel(String text) => Text(
@@ -401,7 +418,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ),
                 ),
                 padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
-                child: Column(
+                // BUG — without this scroll wrapper, the keyboard pushed the
+                // Save button below the visible viewport once the phone and
+                // address fields were focused, so it was still there but
+                // unreachable (looked "not clickable").
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -520,7 +542,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                               Navigator.pop(ctx);
                               _updateCustomerProfile(
                                 name: newName,
-                                phone: newPhone,
+                                phone: '$phonePrefix$newPhone',
                                 address: newAddress,
                               );
                             },
@@ -536,6 +558,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       ],
                     ),
                   ],
+                  ),
                 ),
               ),
             ),

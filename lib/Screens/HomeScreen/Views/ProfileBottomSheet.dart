@@ -75,10 +75,8 @@ class ProfileBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     // Extract user details with fallbacks
     final String name = ctrl.user?.name ?? "Unknown User";
-    final String email =
-        "user@example.com"; // Replace with ctrl.user?.email if available
-    final String phone =
-        "+91 9876543210"; // Replace with ctrl.user?.phone if available
+    final String email = ctrl.user?.email ?? "";
+    final String phone = ctrl.user?.phone ?? "";
     final String initial = name.isNotEmpty ? name[0].toUpperCase() : "U";
 
     return SafeArea(
@@ -249,8 +247,15 @@ class ProfileBottomSheet extends StatelessWidget {
                   confirmText: "Delete",
                   confirmColor: Colors.red,
                   onConfirm: () async {
-                    // TODO: Implement Delete Account Logic
-                    await Get.put(AuthController()).logout(showMessage: false);
+                    Get.back(); // Close confirmation dialog
+                    final messId = ctrl.selectedMessId;
+                    final deleted =
+                        messId != null && await ctrl.deleteMess(messId);
+                    if (deleted) {
+                      await Get.put(
+                        AuthController(),
+                      ).logout(showMessage: false);
+                    }
                   },
                 );
               },

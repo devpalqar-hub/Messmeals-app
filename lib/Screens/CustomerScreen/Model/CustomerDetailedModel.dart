@@ -47,8 +47,14 @@ class CustomerDetailModel {
     totalOrders = json['totalOrders'];
     totalSpent = json['totalSpent'];
     outstandingPayment = json['outstandingPayment'];
-    // ← ADDED: try both common backend field names
-    createdAt = json['createdAt'] ?? json['created_at'] ?? json['joinedAt'];
+    // Tries every shape this field has shown up in across the API: a
+    // top-level value, or nested under the customer's user/profile record.
+    createdAt =
+        json['createdAt'] ??
+        json['created_at'] ??
+        json['joinedAt'] ??
+        json['user']?['createdAt'] ??
+        json['customerProfile']?['createdAt'];
     if (json['activeSubscriptions'] != null) {
       activeSubscriptions = <ActiveSubscriptions>[];
       json['activeSubscriptions'].forEach((v) {

@@ -149,7 +149,9 @@ class ExpenseController extends GetxController {
         return url?.toString();
       }
 
-      Fluttertoast.showToast(msg: "Failed to upload receipt");
+      Fluttertoast.showToast(
+        msg: "Failed to upload receipt: ${_extractErrorMessage(body)}",
+      );
       return null;
     } catch (e) {
       debugPrint("UPLOAD RECEIPT ERROR: $e");
@@ -189,7 +191,10 @@ class ExpenseController extends GetxController {
         "title": title,
         "expenseDate": date,
         "description": description,
-        if (amount != null) "amount": amount,
+        // Always sent, even for a pending placeholder with no amount yet —
+        // omitting it entirely was silently failing to save against the
+        // backend's required field.
+        "amount": amount ?? 0,
         if (paidAmount != null) "paidAmount": paidAmount,
         if (paymentMethod != null && paymentMethod.isNotEmpty)
           "paymentMethod": paymentMethod,
@@ -213,7 +218,9 @@ class ExpenseController extends GetxController {
         return true;
       }
 
-      Fluttertoast.showToast(msg: "Failed to save expense");
+      Fluttertoast.showToast(
+        msg: "Failed to save expense: ${_extractErrorMessage(response.body)}",
+      );
       return false;
     } catch (e) {
       debugPrint("SAVE EXPENSE ERROR : $e");
@@ -300,5 +307,15 @@ class ExpenseController extends GetxController {
   void _setLoading(bool value) {
     isLoading = value;
     update();
+  }
+
+  String _extractErrorMessage(String responseBody) {
+    try {
+      final decoded = jsonDecode(responseBody);
+      final msg = decoded is Map ? decoded['message'] : null;
+      if (msg is List) return msg.join(', ');
+      if (msg is String && msg.isNotEmpty) return msg;
+    } catch (_) {}
+    return "please try again";
   }
 }

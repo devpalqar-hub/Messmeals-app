@@ -193,11 +193,19 @@ class CustomerController extends GetxController {
         ).format(DateTime.parse(startDate)),
         "end_date": DateFormat("yyyy-MM-dd").format(DateTime.parse(endDate)),
         "walletAmount": double.tryParse(walletAmount) ?? 0,
-        "discountAmount": double.tryParse(discountAmount) ?? 0,
+        // The created subscription's own field is "discount" (confirmed
+        // from a live response — totalPrice/discount/discountedPrice), not
+        // "discountAmount" — the backend was silently ignoring the old
+        // name and always storing discount as 0.
+        "discount": double.tryParse(discountAmount) ?? 0,
         "deliveryType": deliveryType,
         "preferredTime": preferredTime,
         "deliveryDays": deliveryDays,
       };
+
+      debugPrint(
+        'ADD CUSTOMER REQUEST: ${const JsonEncoder.withIndent('  ').convert(requestBody)}',
+      );
 
       final response = await http.post(
         url,
@@ -211,7 +219,9 @@ class CustomerController extends GetxController {
       if (response.body.isNotEmpty) {
         try {
           final decoded = jsonDecode(response.body);
-          debugPrint(const JsonEncoder.withIndent('  ').convert(decoded));
+          debugPrint(
+            'ADD CUSTOMER RESPONSE: ${const JsonEncoder.withIndent('  ').convert(decoded)}',
+          );
         } catch (e) {}
       }
 

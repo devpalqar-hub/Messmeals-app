@@ -8,6 +8,7 @@ import 'package:mess/Screens/DeliveryPartner/Deliveries/Models/PartnerDeliveryMo
 import 'package:mess/Screens/DeliveryPartner/Deliveries/Service/PartnerDeliveryController.dart';
 import 'package:mess/Screens/DeliveryPartner/Deliveries/Views/DeliveryDetailScreen.dart';
 import 'package:mess/Screens/Utils/AppColors.dart';
+import 'package:mess/Screens/Utils/AppToast.dart';
 
 class DeliveriesListScreen extends StatefulWidget {
   const DeliveriesListScreen({super.key});
@@ -221,8 +222,29 @@ class _DeliveryListTile extends StatelessWidget {
 
   const _DeliveryListTile({required this.delivery, required this.onTap});
 
+  /// Opens Maps at the customer's precise pinned coordinates when they
+  /// have one (delivery.mapUrl, a "lat,lng" string) — falls back to a
+  /// text search of the address when they don't, since not every customer
+  /// has pinned a location yet.
   Future<void> _openMap() async {
-    if (delivery.address.isEmpty) return;
+    final coords = delivery.mapUrl?.split(',');
+    if (coords != null &&
+        coords.length == 2 &&
+        double.tryParse(coords[0].trim()) != null &&
+        double.tryParse(coords[1].trim()) != null) {
+      await launchUrl(
+        Uri.parse(
+          "https://www.google.com/maps/search/?api=1&query=${coords[0].trim()},${coords[1].trim()}",
+        ),
+        mode: LaunchMode.externalApplication,
+      );
+      return;
+    }
+
+    if (delivery.address.isEmpty) {
+      AppToast.error("No location or address saved for this customer");
+      return;
+    }
     final encoded = Uri.encodeComponent(delivery.address);
     await launchUrl(
       Uri.parse("https://www.google.com/maps/search/?api=1&query=$encoded"),

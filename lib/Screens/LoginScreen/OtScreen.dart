@@ -161,6 +161,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           messName: sc.messName,
           district: sc.selectedDistrict?.name ?? '',
           otp: otp,
+          latitude: sc.pickedLatitude,
+          longitude: sc.pickedLongitude,
         );
         if (ok) {
           // Backend has no country field for a mess yet, so this is kept
